@@ -1,26 +1,75 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
+/*
+ * Fonts from Figma: Noto Sans Thai (Thai text) + Inter (numbers / Latin labels).
+ * `inline` makes the utilities reference next/font's variables directly
+ * (they are defined on <html> in layout.tsx).
+ */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-noto-thai), var(--font-inter), system-ui, sans-serif;
+  --font-latin: var(--font-inter), var(--font-noto-thai), system-ui, sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Design tokens taken from the Figma file "alumni" */
+@theme {
+
+  /* brand */
+  --color-brand: #e82c87;
+  --color-brand-deep: #df1f6b;
+  --color-brand-soft: #e69ec1;
+  --color-brand-tint: #fff3f9;
+  --color-brand-tint-2: #ffebf5;
+  --color-brand-lilac: #dedaff;
+
+  /* text */
+  --color-ink: #20213d;
+  --color-ink-slate: #0f172a;
+  --color-ink-navy: #24205c;
+
+  /* surfaces + lines */
+  --color-line: #e5e6f0;
+  --color-line-slate: #e2e8f0;
+  --color-surface-muted: #f5f6fb;
+  --color-surface-slate: #f1f5f9;
+  --color-surface-upload: #fafbff;
+
+  /* status */
+  --color-success: #16a875;
+  --color-success-ink: #23745d;
+  --color-success-tint: #eaf9f2;
+  --color-danger: #ef626c;
+  --color-info: #00a3e0;
+  --color-warning-ink: #95601d;
+  --color-warning-tint: #fff5df;
+
+  /* admin (staff) workspace */
+  --color-admin-ink: #202640;
+  --color-admin-muted: #727990;
+  --color-admin-line: #e5e8f0;
+  --color-admin-head: #f5f6fa;
+  --color-admin-page: #f9f9f9;
+  --color-admin-side: #fafbff;
+  --color-admin-side-muted: #a6adc8;
+  --color-admin-side-ink: #6d79a7;
+  --color-admin-side-line: #363c57;
+  --color-admin-slate: #64748b;
+  --color-admin-ok: #167a59;
+  --color-admin-ok-tint: #e9f6ef;
+  --color-admin-indigo: #5046c7;
+  --color-admin-indigo-tint: #efedfc;
+  --color-admin-warn: #9b6512;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: #f3f4f8;
+  color: #000;
+  font-family: var(--font-noto-thai), var(--font-inter), system-ui, sans-serif;
+}
+
+/* form controls don't inherit the font by default */
+input,
+select,
+textarea,
+button {
+  font-family: inherit;
 }

@@ -1,0 +1,19 @@
+{
+  "description": "ยอดที่ยืนยันแล้ว ณ 18:45 น. • ดูรายรับเงินจริงแยกจากการหมุนเวียน Token (1 Token = 1 บาท)",
+  "date": "24 ต.ค. 2569",
+  "tickets": { "count": 200, "price": 790 },
+  "revenue": [
+    { "type": "ค่าบัตรเข้างาน", "channel": "โอนธนาคาร", "amount": 158000, "color": "bg-brand-deep" },
+    { "type": "เติม Token เงินสด", "channel": "เงินสด", "amount": 60000, "color": "bg-brand" },
+    { "type": "เติม Token เงินโอน", "channel": "โอนธนาคาร", "amount": 90000, "color": "bg-brand-soft" }
+  ],
+  "tokens": { "toppedUp": 150000, "spent": 9200 },
+  "spendingByCategory": [
+    { "category": "เครื่องดื่ม", "tokens": 2500, "status": "เปิดขาย" },
+    { "category": "ลูกชิ้นยืนกิน", "tokens": 2000, "status": "เปิดขาย" },
+    { "category": "อาหารตามสั่ง", "tokens": 1800, "status": "เปิดขาย" },
+    { "category": "ของหวาน", "tokens": 1200, "status": "เปิดขาย" },
+    { "category": "ของที่ระลึก", "tokens": 1000, "status": "เปิดขาย" },
+    { "category": "เครื่องดื่มแอลกอฮอล์", "tokens": 700, "status": "เปิดขาย" }
+  ]
+}

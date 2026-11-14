@@ -1,0 +1,21 @@
+{
+  "id": "CF26-0148",
+  "status": "pending_review",
+  "purchaseType": "both",
+  "ticketQty": 1,
+  "friendTicketQty": 1,
+  "shirts": [{ "size": "L" }, { "size": "XL" }],
+  "delivery": "pickup",
+  "items": [
+    { "label": "บัตรเข้างาน", "qty": 2, "amount": 1580 },
+    { "label": "เสื้อรุ่น • L", "qty": 1, "amount": 390 },
+    { "label": "เสื้อรุ่น • XL", "qty": 1, "amount": 390 }
+  ],
+  "deliveryNote": "รับเสื้อที่หน้างาน",
+  "total": 2360,
+  "slip": {
+    "fileName": "slip_CF26-0148.jpg",
+    "sizeLabel": "1.2 MB",
+    "uploadedAt": "28 ต.ค. 2569 เวลา 09:41 น."
+  }
+}

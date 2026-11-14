@@ -1,36 +1,51 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ศิษย์เก่า · ระบบงานเลี้ยงรุ่น
 
-## Getting Started
-
-First, run the development server:
+เว็บ Next.js (App Router + Tailwind v4) ที่สร้างตาม Figma **alumni** ตอนนี้ข้อมูลทุกอย่างมาจากไฟล์ JSON จำลอง (mock)
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## หน้าทั้งหมด
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### ผู้ร่วมงาน (มือถือ · Figma หน้า `user`)
+| เส้นทาง | หน้าจอ |
+|---|---|
+| `/` | สมัครสมาชิก / ลงทะเบียน |
+| `/shop` | เลือกซื้อบัตรและเสื้อ (ตะกร้า คำนวณยอดได้จริง) |
+| `/shop/friend` | กรอกข้อมูลเพื่อน |
+| `/checkout/payment` | โอนธนาคารและแนบสลิป |
+| `/checkout/status` | ส่งหลักฐานแล้ว รอตรวจสอบ |
+| `/me/ticket` · `/me/wallet` · `/me/history` | บัตรของฉัน · กระเป๋า Token · ประวัติรายการ |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### เจ้าหน้าที่ (เดสก์ท็อป · Figma หน้า `admin`)
+| เส้นทาง | บทบาท / หน้าจอ |
+|---|---|
+| `/admin/login` | เข้าสู่ระบบพนักงาน (มีช่องเลือกบทบาทสำหรับข้อมูลจำลอง) |
+| `/admin/super/overview` · `stores` · `products` · `logs` | Super Admin |
+| `/admin/finance/revenue` · `attendance` | Finance (อยู่ในเมนู Super Admin ตามดีไซน์) |
+| `/admin/ticketing/slips` · `links` · `scan` | Ticketing Officer (`scan` ยังไม่มีดีไซน์) |
+| `/admin/token/cash` · `transfer` · `history` | Token Staff |
+| `/admin/store/pos` · `checkout` · `history` | Store Operator (`?store=ST-01..04` เปลี่ยนร้าน) |
 
-## Learn More
+## ข้อมูลจำลอง → ฐานข้อมูล
 
-To learn more about Next.js, take a look at the following resources:
+- ไฟล์ข้อมูลอยู่ที่ `src/data/*.json` (ฝั่งผู้ใช้) และ `src/data/admin/*.json` (ฝั่งเจ้าหน้าที่)
+- ทุกหน้าอ่านข้อมูลผ่าน `src/lib/data.ts` และ `src/lib/admin-data.ts` เท่านั้น
+  ฟังก์ชันเป็น `async` อยู่แล้ว เวลาต่อฐานข้อมูลให้เปลี่ยนแค่เนื้อในฟังก์ชัน (เช่น query Prisma / fetch API) โดยคงรูปแบบข้อมูลเดิม หน้าเว็บไม่ต้องแก้
+- ตะกร้า/สถานะชั่วคราวเก็บใน `sessionStorage` (`src/lib/cart.ts`, `src/lib/store-cart.ts`) — แทนที่ด้วย API ภายหลัง
+- การกระทำต่างๆ (อนุมัติสลิป, เติม Token, ชำระเงิน, สร้างร้าน ฯลฯ) ทำงานในหน้าเว็บแต่ยังไม่บันทึกลงที่ใด
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## โครงสร้าง
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+src/
+  app/                 หน้าเว็บ (ผู้ใช้ + /admin)
+  components/user/     ส่วนประกอบหน้ามือถือ
+  components/admin/    AdminShell (sidebar/top bar), ui.tsx, history.tsx, SlipReceipt
+  components/ui/Icon   แสดงไอคอน SVG ที่ส่งออกจาก Figma (public/icons)
+  data/                ไฟล์ JSON จำลอง
+  lib/                 ตัวอ่านข้อมูล + ตะกร้า + ตัวช่วยจัดรูปแบบ
+public/icons, public/images/products   ไฟล์ภาพจาก Figma
+```

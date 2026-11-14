@@ -1,0 +1,13 @@
+import { MobileShell } from "@/components/user/MobileShell";
+import { CheckoutHeader } from "@/components/user/CheckoutHeader";
+import { FriendView } from "./friend-view";
+
+/** Figma: user / เลือกซื้อบัตรและเสื้อ – กรอกข้อมูลเพื่อน (4154:2) */
+export default function FriendPage() {
+  return (
+    <MobileShell>
+      <CheckoutHeader title="บัตรและเสื้อรุ่น" step={1} backHref="/shop" />
+      <FriendView />
+    </MobileShell>
+  );
+}

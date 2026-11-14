@@ -1,0 +1,19 @@
+{
+  "id": "EVT-2026",
+  "name": "งานเลี้ยงรุ่นศิษย์เก่า",
+  "brand": "ศิษย์เก่า",
+  "registrationTitle": "ลงทะเบียนซื้อบัตรเข้างานและซื้อเสื้อรุ่น",
+  "registrationSubtitle": "ลงทะเบียนเพื่อซื้อบัตรเข้างานหรือเสื้อรุ่น",
+  "tokenRate": "1 โทเคน = 1 บาท",
+  "tokenScope": "ใช้ได้ภายในงานนี้",
+  "bankAccount": {
+    "bankName": "ธนาคารกสิกรไทย",
+    "accountType": "บัญชีออมทรัพย์ • ข้อมูลตัวอย่าง",
+    "accountNumber": "123-4-56789-0",
+    "accountName": "บริษัท รุ่นเรา จำกัด"
+  },
+  "slipRule": {
+    "accept": "JPG, PNG หรือ PDF • ไม่เกิน 10 MB",
+    "maxSizeMb": 10
+  }
+}

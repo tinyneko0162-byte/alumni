@@ -1,0 +1,117 @@
+{
+  "event": {
+    "name": "งานเลี้ยงรุ่นศิษย์เก่า",
+    "subtitle": "ระบบสำหรับผู้ปฏิบัติงาน",
+    "dateShort": "24 ต.ค. 2569",
+    "dateLong": "24 ตุลาคม 2569",
+    "time": "17:00–23:00 น.",
+    "venue": "หอประชุมโรงเรียนตัวอย่าง",
+    "now": "24 ต.ค. 2569 · 18:45 น.",
+    "environment": "24 ต.ค. 2569 · ข้อมูลสมมติ",
+    "footer": "งานเลี้ยงรุ่นศิษย์เก่า • ระบบเจ้าหน้าที่"
+  },
+  "account": {
+    "initials": "อร",
+    "name": "อร•• • เจ้าหน้าที่"
+  },
+  "roles": {
+    "super": {
+      "label": "Super Admin",
+      "home": "/admin/super/overview",
+      "menu": [
+        {
+          "href": "/admin/super/overview",
+          "label": "ภาพรวมระบบ",
+          "icon": "layout-dashboard"
+        },
+        {
+          "href": "/admin/super/stores",
+          "label": "จัดการร้านค้า",
+          "icon": "store"
+        },
+        {
+          "href": "/admin/super/products",
+          "label": "สินค้าและราคา Token",
+          "icon": "tags"
+        },
+        {
+          "href": "/admin/super/logs",
+          "label": "บันทึกระบบ",
+          "icon": "scroll-text"
+        },
+        {
+          "href": "/admin/finance/revenue",
+          "label": "รายได้ภายในงาน",
+          "icon": "chart-no-axes-combined"
+        },
+        {
+          "href": "/admin/finance/attendance",
+          "label": "ประวัติการเข้าร่วม",
+          "icon": "users"
+        }
+      ]
+    },
+    "ticketing": {
+      "label": "Ticketing Officer",
+      "home": "/admin/ticketing/slips",
+      "menu": [
+        {
+          "href": "/admin/ticketing/slips",
+          "label": "ตรวจสอบสลิปค่าบัตร",
+          "icon": "ticket-check"
+        },
+        {
+          "href": "/admin/ticketing/links",
+          "label": "ส่งลิงก์ทางอีเมล",
+          "icon": "mail"
+        },
+        {
+          "href": "/admin/ticketing/scan",
+          "label": "สแกนบัตรเข้างาน",
+          "icon": "ticket-check"
+        }
+      ]
+    },
+    "token": {
+      "label": "Token Staff",
+      "home": "/admin/token/cash",
+      "menu": [
+        {
+          "href": "/admin/token/cash",
+          "label": "เติม Token • เงินสด",
+          "icon": "scan-line"
+        },
+        {
+          "href": "/admin/token/transfer",
+          "label": "เติม Token • โอนเงิน",
+          "icon": "landmark"
+        },
+        {
+          "href": "/admin/token/history",
+          "label": "ประวัติการเติม Token",
+          "icon": "history"
+        }
+      ]
+    },
+    "store": {
+      "label": "Store Operator",
+      "home": "/admin/store/pos",
+      "menu": [
+        {
+          "href": "/admin/store/pos",
+          "label": "ขายสินค้า",
+          "icon": "shopping-basket"
+        },
+        {
+          "href": "/admin/store/history",
+          "label": "ประวัติการขาย",
+          "icon": "receipt-text"
+        }
+      ],
+      "account": {
+        "initials": "รจ",
+        "name": "รจ•• • เจ้าหน้าที่"
+      }
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "description": "ส่งลิงก์ส่วนตัวให้ผู้ซื้อบัตรที่ผ่านการอนุมัติแล้ว โดยใช้อีเมลของบริษัทเท่านั้น",
+  "senderEmail": "tickets@sitkao-relations.com",
+  "subject": "ลิงก์เข้างาน งานเลี้ยงรุ่นศิษย์เก่า",
+  "companyName": "บริษัท รุ่นเรา จำกัด",
+  "current": {
+    "ticketId": "TKT-0400",
+    "recipientName": "นา•• ศิษย์เก่า",
+    "recipientShort": "นา••",
+    "email": "ki••@gmail.com",
+    "amount": 790,
+    "linkRef": "LINK-0400",
+    "linkMasked": "event.example/t/••••-0400"
+  },
+  "history": [
+    { "ticketId": "TKT-0399", "email": "pa••@example.com", "time": "18:41", "status": "ส่งแล้ว" },
+    { "ticketId": "TKT-0398", "email": "wi••@example.com", "time": "18:39", "status": "ส่งแล้ว" }
+  ]
+}

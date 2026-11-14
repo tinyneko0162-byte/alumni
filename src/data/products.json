@@ -1,0 +1,28 @@
+{
+  "purchaseTypes": [
+    { "id": "ticket", "label": "บัตรเข้างาน" },
+    { "id": "shirt", "label": "เสื้อที่ระลึก" },
+    { "id": "both", "label": "ทั้งสองอย่าง" }
+  ],
+  "ticket": {
+    "id": "ticket",
+    "name": "บัตรเข้างาน",
+    "price": 790,
+    "unitLabel": "ใบ"
+  },
+  "friendTicket": {
+    "id": "friend-ticket",
+    "name": "ซื้อบัตรเข้างานให้เพื่อน",
+    "price": 790
+  },
+  "shirt": {
+    "id": "shirt",
+    "name": "เสื้อรุ่น",
+    "price": 390,
+    "sizes": ["S", "M", "L", "XL", "2XL"],
+    "deliveryOptions": [
+      { "id": "pickup", "label": "รับเสื้อที่หน้างาน" },
+      { "id": "delivery", "label": "ส่งที่บ้าน" }
+    ]
+  }
+}

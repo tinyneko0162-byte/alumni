@@ -1,0 +1,17 @@
+{
+  "description": "สร้างร้าน กำหนดผู้ดูแล จุดขาย",
+  "stores": [
+    { "id": "ST-01", "name": "ร้านยากิโซบะ", "owner": "ณ****ี", "detail": "ยากิโซบะ", "status": "open" },
+    { "id": "ST-02", "name": "ร้านขายเบียร์สด", "owner": "ส****ย", "detail": "เบียร์สด", "status": "open" },
+    { "id": "ST-03", "name": "ร้านของที่ระลึก", "owner": "ม****า", "detail": "ของที่ระลึก", "status": "open" }
+  ],
+  "productCount": 3,
+  "productNames": "ของที่ระลึก เบียร์สด ยากิโซบะ",
+  "categoryCount": 6,
+  "draft": {
+    "name": "ร้านไก่ป็อปทอด",
+    "code": "ST-04",
+    "owner": "นาง *****",
+    "detail": "ขายไก่ป็อปทอด"
+  }
+}

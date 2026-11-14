@@ -1,0 +1,226 @@
+"use client";
+
+import { Icon } from "@/components/ui/Icon";
+import { OrderSummary } from "@/components/user/OrderSummary";
+import { PrimaryButton } from "@/components/user/PrimaryButton";
+import { includesShirt, includesTicket, summarize, useCart, type PurchaseType } from "@/lib/cart";
+import type { Products } from "@/lib/data";
+import { baht, cx } from "@/lib/format";
+
+export function ShopView({ eventName, products }: { eventName: string; products: Products }) {
+  const { cart, update } = useCart();
+  const { items, total, note } = summarize(cart);
+  const hasTicket = includesTicket(cart);
+  const hasShirt = includesShirt(cart);
+  const needsFriendInfo = hasTicket && cart.friendTicketQty > 0;
+
+  const setShirtQty = (qty: number) =>
+    update((c) => {
+      const n = Math.max(1, Math.min(10, qty));
+      const shirts = c.shirts.slice(0, n);
+      while (shirts.length < n) shirts.push({ size: shirts.at(-1)?.size ?? "M" });
+      return { shirts };
+    });
+
+  return (
+    <div className="flex flex-col gap-[18px] px-6 pt-[18px] pb-6">
+      <div className="rounded-[20px] bg-brand-deep p-[18px]">
+        <p className="font-latin text-[25px] font-bold text-white">{eventName}</p>
+      </div>
+
+      {/* Purchase type segmented control */}
+      <div role="radiogroup" aria-label="ประเภทการซื้อ" className="flex gap-1.5 rounded-xl bg-brand-tint p-1">
+        {products.purchaseTypes.map((t) => {
+          const on = cart.purchaseType === t.id;
+          return (
+            <button
+              key={t.id}
+              role="radio"
+              aria-checked={on}
+              onClick={() => update({ purchaseType: t.id as PurchaseType })}
+              className={cx(
+                "h-[39px] flex-1 rounded-[9px] text-[11px] font-semibold transition",
+                on ? "bg-brand-deep text-white" : "bg-brand-tint-2 text-black hover:brightness-95",
+              )}
+            >
+              {t.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {hasTicket && (
+        <ProductCard icon="ticket-product" iconBg="bg-brand-tint" name={products.ticket.name} price={products.ticket.price}>
+          <p className="text-right text-[12px] text-black">
+            {baht(products.ticket.price)} / {products.ticket.unitLabel}
+          </p>
+        </ProductCard>
+      )}
+
+      {hasShirt && (
+        <ProductCard
+          icon="shirt"
+          iconBg="bg-success-tint"
+          name={products.shirt.name}
+          price={products.shirt.price}
+          borderClass="border-[#b3b3b3]"
+        >
+          <div className="flex flex-col gap-[18px]">
+            {cart.shirts.map((s, i) => (
+              <div key={i} className="flex flex-col gap-2">
+                <div className="flex items-start justify-between">
+                  <p className="text-[12px] font-medium text-ink">ตัวที่{i + 1}</p>
+                  <button type="button" className="text-[11px] text-brand-deep hover:underline">
+                    ตารางไซซ์
+                  </button>
+                </div>
+                <div role="radiogroup" aria-label={`ไซซ์ตัวที่ ${i + 1}`} className="flex gap-2">
+                  {products.shirt.sizes.map((size) => {
+                    const on = s.size === size;
+                    return (
+                      <button
+                        key={size}
+                        role="radio"
+                        aria-checked={on}
+                        onClick={() =>
+                          update((c) => ({
+                            shirts: c.shirts.map((x, j) => (j === i ? { size } : x)),
+                          }))
+                        }
+                        className={cx(
+                          "h-[34px] flex-1 rounded-lg font-latin text-[12px] font-semibold transition",
+                          on ? "bg-brand-deep text-white" : "bg-surface-muted text-black hover:bg-line",
+                        )}
+                      >
+                        {size}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="flex justify-end">
+            <Stepper value={cart.shirts.length} min={1} onChange={setShirtQty} label="จำนวนเสื้อ" />
+          </div>
+          <div role="radiogroup" aria-label="การรับเสื้อ" className="flex justify-end gap-4">
+            {products.shirt.deliveryOptions.map((d) => {
+              const on = cart.delivery === d.id;
+              return (
+                <label key={d.id} className="flex cursor-pointer items-center gap-1 text-[12px] text-black">
+                  <input
+                    type="radio"
+                    name="delivery"
+                    className="sr-only"
+                    checked={on}
+                    onChange={() => update({ delivery: d.id as "pickup" | "delivery" })}
+                  />
+                  <span
+                    className={cx(
+                      "flex size-4 items-center justify-center rounded-full border",
+                      on ? "border-ink" : "border-black/60",
+                    )}
+                  >
+                    {on && <span className="size-2 rounded-full bg-ink" />}
+                  </span>
+                  {d.label}
+                </label>
+              );
+            })}
+          </div>
+        </ProductCard>
+      )}
+
+      {hasTicket && (
+        <div className="flex items-center justify-between rounded-[20px] border border-line bg-white p-4">
+          <div className="flex flex-col gap-[3px]">
+            <p className="text-[15px] text-ink">{products.friendTicket.name}</p>
+            <p className="font-latin text-[19px] font-bold text-black">{baht(products.friendTicket.price)}</p>
+          </div>
+          <Stepper
+            value={cart.friendTicketQty}
+            min={0}
+            onChange={(v) => update({ friendTicketQty: Math.max(0, Math.min(10, v)) })}
+            label="จำนวนบัตรของเพื่อน"
+          />
+        </div>
+      )}
+
+      <OrderSummary orderId={cart.orderId} items={items} note={note} total={total} />
+
+      <PrimaryButton
+        softBorder
+        href={needsFriendInfo ? "/shop/friend" : "/checkout/payment"}
+        disabled={items.length === 0}
+      >
+        {needsFriendInfo ? "กรอกข้อมูลของเพื่อน" : "ดำเนินการชำระเงิน"}
+      </PrimaryButton>
+    </div>
+  );
+}
+
+function ProductCard({
+  icon,
+  iconBg,
+  name,
+  price,
+  children,
+  borderClass = "border-line",
+}: {
+  icon: string;
+  iconBg: string;
+  name: string;
+  price: number;
+  children?: React.ReactNode;
+  borderClass?: string;
+}) {
+  return (
+    <section className={cx("flex flex-col gap-3.5 rounded-[20px] border bg-white p-4", borderClass)}>
+      <div className="flex items-center gap-[13px]">
+        <div className={cx("flex h-[76px] w-[70px] items-center justify-center rounded-[14px]", iconBg)}>
+          <Icon name={icon} size={37} />
+        </div>
+        <div className="flex flex-1 flex-col gap-[3px]">
+          <p className="text-[15px] text-ink">{name}</p>
+          <p className="font-latin text-[19px] font-bold text-black">{baht(price)}</p>
+        </div>
+        <span className="flex size-[21px] items-center justify-center rounded-[7px] bg-brand-deep">
+          <Icon name="check-white" size={14} />
+        </span>
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function Stepper({
+  value,
+  min,
+  onChange,
+  label,
+}: {
+  value: number;
+  min: number;
+  onChange: (v: number) => void;
+  label: string;
+}) {
+  return (
+    <div className="flex h-[34px] items-center gap-4 rounded-[9px] border border-line px-2.5" aria-label={label}>
+      <button
+        type="button"
+        aria-label="ลด"
+        disabled={value <= min}
+        onClick={() => onChange(value - 1)}
+        className="disabled:opacity-30"
+      >
+        <Icon name="minus" size={14} />
+      </button>
+      <span className="min-w-3 text-center font-latin text-[13px] font-semibold text-ink" aria-live="polite">
+        {value}
+      </span>
+      <button type="button" aria-label="เพิ่ม" onClick={() => onChange(value + 1)}>
+        <Icon name="plus" size={14} />
+      </button>
+    </div>
+  );
+}
