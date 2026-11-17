@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Detail, FilterField, LedgerStrip, SelectField, Stat, downloadCsv } from "@/components/admin/history";
+import { SlipDialog } from "@/components/admin/SlipReceipt";
 import { BrandButton, Chip, Guidance, OutlineButton, PageHeading, Panel } from "@/components/admin/ui";
 import { Icon } from "@/components/ui/Icon";
 import type { getTokenHistory } from "@/lib/admin-data";
@@ -48,6 +49,7 @@ export function HistoryView({ data }: { data: Data }) {
 
   const sel = records.find((r) => r.id === selectedId) ?? records[0];
   const before = sel.balanceBefore ?? 0;
+  const [evidenceOpen, setEvidenceOpen] = useState(false);
 
   const exportCsv = () =>
     downloadCsv("token-topups.csv", [
@@ -231,8 +233,22 @@ export function HistoryView({ data }: { data: Data }) {
                     ธนาคารอ้างอิง {sel.evidence.bankRef} · ฿{money(sel.received ?? 0)}
                   </p>
                 </div>
-                <OutlineButton>ดูหลักฐาน</OutlineButton>
+                <OutlineButton onClick={() => setEvidenceOpen(true)}>ดูหลักฐาน</OutlineButton>
               </div>
+              <SlipDialog
+                open={evidenceOpen}
+                onClose={() => setEvidenceOpen(false)}
+                amount={sel.received ?? 0}
+                purpose="เติม Token"
+                fromName={sel.owner}
+                fromAccount={sel.fromAccount ?? "—"}
+                toName="บริษัท รุ่นเรา จำกัด"
+                toAccount="ธนาคารตัวอย่าง • xxx-x-xx900-2"
+                paidAt={sel.time}
+                reference={sel.evidence.bankRef}
+                fileName={`${sel.evidence.id}.jpg`}
+                footer="ไฟล์ตัวอย่าง • ไม่ใช่หลักฐานการชำระเงินจริง"
+              />
             </>
           )}
         </Panel>

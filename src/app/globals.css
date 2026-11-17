@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* `dark:` variant follows the theme toggle (data-theme on <html>), not the OS setting */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 /*
  * Fonts from Figma: Noto Sans Thai (Thai text) + Inter (numbers / Latin labels).
  * `inline` makes the utilities reference next/font's variables directly
@@ -8,6 +11,14 @@
 @theme inline {
   --font-sans: var(--font-noto-thai), var(--font-inter), system-ui, sans-serif;
   --font-latin: var(--font-inter), var(--font-noto-thai), system-ui, sans-serif;
+}
+
+:root {
+  --page-bg: #f3f4f8;
+  --page-fg: #000;
+  --surface: #fff;
+  --on-surface: #000;
+  color-scheme: light;
 }
 
 /* Design tokens taken from the Figma file "alumni" */
@@ -20,6 +31,7 @@
   --color-brand-tint: #fff3f9;
   --color-brand-tint-2: #ffebf5;
   --color-brand-lilac: #dedaff;
+  --color-check: #e69ec1; /* checked checkbox fill */
 
   /* text */
   --color-ink: #20213d;
@@ -61,8 +73,8 @@
 }
 
 body {
-  background: #f3f4f8;
-  color: #000;
+  background: var(--page-bg);
+  color: var(--page-fg);
   font-family: var(--font-noto-thai), var(--font-inter), system-ui, sans-serif;
 }
 
@@ -73,3 +85,64 @@ textarea,
 button {
   font-family: inherit;
 }
+
+/*
+ * Dark theme. Light stays the Figma design; dark re-maps the same tokens.
+ * Toggled by <ThemeToggle> (sets data-theme on <html>, saved in localStorage).
+ */
+[data-theme="dark"] {
+  color-scheme: dark;
+  --page-bg: #0d0e19;
+  --page-fg: #e8e9f4;
+  --surface: #1a1b2c;
+  --on-surface: #e8e9f4;
+
+  --color-brand-tint: #2c1b27;
+  --color-brand-tint-2: #3a2232;
+  --color-brand-lilac: #3a3668;
+  --color-check: #e82c87;
+
+  --color-ink: #e8e9f5;
+  --color-ink-slate: #f1f5f9;
+  --color-ink-navy: #dcdaf5;
+
+  --color-line: #33354d;
+  --color-line-slate: #383b55;
+  --color-surface-muted: #25273e;
+  --color-surface-slate: #232540;
+  --color-surface-upload: #1f2138;
+
+  --color-success-ink: #5fd6ab;
+  --color-success-tint: #12332a;
+  --color-danger: #ff7b86;
+  --color-warning-ink: #f0c377;
+  --color-warning-tint: #3a2f17;
+
+  --color-admin-ink: #e9ebf7;
+  --color-admin-muted: #a3aac4;
+  --color-admin-line: #34374f;
+  --color-admin-head: #252840;
+  --color-admin-page: #0f1020;
+  --color-admin-side: #17182b;
+  --color-admin-side-ink: #98a4d8;
+  --color-admin-slate: #94a3b8;
+  --color-admin-ok: #4fd0a0;
+  --color-admin-ok-tint: #10332a;
+  --color-admin-indigo: #a29bff;
+  --color-admin-indigo-tint: #2a2750;
+  --color-admin-warn: #f0b657;
+}
+
+/* Utilities that hard-code white / black surfaces and text */
+[data-theme="dark"] .bg-white { background-color: var(--surface); }
+[data-theme="dark"] .text-black { color: var(--on-surface); }
+[data-theme="dark"] .text-black\/80 { color: color-mix(in srgb, var(--on-surface) 80%, transparent); }
+[data-theme="dark"] .text-black\/60 { color: color-mix(in srgb, var(--on-surface) 60%, transparent); }
+[data-theme="dark"] .border-black\/60 { border-color: color-mix(in srgb, var(--on-surface) 60%, transparent); }
+/* pale-pink info bars become a deep rose in dark; their text-black turns light above */
+[data-theme="dark"] .bg-brand-soft { background-color: #4a2a3c; }
+[data-theme="dark"] .bg-\[\#fdecee\] { background-color: #3a1d22; }
+[data-theme="dark"] .text-\[\#c2414b\] { color: #ff8f98; }
+[data-theme="dark"] .bg-\[\#eeedf8\] { background-color: #2a2c47; }
+[data-theme="dark"] img[data-dark-icon] { filter: invert(1) hue-rotate(180deg) brightness(1.05); }
+[data-theme="dark"] .placeholder\:text-black\/80::placeholder { color: color-mix(in srgb, var(--on-surface) 55%, transparent); }

@@ -4,19 +4,24 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { FormField } from "@/components/user/FormField";
 import { PrimaryButton } from "@/components/user/PrimaryButton";
+import { Dialog } from "@/components/ui/Dialog";
 import { Icon } from "@/components/ui/Icon";
+import type { EventInfo } from "@/lib/data";
 
 const PASSWORD_HINT = "อย่างน้อย 8 ตัวอักษร มีตัวอักษรและตัวเลข";
+const phoneOk = (p: string) => /^0\d{8,9}$/.test(p.replace(/[\s-]/g, ""));
 const strong = (p: string) => p.length >= 8 && /[A-Za-z]/.test(p) && /\d/.test(p);
 
-export function RegisterForm() {
+export function RegisterForm({ policy }: { policy: EventInfo["policy"] }) {
   const router = useRouter();
   const [f, setF] = useState({ name: "", email: "", phone: "", password: "", confirm: "" });
-  const [accepted, setAccepted] = useState(true);
+  const [accepted, setAccepted] = useState(false);
+  const [policyOpen, setPolicyOpen] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const set = (k: keyof typeof f) => (v: string) => setF((s) => ({ ...s, [k]: v }));
 
   const errors = {
+    phone: submitted && !phoneOk(f.phone) ? "กรอกเบอร์โทรศัพท์ 9–10 หลัก เช่น 0812345678" : undefined,
     password: submitted && !strong(f.password) ? PASSWORD_HINT : undefined,
     confirm: submitted && f.confirm !== f.password ? "รหัสผ่านไม่ตรงกัน" : undefined,
   };
@@ -27,7 +32,7 @@ export function RegisterForm() {
       onSubmit={(e) => {
         e.preventDefault();
         setSubmitted(true);
-        if (!strong(f.password) || f.confirm !== f.password || !accepted) return;
+        if (!phoneOk(f.phone) || !strong(f.password) || f.confirm !== f.password || !accepted) return;
         // Mock: no backend yet — go straight to the shop.
         router.push("/shop");
       }}
@@ -35,39 +40,72 @@ export function RegisterForm() {
       <div className="flex flex-col gap-[15px]">
         <FormField label="ชื่อ–นามสกุล" icon="user-round" name="name" placeholder="ชื่อ" autoComplete="name" value={f.name} onChange={set("name")} />
         <FormField label="อีเมล" icon="mail" name="email" type="email" placeholder="****@gmail.com" autoComplete="email" value={f.email} onChange={set("email")} />
-        <FormField label="เบอร์โทรศัพท์" icon="phone" name="phone" type="tel" placeholder="**********" autoComplete="tel" value={f.phone} onChange={set("phone")} />
+        <FormField label="เบอร์โทรศัพท์" icon="phone" name="phone" type="tel" placeholder="**********" autoComplete="tel" value={f.phone} onChange={set("phone")} error={errors.phone} />
         <FormField label="รหัสผ่าน" icon="lock-keyhole" name="password" type="password" placeholder="••••••••••" autoComplete="new-password" hint={PASSWORD_HINT} value={f.password} onChange={set("password")} error={errors.password} />
         <FormField label="ยืนยันรหัสผ่าน" icon="lock-keyhole" name="confirm" type="password" placeholder="••••••••••" autoComplete="new-password" hint={PASSWORD_HINT} value={f.confirm} onChange={set("confirm")} error={errors.confirm} />
       </div>
 
-      <label className="flex cursor-pointer items-start gap-2.5">
-        <input
-          type="checkbox"
-          checked={accepted}
-          onChange={(e) => setAccepted(e.target.checked)}
-          className="peer sr-only"
-        />
-        <span
-          className={`flex size-5 shrink-0 items-center justify-center rounded-[5px] peer-focus-visible:ring-2 peer-focus-visible:ring-brand/40 ${
-            accepted ? "bg-brand-soft" : "border border-line bg-white"
-          }`}
-        >
-          {accepted && <Icon name="check-white" size={14} />}
-        </span>
-        <span className="text-[12px] leading-[1.8] text-black">
-          <span className="block">
-            ฉันยอมรับ<span className="text-brand-soft">ข้อกำหนดการใช้งาน</span>
-          </span>
-          <span className="block">
-            และรับทราบ<span className="text-brand-soft">นโยบายความเป็นส่วนตัว</span>
-          </span>
-        </span>
-      </label>
-      {submitted && !accepted && (
-        <p className="-mt-4 text-[11px] text-danger">กรุณายอมรับข้อกำหนดก่อนลงทะเบียน</p>
-      )}
+      <div className="flex flex-col gap-2">
+        <div className="flex items-start gap-2.5">
+          <label className="flex cursor-pointer items-start" aria-label="ยอมรับข้อกำหนดและนโยบาย">
+            <input
+              type="checkbox"
+              checked={accepted}
+              onChange={(e) => setAccepted(e.target.checked)}
+              className="peer sr-only"
+            />
+            <span
+              className={`flex size-5 shrink-0 items-center justify-center rounded-[5px] peer-focus-visible:ring-2 peer-focus-visible:ring-brand/40 ${
+                accepted ? "bg-check" : "border border-line bg-white"
+              }`}
+            >
+              {accepted && <Icon name="check-white" size={14} />}
+            </span>
+          </label>
+          <p className="text-[12px] leading-[1.8] text-black">
+            ฉันยอมรับ
+            <button type="button" onClick={() => setPolicyOpen(true)} className="text-brand-soft underline-offset-2 hover:underline">
+              {policy.termsTitle}
+            </button>
+            และรับทราบ
+            <button type="button" onClick={() => setPolicyOpen(true)} className="text-brand-soft underline-offset-2 hover:underline">
+              {policy.privacyTitle}
+            </button>
+            <span className="block font-semibold text-brand-deep">รวมถึงรับทราบว่า{policy.refundNotice}</span>
+          </p>
+        </div>
+        {submitted && !accepted && <p role="alert" className="text-[11px] text-danger">กรุณาติ๊กยอมรับข้อกำหนดและนโยบายก่อนลงทะเบียน</p>}
+      </div>
+
+      <Dialog open={policyOpen} onClose={() => setPolicyOpen(false)} title="ข้อกำหนดและนโยบาย">
+        <div className="flex flex-col gap-5">
+          <PolicySection title={policy.termsTitle} items={policy.terms} />
+          <PolicySection title={policy.privacyTitle} items={policy.privacy} />
+          <PrimaryButton
+            onClick={() => {
+              setAccepted(true);
+              setPolicyOpen(false);
+            }}
+          >
+            ยอมรับและปิด
+          </PrimaryButton>
+        </div>
+      </Dialog>
 
       <PrimaryButton type="submit">ลงทะเบียนและเลือกซื้อสินค้า</PrimaryButton>
     </form>
+  );
+}
+
+function PolicySection({ title, items }: { title: string; items: string[] }) {
+  return (
+    <section className="flex flex-col gap-2">
+      <h3 className="text-[14px] font-semibold text-ink-slate">{title}</h3>
+      <ol className="flex list-decimal flex-col gap-1.5 pl-5 text-[13px] leading-[1.7] text-black marker:text-brand">
+        {items.map((t) => (
+          <li key={t}>{t}</li>
+        ))}
+      </ol>
+    </section>
   );
 }

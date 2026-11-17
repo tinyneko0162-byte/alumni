@@ -46,13 +46,14 @@ export default async function MyTicketPage() {
           </div>
         </div>
 
-        <button
-          type="button"
+        <a
+          href="/icons/qr-entry.svg"
+          download={`ticket-${ticket.number}.svg`}
           className="flex h-12 w-full items-center justify-center gap-[9px] rounded-lg border border-line-slate bg-surface-slate transition hover:bg-line-slate"
         >
           <Icon name="share-2" size={20} />
           <span className="text-[14px] font-semibold text-ink-slate">บันทึก</span>
-        </button>
+        </a>
         <p className="text-[12px] leading-[1.55] text-black">{ticket.shareNote}</p>
       </main>
       <AttendeeNav active="ticket" />

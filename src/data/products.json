@@ -1,8 +1,17 @@
 {
   "purchaseTypes": [
-    { "id": "ticket", "label": "บัตรเข้างาน" },
-    { "id": "shirt", "label": "เสื้อที่ระลึก" },
-    { "id": "both", "label": "ทั้งสองอย่าง" }
+    {
+      "id": "ticket",
+      "label": "บัตรเข้างาน"
+    },
+    {
+      "id": "shirt",
+      "label": "เสื้อที่ระลึก"
+    },
+    {
+      "id": "both",
+      "label": "ทั้งสองอย่าง"
+    }
   ],
   "ticket": {
     "id": "ticket",
@@ -19,10 +28,53 @@
     "id": "shirt",
     "name": "เสื้อรุ่น",
     "price": 390,
-    "sizes": ["S", "M", "L", "XL", "2XL"],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL",
+      "2XL"
+    ],
     "deliveryOptions": [
-      { "id": "pickup", "label": "รับเสื้อที่หน้างาน" },
-      { "id": "delivery", "label": "ส่งที่บ้าน" }
-    ]
+      {
+        "id": "pickup",
+        "label": "รับเสื้อที่หน้างาน"
+      },
+      {
+        "id": "delivery",
+        "label": "ส่งที่บ้าน"
+      }
+    ],
+    "sizeChart": {
+      "unit": "นิ้ว",
+      "note": "ค่าประมาณ วัดจากตัวเสื้อ อาจคลาดเคลื่อน 1 นิ้ว",
+      "rows": [
+        {
+          "size": "S",
+          "chest": 36,
+          "length": 26
+        },
+        {
+          "size": "M",
+          "chest": 38,
+          "length": 27
+        },
+        {
+          "size": "L",
+          "chest": 40,
+          "length": 28
+        },
+        {
+          "size": "XL",
+          "chest": 42,
+          "length": 29
+        },
+        {
+          "size": "2XL",
+          "chest": 44,
+          "length": 30
+        }
+      ]
+    }
   }
 }

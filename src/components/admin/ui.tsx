@@ -53,19 +53,22 @@ export function OutlineButton({
   type = "button",
   className,
   onClick,
+  disabled,
 }: {
   icon?: string;
   children: React.ReactNode;
   type?: "button" | "submit";
   className?: string;
   onClick?: () => void;
+  disabled?: boolean;
 }) {
   return (
     <button
       type={type}
       onClick={onClick}
+      disabled={disabled}
       className={cx(
-        "flex min-h-[42px] items-center justify-center gap-2 rounded-lg border border-admin-line bg-white px-4 py-[9px] text-[13px] font-semibold leading-[1.55] text-admin-ink transition hover:bg-admin-head",
+        "flex min-h-[42px] items-center justify-center gap-2 rounded-lg border border-admin-line bg-white px-4 py-[9px] text-[13px] font-semibold leading-[1.55] text-admin-ink transition hover:bg-admin-head disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-white",
         className,
       )}
     >
@@ -223,14 +226,25 @@ export function Guidance({ children, tone = "brand" }: { children: React.ReactNo
 }
 
 /** "แสดง 1–N จาก X" + prev / current page / next. Static for the mock. */
-export function Pagination({ label }: { label: string }) {
+/** All mock data fits on one page, so both arrows are disabled until `page`/`pageCount` are passed. */
+export function Pagination({
+  label,
+  page = 1,
+  pageCount = 1,
+  onPage,
+}: {
+  label: string;
+  page?: number;
+  pageCount?: number;
+  onPage?: (p: number) => void;
+}) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
       <p className="text-[11px] leading-[1.55] text-admin-muted">{label}</p>
       <div className="flex gap-2">
-        <OutlineButton icon="a-chevron-left">ก่อนหน้า</OutlineButton>
-        <span className="rounded-md bg-admin-indigo-tint p-2.5 text-[12px] leading-[1.55] text-admin-indigo">1</span>
-        <OutlineButton icon="a-chevron-right-dark">ถัดไป</OutlineButton>
+        <OutlineButton icon="a-chevron-left" disabled={page <= 1} onClick={() => onPage?.(page - 1)}>ก่อนหน้า</OutlineButton>
+        <span className="rounded-md bg-admin-indigo-tint p-2.5 text-[12px] leading-[1.55] text-admin-indigo">{page}</span>
+        <OutlineButton icon="a-chevron-right-dark" disabled={page >= pageCount} onClick={() => onPage?.(page + 1)}>ถัดไป</OutlineButton>
       </div>
     </div>
   );

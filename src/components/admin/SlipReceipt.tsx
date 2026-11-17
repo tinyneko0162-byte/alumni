@@ -1,4 +1,32 @@
+"use client";
+
+import { useState } from "react";
+import { Dialog } from "@/components/ui/Dialog";
 import { Icon } from "@/components/ui/Icon";
+
+export type SlipProps = {
+  amount: number;
+  purpose: string;
+  fromName: string;
+  fromAccount: string;
+  toName: string;
+  toAccount: string;
+  paidAt: string;
+  reference: string;
+  fileName: string;
+  footer?: string;
+};
+
+/** Enlarged view of a slip in a modal (used by the zoom / expand buttons). */
+export function SlipDialog({ open, onClose, ...slip }: SlipProps & { open: boolean; onClose: () => void }) {
+  return (
+    <Dialog open={open} onClose={onClose} title="หลักฐานการโอน" className="max-w-[520px]">
+      <div style={{ zoom: 1.3 }} className="flex justify-center">
+        <SlipReceipt {...slip} zoomable={false} />
+      </div>
+    </Dialog>
+  );
+}
 
 /** Mock bank-transfer slip shown in review screens (ticket slips + token top-ups). */
 export function SlipReceipt({
@@ -12,25 +40,18 @@ export function SlipReceipt({
   reference,
   fileName,
   footer,
-}: {
-  amount: number;
-  purpose: string;
-  fromName: string;
-  fromAccount: string;
-  toName: string;
-  toAccount: string;
-  paidAt: string;
-  reference: string;
-  fileName: string;
-  footer?: string;
-}) {
+  zoomable = true,
+}: SlipProps & { zoomable?: boolean }) {
+  const [zoom, setZoom] = useState(false);
   return (
     <div className="flex flex-col items-center gap-5 rounded-lg bg-brand-tint p-[22px]">
       <div className="flex w-full items-start justify-between">
         <p className="text-[10px] leading-[1.55] text-admin-muted">{fileName}</p>
-        <button type="button" aria-label="ซูม">
-          <Icon name="a-zoom-in" size={17} />
-        </button>
+        {zoomable && (
+          <button type="button" aria-label="ซูม" onClick={() => setZoom(true)}>
+            <Icon name="a-zoom-in" size={17} />
+          </button>
+        )}
       </div>
       <div className="flex w-[265px] max-w-full flex-col items-center gap-3.5 rounded-md bg-white p-[22px] leading-[1.55] shadow-[0_3px_12px_rgba(27,33,64,0.03)]">
         <span className="flex size-10 items-center justify-center rounded-full bg-admin-ok-tint">
@@ -59,6 +80,9 @@ export function SlipReceipt({
         <p className="text-[10px] text-admin-muted">{reference}</p>
       </div>
       {footer && <p className="text-[10px] leading-[1.55] text-admin-muted">{footer}</p>}
+      {zoomable && (
+        <SlipDialog open={zoom} onClose={() => setZoom(false)} amount={amount} purpose={purpose} fromName={fromName} fromAccount={fromAccount} toName={toName} toAccount={toAccount} paidAt={paidAt} reference={reference} fileName={fileName} footer={footer} />
+      )}
     </div>
   );
 }

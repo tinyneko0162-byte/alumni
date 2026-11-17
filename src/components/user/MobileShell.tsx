@@ -1,3 +1,4 @@
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { cx } from "@/lib/format";
 
 /**
@@ -22,6 +23,7 @@ export function MobileShell({
           className,
         )}
       >
+        <ThemeToggle className="absolute top-6 right-6 z-20" />
         {children}
       </div>
     </div>
