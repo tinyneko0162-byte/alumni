@@ -4,6 +4,9 @@ import Link from "next/link";
 import { useState } from "react";
 import { Chip, DataTable, OutlineButton, PageHeading, Panel } from "@/components/admin/ui";
 import { Icon } from "@/components/ui/Icon";
+import { QrScanner } from "@/components/ui/QrScanner";
+import demo from "@/data/demo.json";
+import { parseQr } from "@/lib/qr-payload";
 import type { getStorePos } from "@/lib/admin-data";
 import { usePosCart } from "@/lib/store-cart";
 
@@ -11,13 +14,26 @@ type Data = Awaited<ReturnType<typeof getStorePos>>;
 
 export function CheckoutView({ store, wallet, recent: initialRecent }: { store: Data["stores"][number]; wallet: Data["wallet"]; recent: Data["recent"] }) {
   const { qty, setQty } = usePosCart(store.id);
-  const [scanned, setScanned] = useState(true);
+  const [scanned, setScanned] = useState(false);
+  const [scanMsg, setScanMsg] = useState<string | null>(null);
   const [paid, setPaid] = useState<string | null>(null);
   const [balance, setBalance] = useState(wallet.balance);
   const [recent, setRecent] = useState(initialRecent);
   const p = store.product;
   const total = qty * p.price;
   const enough = balance >= total;
+
+  const onScan = (text: string) => {
+    const qr = parseQr(text);
+    if (qr?.kind === "wallet" && qr.id.toUpperCase() === demo.wallet.id) {
+      setScanned(true);
+      setScanMsg(`สแกนสำเร็จ · ${demo.wallet.owner}`);
+    } else if (qr?.kind === "entry") {
+      setScanMsg("นี่คือ QR บัตรเข้างาน ไม่ใช่ QR กระเป๋า Token");
+    } else {
+      setScanMsg("ไม่พบ Wallet นี้ในระบบ");
+    }
+  };
 
   const pay = () => {
     if (!scanned || qty === 0 || !enough) return;
@@ -37,22 +53,17 @@ export function CheckoutView({ store, wallet, recent: initialRecent }: { store: 
       <div className="flex flex-col gap-5 xl:flex-row xl:items-start">
         <div className="flex flex-col gap-5 xl:w-[611px]">
           <Panel title="สแกน Wallet ลูกค้า" aside={<Icon name="a-camera" size={18} />}>
-            <div className="flex h-[280px] flex-col items-center justify-center gap-4 rounded-xl bg-[#10182a]">
-              <div className="flex items-center gap-1.5">
-                <Icon name="a-camera-dot" size={5} />
-                <p className="text-[11px] leading-[1.55] text-[#c5cde0]">กล้องพร้อม • สแกน Wallet QR</p>
-              </div>
-              <div className="relative flex h-[150px] w-[172px] items-center justify-center rounded-[14px] border-2 border-[#a7a0f9]">
-                <Icon name="a-scan-qr-code" size={58} />
-                <span className="absolute top-[86px] left-2.5 h-0.5 w-[148px] animate-pulse bg-[#b1a9ff]" />
-              </div>
-              <p className="text-[11px] leading-[1.55] text-[#c5cde0]">วาง QR ของลูกค้าให้อยู่ในกรอบ</p>
-            </div>
+            <QrScanner onScan={onScan} paused={scanned} className="h-[280px]" />
+            {scanMsg && (
+              <p role="status" className={scanned ? "text-[12px] text-admin-ok" : "text-[12px] text-[#c2414b]"}>
+                {scanMsg}
+              </p>
+            )}
             <div className="flex gap-2.5">
-              <OutlineButton icon="a-refresh-cw" className="flex-1" onClick={() => setScanned(true)}>
+              <OutlineButton icon="a-refresh-cw" className="flex-1" onClick={() => { setScanned(false); setScanMsg(null); }}>
                 สแกนใหม่
               </OutlineButton>
-              <OutlineButton icon="a-keyboard" onClick={() => setScanned(!!prompt("กรอก Wallet ID")?.trim())}>
+              <OutlineButton icon="a-keyboard" onClick={() => { const id = prompt("กรอก Wallet ID")?.trim(); if (id) onScan(`ALUMNI-WALLET:${id}`); }}>
                 กรอก Wallet ID
               </OutlineButton>
             </div>
