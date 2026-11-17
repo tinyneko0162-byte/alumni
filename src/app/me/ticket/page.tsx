@@ -2,6 +2,8 @@ import { getAttendee } from "@/lib/data";
 import { BrandMark, MobileShell } from "@/components/user/MobileShell";
 import { AttendeeNav, Pill } from "@/components/user/AttendeeNav";
 import { Icon } from "@/components/ui/Icon";
+import { QrCode } from "@/components/ui/QrCode";
+import { entryPayload } from "@/lib/qr-payload";
 
 /** Figma: user / ผู้ร่วมงาน · บัตรของฉัน (4069:558) */
 export default async function MyTicketPage() {
@@ -29,7 +31,7 @@ export default async function MyTicketPage() {
           </div>
           <div className="flex flex-col items-center gap-3.5">
             <p className="w-full text-[18px] font-semibold leading-[1.55] text-ink-slate">QR สำหรับเข้างาน</p>
-            <Icon name="qr-entry" size={218} alt="QR สำหรับเข้างาน" />
+            <QrCode value={entryPayload(ticket.number)} alt="QR สำหรับเข้างาน" />
             <Pill tone="brandSoft">{ticket.qrLabel}</Pill>
             <p className="w-full text-[12px] leading-[1.55] text-black">{ticket.qrNote}</p>
           </div>
@@ -47,8 +49,8 @@ export default async function MyTicketPage() {
         </div>
 
         <a
-          href="/icons/qr-entry.svg"
-          download={`ticket-${ticket.number}.svg`}
+          href={`/api/qr?type=entry&id=${encodeURIComponent(ticket.number)}`}
+          download={`ticket-${ticket.number}.png`}
           className="flex h-12 w-full items-center justify-center gap-[9px] rounded-lg border border-line-slate bg-surface-slate transition hover:bg-line-slate"
         >
           <Icon name="share-2" size={20} />

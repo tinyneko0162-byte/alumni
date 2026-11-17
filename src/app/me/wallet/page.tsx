@@ -3,6 +3,8 @@ import { BrandMark, MobileShell } from "@/components/user/MobileShell";
 import { AttendeeNav } from "@/components/user/AttendeeNav";
 import { BankAccount } from "@/components/user/BankAccount";
 import { Icon } from "@/components/ui/Icon";
+import { QrCode } from "@/components/ui/QrCode";
+import { walletPayload } from "@/lib/qr-payload";
 import { num } from "@/lib/format";
 import { WalletTopUp } from "./wallet-top-up";
 
@@ -55,7 +57,7 @@ export default async function WalletPage() {
           <p className="text-[18px] text-ink-navy">QR กระเป๋าของฉัน</p>
           <p className="text-[12px] text-black">เปิดหน้านี้ให้เจ้าหน้าที่สแกนเพื่อเติมเงิน</p>
         </div>
-        <Icon name="qr-wallet" size={210} alt="QR กระเป๋า" className="my-1" />
+        <QrCode value={walletPayload(wallet.id)} size={210} alt="QR กระเป๋า" />
         <div className="flex w-full items-center justify-between rounded-xl bg-brand-tint px-3.5 py-[11px]">
           <div className="flex flex-col gap-[3px] text-brand-deep">
             <p className="text-[10px]">ID กระเป๋า</p>

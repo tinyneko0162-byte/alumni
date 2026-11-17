@@ -14,10 +14,31 @@ export function LinksView({ data, event }: { data: Data; event: AdminConfig["eve
   const [sent, setSent] = useState(false);
   const [history, setHistory] = useState(data.history);
 
-  const send = () => {
-    const time = new Date().toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
-    setHistory((h) => [{ ticketId: c.ticketId, email: to, time, status: "ส่งแล้ว" }, ...h.filter((x) => x.ticketId !== c.ticketId)]);
-    setSent(true);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const send = async () => {
+    setSending(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/send-ticket", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ticketId: c.ticketId, to, subject, name: c.recipientShort }),
+      });
+      const json = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string };
+      if (!res.ok || !json.ok) {
+        setError(json.error ?? "ส่งอีเมลไม่สำเร็จ");
+        return;
+      }
+      const time = new Date().toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
+      setHistory((h) => [{ ticketId: c.ticketId, email: to, time, status: "ส่งแล้ว" }, ...h.filter((x) => x.ticketId !== c.ticketId)]);
+      setSent(true);
+    } catch {
+      setError("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ ลองใหม่อีกครั้ง");
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -41,9 +62,14 @@ export function LinksView({ data, event }: { data: Data; event: AdminConfig["eve
             <Detail label="ผู้รับ" value={c.recipientName} />
             <Detail label="ค่าบัตร" value={`฿${c.amount.toFixed(2)} · อนุมัติแล้ว`} />
             <div className="h-px bg-admin-line" />
-            <BrandButton icon="a-send-white" onClick={send} className="w-full bg-[#ea3f92]">
-              {sent ? "ส่งซ้ำจากอีเมลบริษัท" : "ส่งลิงก์จากอีเมลบริษัท"}
+            <BrandButton icon="a-send-white" onClick={send} disabled={sending || !to.trim()} className="w-full bg-[#ea3f92]">
+              {sending ? "กำลังส่ง…" : sent ? "ส่งซ้ำจากอีเมลบริษัท" : "ส่งลิงก์จากอีเมลบริษัท"}
             </BrandButton>
+            {error && (
+              <p role="alert" className="rounded-lg bg-[#fdecee] p-3 text-[12px] leading-[1.55] text-[#c2414b]">
+                {error}
+              </p>
+            )}
             <p className="text-[11px] leading-[1.55] text-admin-muted">ระบบจะบันทึกเวลา ผู้ส่ง และสถานะการส่ง หากส่งไม่สำเร็จสามารถส่งซ้ำได้</p>
           </Panel>
 
