@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { AdminShell } from "@/components/admin/AdminShell";
-import { Chip, DataTable, Metric, OutlineButton, PageHeading, Panel } from "@/components/admin/ui";
+import { ExportButton } from "@/components/admin/ExportButton";
+import { Chip, DataTable, Metric, PageHeading, Panel } from "@/components/admin/ui";
 import { Icon } from "@/components/ui/Icon";
 import { getAdminConfig, getOverview } from "@/lib/admin-data";
 
@@ -14,7 +15,18 @@ export default async function OverviewPage() {
       <PageHeading
         title="ภาพรวมระบบ"
         description={d.description}
-        actions={<OutlineButton icon="a-download">ส่งออกรายงาน</OutlineButton>}
+        actions={
+          <ExportButton
+            variant="outline"
+            filename="system-overview.csv"
+            rows={[
+              ["รายการ", "ค่า"],
+              ...d.metrics.map((m) => [m.label, String(m.value)]),
+              ["ผู้เข้างานสะสม", String(d.attendance.total)],
+              ...d.attendance.slots.map((sl) => [`เช็กอิน ${sl.time}`, String(sl.count)]),
+            ]}
+          />
+        }
       />
 
       <section className="flex flex-wrap items-center justify-between gap-4 rounded-xl bg-brand-deep p-[22px]">

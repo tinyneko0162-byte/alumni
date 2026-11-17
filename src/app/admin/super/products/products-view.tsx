@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { BrandButton, Chip, Field, OutlineButton, PageHeading, Panel, SearchBox } from "@/components/admin/ui";
+import { Dialog } from "@/components/ui/Dialog";
 import { Icon } from "@/components/ui/Icon";
 import type { getProductCatalog } from "@/lib/admin-data";
 import { cx } from "@/lib/format";
@@ -23,6 +24,36 @@ export function ProductsView({ data }: { data: Data }) {
   const [selected, setSelected] = useState<string>(data.products.at(-1)!.sku);
   const current = products.find((p) => p.sku === selected) ?? products[0];
   const [form, setForm] = useState({ stock: String(current.stock), price: String(current.price), status: current.status });
+
+  const [addOpen, setAddOpen] = useState(false);
+  const blank = { name: "", store: data.storeTabs[0], category: "สิ่งของ", price: "", stock: "" };
+  const [add, setAdd] = useState(blank);
+  const addPrice = Number(add.price);
+  const addValid = add.name.trim() !== "" && Number.isFinite(addPrice) && addPrice > 0;
+
+  const create = () => {
+    if (!addValid) return;
+    const stock = Number(add.stock);
+    const sku = `NEW-${String(products.length + 1).padStart(2, "0")}`;
+    const p: Product = {
+      sku,
+      name: add.name.trim(),
+      store: add.store,
+      storeCode: products.find((x) => x.store === add.store)?.storeCode ?? "ST-00",
+      category: add.category,
+      price: addPrice,
+      stock: Number.isFinite(stock) && stock > 0 ? stock : 0,
+      unit: "ชิ้น",
+      status: "ขายอยู่",
+      updatedAt: nowLabel(),
+    };
+    setProducts((all) => [...all, p]);
+    setTab("ทุกร้าน");
+    setQuery("");
+    select(p);
+    setAdd(blank);
+    setAddOpen(false);
+  };
 
   const select = (p: Product) => {
     setSelected(p.sku);
@@ -48,7 +79,7 @@ export function ProductsView({ data }: { data: Data }) {
 
   return (
     <>
-      <PageHeading title={data.title} description={data.description} actions={<BrandButton icon="a-plus-white">เพิ่มสินค้า</BrandButton>} />
+      <PageHeading title={data.title} description={data.description} actions={<BrandButton icon="a-plus-white" onClick={() => setAddOpen(true)}>เพิ่มสินค้า</BrandButton>} />
 
       <div className="flex items-start gap-2.5 rounded-lg bg-brand-soft p-3">
         <Icon name="a-info-dark" size={18} />
@@ -113,9 +144,9 @@ export function ProductsView({ data }: { data: Data }) {
               แสดง 1–{Math.min(data.pageSize, shown.length)} จาก {data.totalProducts} สินค้า
             </p>
             <div className="flex gap-2">
-              <OutlineButton icon="a-chevron-left">ก่อนหน้า</OutlineButton>
+              <OutlineButton icon="a-chevron-left" disabled>ก่อนหน้า</OutlineButton>
               <span className="rounded-md bg-admin-indigo-tint p-2.5 text-[12px] leading-[1.55] text-admin-indigo">1</span>
-              <OutlineButton icon="a-chevron-right-dark">ถัดไป</OutlineButton>
+              <OutlineButton icon="a-chevron-right-dark" disabled>ถัดไป</OutlineButton>
             </div>
           </div>
         </Panel>
@@ -164,6 +195,40 @@ export function ProductsView({ data }: { data: Data }) {
           </Panel>
         </div>
       </div>
+      <Dialog open={addOpen} onClose={() => setAddOpen(false)} title="เพิ่มสินค้าใหม่">
+        <div className="flex flex-col gap-4">
+          <Field label="ชื่อสินค้า *" value={add.name} onChange={(e) => setAdd({ ...add, name: e.target.value })} />
+          <label className="flex flex-col gap-1.5">
+            <span className="text-[12px] font-semibold leading-[1.55] text-admin-ink">ร้านค้า</span>
+            <select
+              value={add.store}
+              onChange={(e) => setAdd({ ...add, store: e.target.value })}
+              className="min-h-[44px] rounded-lg border border-admin-line bg-white px-3 text-[13px] text-admin-ink outline-none focus:border-brand-soft"
+            >
+              {data.storeTabs.map((t) => (
+                <option key={t}>{t}</option>
+              ))}
+            </select>
+          </label>
+          <label className="flex flex-col gap-1.5">
+            <span className="text-[12px] font-semibold leading-[1.55] text-admin-ink">หมวดหมู่</span>
+            <select
+              value={add.category}
+              onChange={(e) => setAdd({ ...add, category: e.target.value })}
+              className="min-h-[44px] rounded-lg border border-admin-line bg-white px-3 text-[13px] text-admin-ink outline-none focus:border-brand-soft"
+            >
+              {Array.from(new Set(["สิ่งของ", ...products.map((p) => p.category)])).map((c) => (
+                <option key={c}>{c}</option>
+              ))}
+            </select>
+          </label>
+          <Field label="ราคา Token / บาท *" inputMode="numeric" value={add.price} onChange={(e) => setAdd({ ...add, price: e.target.value })} hint="1 Token = 1 บาท" />
+          <Field label="Stock" inputMode="numeric" value={add.stock} onChange={(e) => setAdd({ ...add, stock: e.target.value })} />
+          <BrandButton onClick={create} disabled={!addValid} className="w-full">
+            เพิ่มสินค้า
+          </BrandButton>
+        </div>
+      </Dialog>
     </>
   );
 }

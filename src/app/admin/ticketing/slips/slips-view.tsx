@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { SlipDialog, SlipReceipt } from "@/components/admin/SlipReceipt";
 import { BrandButton, Chip, PageHeading, Panel, SearchBox } from "@/components/admin/ui";
 import { Icon } from "@/components/ui/Icon";
 import type { getTicketSlips } from "@/lib/admin-data";
@@ -23,6 +24,18 @@ export function SlipsView({ data }: { data: Data }) {
   const list = (tab === "pending" ? pending : approved).filter((r) => (r.name + r.id).includes(q.trim()));
   const current = [...pending, ...approved].find((r) => r.id === selectedId) ?? list[0];
   const isPending = current && pending.some((r) => r.id === current.id);
+  const [expand, setExpand] = useState(false);
+  const slip = current && {
+    amount: current.amount,
+    purpose: "ค่าบัตรเข้างาน",
+    fromName: current.name,
+    fromAccount: current.fromAccount,
+    toName: data.companyAccountName,
+    toAccount: data.companyAccountMasked,
+    paidAt: current.paidAt,
+    reference: current.ref,
+    fileName: current.slipFile,
+  };
   const pendingTotal = data.pendingCount - approved.length;
 
   const approve = () => {
@@ -94,50 +107,20 @@ export function SlipsView({ data }: { data: Data }) {
           <p className="text-[10px] leading-[1.55] text-admin-muted">เรียงตามเวลาส่ง • เก่าสุดก่อน</p>
         </Panel>
 
-        {current && (
+        {current && slip && (
           <>
             <Panel
               title="หลักฐานการชำระเงิน"
               aside={
-                <button type="button" aria-label="ขยาย">
+                <button type="button" aria-label="ขยาย" onClick={() => setExpand(true)}>
                   <Icon name="a-expand" size={17} />
                 </button>
               }
               className="flex-1"
             >
-              <div className="flex flex-col items-center gap-5 rounded-lg bg-brand-tint p-[22px]">
-                <div className="flex w-full items-start justify-between">
-                  <p className="text-[10px] leading-[1.55] text-admin-muted">{current.slipFile}</p>
-                  <button type="button" aria-label="ซูม">
-                    <Icon name="a-zoom-in" size={17} />
-                  </button>
-                </div>
-                <div className="flex w-[265px] max-w-full flex-col items-center gap-3.5 rounded-md bg-white p-[22px] leading-[1.55] shadow-[0_3px_12px_rgba(27,33,64,0.03)]">
-                  <span className="flex size-10 items-center justify-center rounded-full bg-admin-ok-tint">
-                    <Icon name="a-check-green" size={20} />
-                  </span>
-                  <p className="text-[15px] font-semibold text-admin-ink">โอนเงินสำเร็จ</p>
-                  <p className="text-[10px] text-admin-muted">สลิปจำลองเพื่อการออกแบบ</p>
-                  <p className="font-latin text-[28px] font-semibold text-admin-ink">{money(current.amount)}</p>
-                  <p className="text-[11px] text-admin-muted">บาท • ค่าบัตรเข้างาน</p>
-                  <div className="h-px w-full bg-admin-line" />
-                  <div className="flex w-full items-center justify-between">
-                    <p className="text-[12px] text-admin-muted">จาก</p>
-                    <p className="text-[13px] font-medium text-admin-ink">{current.name}</p>
-                  </div>
-                  <p className="text-[10px] text-admin-muted">{current.fromAccount}</p>
-                  <Icon name="a-arrow-down" size={16} />
-                  <div className="flex w-full items-center justify-between text-[12px]">
-                    <p className="text-admin-muted">ถึง</p>
-                    <p className="font-bold text-black">{data.companyAccountName}</p>
-                  </div>
-                  <p className="text-[10px] text-admin-muted">{data.companyAccountMasked}</p>
-                  <div className="h-px w-full bg-admin-line" />
-                  <p className="text-[10px] text-admin-muted">{current.paidAt}</p>
-                  <p className="text-[10px] text-admin-muted">{current.ref}</p>
-                </div>
-              </div>
+              <SlipReceipt {...slip} />
               <p className="text-[11px] leading-[1.55] text-admin-muted">แนบเมื่อ {current.submittedAt} น.</p>
+              <SlipDialog open={expand} onClose={() => setExpand(false)} {...slip} />
             </Panel>
 
             <Panel title="รายละเอียดคำขอ" aside={<span className="text-[11px] text-admin-muted">{current.id}</span>} className="xl:w-[350px]">

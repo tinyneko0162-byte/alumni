@@ -13,6 +13,7 @@ export function LoginForm({ roles }: { roles: RoleOption[] }) {
   const [show, setShow] = useState(false);
   const [role, setRole] = useState(roles[0]?.key ?? "");
   const [error, setError] = useState(false);
+  const [forgot, setForgot] = useState(false);
 
   return (
     <form
@@ -53,7 +54,7 @@ export function LoginForm({ roles }: { roles: RoleOption[] }) {
             className="min-w-0 flex-1 bg-transparent text-[14px] text-ink-slate outline-none placeholder:text-admin-slate"
           />
           <button type="button" onClick={() => setShow((s) => !s)} aria-label={show ? "ซ่อนรหัสผ่าน" : "แสดงรหัสผ่าน"}>
-            <Icon name="a-eye-off" size={20} />
+            <Icon name="a-eye-off" size={20} className={show ? "opacity-40" : undefined} />
           </button>
         </Field>
         {/* Mock only: pick which role workspace to open until real accounts exist */}
@@ -73,12 +74,24 @@ export function LoginForm({ roles }: { roles: RoleOption[] }) {
         </label>
       </div>
 
-      <div className="flex items-center justify-between">
-        <p className={`text-[12px] ${error ? "text-danger" : "text-admin-slate"}`}>กรุณากรอกข้อมูลให้ครบทุกช่อง</p>
-        <button type="button" className="text-[13px] font-semibold text-brand-deep hover:underline">
+      <div className="flex items-center justify-between gap-3">
+        <p role={error ? "alert" : undefined} className={`text-[12px] ${error ? "text-danger" : "text-admin-slate"}`}>
+          กรุณากรอกข้อมูลให้ครบทุกช่อง
+        </p>
+        <button
+          type="button"
+          aria-expanded={forgot}
+          onClick={() => setForgot((f) => !f)}
+          className="shrink-0 text-[13px] font-semibold text-brand-deep hover:underline"
+        >
           ลืมรหัสผ่าน?
         </button>
       </div>
+      {forgot && (
+        <p className="-mt-3 rounded-lg bg-brand-tint p-3 text-[12px] leading-[1.7] text-ink-slate">
+          ระบบนี้ยังไม่มีการรีเซ็ตรหัสผ่านด้วยตนเอง กรุณาติดต่อเจ้าของอีเวนต์เพื่อขอรหัสผ่านใหม่
+        </p>
+      )}
 
       <button
         type="submit"

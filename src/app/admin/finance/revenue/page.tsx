@@ -1,9 +1,9 @@
 import { AdminShell } from "@/components/admin/AdminShell";
-import { Chip, DataTable, Guidance, OutlineButton, PageHeading, Panel } from "@/components/admin/ui";
+import { Chip, DataTable, Guidance, PageHeading, Panel } from "@/components/admin/ui";
 import { Detail } from "@/components/admin/history";
 import { Icon } from "@/components/ui/Icon";
 import { getFinanceRevenue } from "@/lib/admin-data";
-import { ExportButton } from "./export-button";
+import { ExportButton } from "@/components/admin/ExportButton";
 
 const fmt = (n: number) => n.toLocaleString("en-US");
 const money = (n: number) => `฿${n.toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
@@ -26,7 +26,7 @@ export default async function RevenuePage() {
         description={d.description}
         actions={
           <>
-            <OutlineButton icon="a-calendar-days">{d.date}</OutlineButton>
+            <span className="flex min-h-[42px] items-center gap-2 rounded-lg border border-admin-line bg-white px-4 text-[13px] font-semibold text-admin-ink"><Icon name="a-calendar-days" size={17} />{d.date}</span>
             <ExportButton
               rows={[
                 ["ประเภทรายรับ", "ช่องทาง", "ยอด (บาท)", "สัดส่วน"],

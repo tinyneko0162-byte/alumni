@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+import { Dialog } from "@/components/ui/Dialog";
 import { Icon } from "@/components/ui/Icon";
 import { OrderSummary } from "@/components/user/OrderSummary";
 import { PrimaryButton } from "@/components/user/PrimaryButton";
@@ -9,6 +11,7 @@ import { baht, cx } from "@/lib/format";
 
 export function ShopView({ eventName, products }: { eventName: string; products: Products }) {
   const { cart, update } = useCart();
+  const [chartOpen, setChartOpen] = useState(false);
   const { items, total, note } = summarize(cart);
   const hasTicket = includesTicket(cart);
   const hasShirt = includesShirt(cart);
@@ -70,7 +73,7 @@ export function ShopView({ eventName, products }: { eventName: string; products:
               <div key={i} className="flex flex-col gap-2">
                 <div className="flex items-start justify-between">
                   <p className="text-[12px] font-medium text-ink">ตัวที่{i + 1}</p>
-                  <button type="button" className="text-[11px] text-brand-deep hover:underline">
+                  <button type="button" onClick={() => setChartOpen(true)} className="text-[11px] text-brand-deep hover:underline">
                     ตารางไซซ์
                   </button>
                 </div>
@@ -155,6 +158,28 @@ export function ShopView({ eventName, products }: { eventName: string; products:
       >
         {needsFriendInfo ? "กรอกข้อมูลของเพื่อน" : "ดำเนินการชำระเงิน"}
       </PrimaryButton>
+
+      <Dialog open={chartOpen} onClose={() => setChartOpen(false)} title="ตารางไซซ์เสื้อ">
+        <table className="w-full text-center text-[13px] text-ink">
+          <thead>
+            <tr className="border-b border-line text-[12px] text-ink/60">
+              <th className="py-2 font-medium">ไซซ์</th>
+              <th className="py-2 font-medium">รอบอก ({products.shirt.sizeChart.unit})</th>
+              <th className="py-2 font-medium">ความยาว ({products.shirt.sizeChart.unit})</th>
+            </tr>
+          </thead>
+          <tbody>
+            {products.shirt.sizeChart.rows.map((r) => (
+              <tr key={r.size} className="border-b border-line last:border-0">
+                <td className="py-2.5 font-latin font-semibold">{r.size}</td>
+                <td className="py-2.5 font-latin">{r.chest}</td>
+                <td className="py-2.5 font-latin">{r.length}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <p className="mt-3 text-[11px] leading-[1.55] text-ink/60">{products.shirt.sizeChart.note}</p>
+      </Dialog>
     </div>
   );
 }

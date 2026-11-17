@@ -1,3 +1,4 @@
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { getAdminConfig } from "@/lib/admin-data";
 import { LoginForm } from "./login-form";
 
@@ -7,7 +8,7 @@ export default async function StaffLoginPage() {
   const roles = Object.entries(cfg.roles).map(([key, r]) => ({ key, label: r.label, home: r.home }));
   return (
     <div className="flex min-h-dvh flex-col bg-admin-page">
-      <header className="flex h-24 items-center border-b border-line-slate bg-white px-12 max-sm:px-4">
+      <header className="flex h-24 items-center justify-between border-b border-line-slate bg-white px-12 max-sm:px-4">
         <div className="flex items-center gap-5">
           <p className="font-latin text-[37px] font-extrabold text-brand">ศิษย์เก่า</p>
           <span className="h-8 w-px bg-line-slate" />
@@ -16,6 +17,7 @@ export default async function StaffLoginPage() {
             <p className="text-[12px] text-admin-slate">{cfg.event.subtitle}</p>
           </div>
         </div>
+        <ThemeToggle />
       </header>
       <main className="flex flex-1 items-center justify-center bg-surface-upload px-4 py-16">
         <LoginForm roles={roles} />

@@ -18,7 +18,7 @@ export default async function RegisterPage() {
           <p className="text-[27px] font-bold text-ink">{event.name}</p>
           <p className="text-[13px] leading-[1.7] text-black">{event.registrationSubtitle}</p>
         </div>
-        <RegisterForm />
+        <RegisterForm policy={event.policy} />
       </div>
     </MobileShell>
   );
