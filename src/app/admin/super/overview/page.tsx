@@ -96,7 +96,7 @@ export default async function OverviewPage() {
       >
         <DataTable
           rows={d.activity}
-          rowKey={(r) => r.ref}
+          rowKey={(r) => r.key}
           columns={[
             { key: "time", header: "เวลา", width: 90, strong: true, render: (r) => r.time },
             { key: "action", header: "กิจกรรม", render: (r) => r.action },

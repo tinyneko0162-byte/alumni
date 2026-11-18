@@ -66,7 +66,7 @@ export async function getOverview() {
       const count = live[q.href] ?? q.count;
       return { ...q, count, note: count === 0 ? "ไม่มีรายการค้าง" : q.note };
     }),
-    activity: db.logs.slice(0, 5).map((l) => ({ time: l.time, action: l.event, actor: l.role, ref: l.ref, result: l.result })),
+    activity: db.logs.slice(0, 5).map((l, i) => ({ key: `${i}-${l.ref}`, time: l.time, action: l.event, actor: l.role, ref: l.ref, result: l.result })),
   };
 }
 
