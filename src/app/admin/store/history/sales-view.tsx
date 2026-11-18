@@ -10,31 +10,42 @@ import { cx } from "@/lib/format";
 type Data = Awaited<ReturnType<typeof getStoreSales>>;
 type Sale = Data["sales"][number] & { debitId?: string; audit?: string };
 
+const amt = (s: { qty: number; unitPrice?: number; amount?: number }) => s.amount ?? s.qty * (s.unitPrice ?? 0);
 const fmt = (n: number) => n.toLocaleString("en-US");
 
 export function SalesView({ data }: { data: Data }) {
   const sales = data.sales as Sale[];
-  const price = data.product.price;
   const [q, setQ] = useState("");
   const [status, setStatus] = useState("all");
   const [applied, setApplied] = useState({ q: "", status: "all" });
-  const [selectedId, setSelectedId] = useState(sales[0].id);
+  const [selectedId, setSelectedId] = useState(sales[0]?.id ?? "");
 
   const shown = useMemo(
     () => sales.filter((s) => (applied.status === "all" || s.status === applied.status) && (s.id + s.wallet).includes(applied.q.trim())),
     [sales, applied],
   );
   const paid = shown.filter((s) => s.status === "ชำระแล้ว");
-  const paidTokens = paid.reduce((t, s) => t + s.qty * price, 0);
+  const paidTokens = paid.reduce((t, s) => t + amt(s), 0);
   const paidQty = paid.reduce((t, s) => t + s.qty, 0);
   const pct = shown.length ? Math.round((paid.length / shown.length) * 100) : 0;
 
   const sel = sales.find((s) => s.id === selectedId) ?? sales[0];
-  const selTotal = sel.qty * price;
-  const isPaid = sel.status === "ชำระแล้ว";
+  const selTotal = sel ? amt(sel) : 0;
+  const isPaid = sel?.status === "ชำระแล้ว";
 
   return (
     <>
+      <div className="flex flex-wrap gap-2">
+        {data.stores.map((st) => (
+          <a
+            key={st.id}
+            href={`/admin/store/history?store=${st.id}`}
+            className={cx("rounded-full border px-4 py-1.5 text-[12px]", st.id === data.store.id ? "border-admin-indigo bg-admin-indigo text-white" : "border-admin-line bg-white text-admin-ink hover:bg-admin-head")}
+          >
+            {st.name}
+          </a>
+        ))}
+      </div>
       <PageHeading
         title="ประวัติการขาย"
         description={data.description}
@@ -44,7 +55,7 @@ export function SalesView({ data }: { data: Data }) {
             onClick={() =>
               downloadCsv("sales-history.csv", [
                 ["เวลา", "ใบเสร็จ", "จำนวน", "ยอด (Token)", "Wallet", "ผู้ขาย", "สถานะ"],
-                ...shown.map((s) => [s.time, s.id, s.qty, s.qty * price, s.wallet, s.seller, s.status]),
+                ...shown.map((s) => [s.time, s.id, s.qty, amt(s), s.wallet, s.seller, s.status]),
               ])
             }
           >
@@ -90,7 +101,7 @@ export function SalesView({ data }: { data: Data }) {
           <BrandButton type="submit">ใช้ตัวกรอง</BrandButton>
         </form>
         <div className="flex flex-wrap justify-between gap-2 text-[11px] leading-[1.55]">
-          <p className="text-admin-muted">ผลลัพธ์ {shown.length} รายการ · ร้านค้าหลัก · เรียงเวลาล่าสุดก่อน · ยอดสรุปนับเฉพาะชำระแล้ว</p>
+          <p className="text-admin-muted">ผลลัพธ์ {shown.length} รายการ · {data.store.name} · เรียงเวลาล่าสุดก่อน · ยอดสรุปนับเฉพาะชำระแล้ว</p>
           <button
             type="button"
             className="text-admin-indigo hover:underline"
@@ -119,7 +130,7 @@ export function SalesView({ data }: { data: Data }) {
             </thead>
             <tbody>
               {shown.map((s) => {
-                const on = s.id === sel.id;
+                const on = s.id === sel?.id;
                 const ok = s.status === "ชำระแล้ว";
                 return (
                   <tr key={s.id} onClick={() => setSelectedId(s.id)} className={cx("cursor-pointer text-admin-ink", on ? "bg-brand-soft" : "bg-white hover:bg-admin-head")}>
@@ -130,11 +141,11 @@ export function SalesView({ data }: { data: Data }) {
                     <td className="border-b border-admin-line px-3">
                       <p className={on ? "font-semibold text-black" : "font-medium"}>{s.id}</p>
                       <p className="text-[10px] text-admin-muted">
-                        {data.product.name} ×{s.qty}
+                        {s.productName} ×{s.qty}
                       </p>
                     </td>
                     <td className="border-b border-admin-line px-3">{s.qty}</td>
-                    <td className={cx("border-b border-admin-line px-3", ok && "font-semibold text-black")}>{s.qty * price}</td>
+                    <td className={cx("border-b border-admin-line px-3", ok && "font-semibold text-black")}>{amt(s)}</td>
                     <td className="border-b border-admin-line px-3">{s.wallet}</td>
                     <td className="border-b border-admin-line px-3">{s.seller}</td>
                     <td className="border-b border-admin-line px-3">
@@ -159,6 +170,7 @@ export function SalesView({ data }: { data: Data }) {
         <Guidance>{data.note}</Guidance>
       </Panel>
 
+      {sel ? (
       <div className="flex flex-col gap-5 xl:flex-row xl:items-start">
         <Panel className="min-h-[514px] xl:w-[622px]">
           <div className="flex items-center justify-between gap-3">
@@ -178,12 +190,12 @@ export function SalesView({ data }: { data: Data }) {
             </div>
             <div className="flex items-center gap-3 border-b border-admin-line py-3">
               <div className="flex flex-1 flex-col gap-0.5 pl-2 leading-[1.55]">
-                <p className="text-[13px] font-medium text-admin-ink">{data.product.name}</p>
+                <p className="text-[13px] font-medium text-admin-ink">{sel.productName}</p>
                 <p className="text-[10px] text-admin-muted">
-                  {data.product.code} · {data.product.name}
+                  {data.store.id} · {sel.productName}
                 </p>
               </div>
-              <p className="text-[12px] text-admin-ink">{price}</p>
+              <p className="text-[12px] text-admin-ink">{sel.unitPrice ?? "-"}</p>
               <p className="w-[65px] text-center text-[12px] text-admin-ink">{sel.qty}</p>
               <p className="w-[78px] pr-2 text-right text-[13px] font-semibold text-admin-ink">{selTotal}</p>
             </div>
@@ -228,12 +240,15 @@ export function SalesView({ data }: { data: Data }) {
           </div>
         </Panel>
       </div>
+      ) : (
+        <Panel><p className="py-6 text-center text-[13px] text-admin-muted">ร้านนี้ยังไม่มีรายการขาย</p></Panel>
+      )}
 
       <Guidance>{data.priceNote}</Guidance>
 
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-admin-line bg-white p-4 leading-[1.55]">
         <div className="flex flex-col gap-0.5">
-          <p className="text-[12px] font-semibold text-admin-ink">ยอดขายยืนยันสะสม ร้านค้าหลัก ทั้งงาน · {fmt(data.storeTotal)} Token</p>
+          <p className="text-[12px] font-semibold text-admin-ink">ยอดขายยืนยันสะสม {data.store.name} ทั้งงาน · {fmt(data.storeTotal)} Token</p>
           <p className="text-[11px] text-admin-muted">ยอดขายรวมทุกหมวดหมู่สินค้าทั้งงาน · ยอดสะสมไม่ใช่ยอดตามตัวกรองหรือยอดหน้านี้</p>
         </div>
         <div className="flex flex-col items-end gap-0.5">

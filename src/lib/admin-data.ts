@@ -142,8 +142,27 @@ export async function getStorePos() {
   return { ...storePos, stores, recent: [...recent, ...storePos.recent].slice(0, 6) };
 }
 
-export async function getStoreSales() {
-  return { ...storeSales, sales: readDb().sales };
+export async function getStoreSales(storeId?: string) {
+  const pos = await getStorePos();
+  const store = pos.stores.find((s) => s.id === storeId) ?? pos.stores.find((s) => s.id === pos.defaultStore)!;
+  // ยอดขายเดิม (seed) ไม่มี storeId → นับเป็นของร้านแรก ST-01
+  const sales = readDb()
+    .sales.filter((s) => (s.storeId ?? "ST-01") === store.id)
+    .map((s) => ({
+      ...s,
+      productName: s.productName ?? (store.id === "ST-01" ? storeSales.product.name : store.product.name),
+      unitPrice: s.unitPrice ?? (store.id === "ST-01" ? storeSales.product.price : store.product.price),
+    }));
+  return {
+    ...storeSales,
+    description: `${store.name} · สรุปยอดการรับชำระด้วย Token และการยกเลิกรายการสินค้า`,
+    sales,
+    storeTotal: (store.id === "ST-01" ? storeSales.storeTotal : 0) + sales.filter((x) => x.amount !== undefined && x.status === "ชำระแล้ว").reduce((n, x) => n + (x.amount ?? 0), 0),
+    priceNote: `ราคาสินค้าอ่านอย่างเดียวจาก Super Admin · ${store.product.sku} ${store.product.name} ${store.product.price} · แก้ไขราคาไม่ได้จากหน้านี้`,
+    boothName: store.name,
+    store: { id: store.id, name: store.name },
+    stores: pos.stores.map((s) => ({ id: s.id, name: s.name })),
+  };
 }
 
 const seededTopups = new Set(tokenHistory.records.map((r) => `${r.id}|${r.status}`));
