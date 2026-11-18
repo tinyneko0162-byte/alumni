@@ -25,7 +25,7 @@ export async function getAdminConfig(): Promise<AdminConfig & { enabled: Record<
   return { ...roles, enabled: readDb().roleEnabled };
 }
 
-const nowHm = () => new Date().toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
+const nowHm = () => new Date().toLocaleTimeString("th-TH", { timeZone: "Asia/Bangkok", hour: "2-digit", minute: "2-digit" });
 
 /** Approved tickets and check-ins: sample numbers from the JSON plus everything done in the app since. */
 function attendanceTotals(db: Db) {
@@ -92,7 +92,19 @@ export async function getProductCatalog() {
 
 export async function getLogs() {
   const events = readDb().logs;
-  return { ...logs, events, total: Math.max(logs.total, events.length) };
+  const ok = events.filter((e) => e.result === "สำเร็จ" || e.result === "ส่งแล้ว").length;
+  const waiting = events.filter((e) => e.result === "รอตรวจ").length;
+  const failed = events.length - ok - waiting;
+  return {
+    ...logs,
+    events,
+    total: events.length,
+    metrics: [
+      { label: "เหตุการณ์ทั้งหมด", value: events.length.toLocaleString("en-US"), note: "เก็บล่าสุด 200 รายการ" },
+      { label: "ดำเนินการสำเร็จ", value: ok.toLocaleString("en-US"), note: "รวมการขาย เติมเงิน และเช็กอิน" },
+      { label: "รอตรวจ / ไม่สำเร็จ", value: `${waiting} / ${failed}`, note: failed ? "มีรายการไม่สำเร็จ ตรวจสอบด้านล่าง" : "ไม่มีรายการผิดพลาด", noteTone: failed ? "warning" : undefined },
+    ],
+  };
 }
 
 export async function getTicketSlips() {
@@ -104,12 +116,17 @@ export async function getTicketSlips() {
 
 export async function getTicketLinks() {
   const db = readDb();
-  // newest approved order whose link has not been emailed yet; otherwise the sample row
-  const o = db.orders.find((x) => x.status === "approved" && !x.linkSent);
-  const current = o
-    ? { ticketId: o.ticketIds[0] ?? o.id, recipientName: o.name, recipientShort: o.name.split(" ")[0], email: o.email, amount: o.amount, linkRef: `LINK-${o.id.slice(-4)}`, linkMasked: `event.example/t/••••-${o.id.slice(-4)}` }
+  const sent = new Set(db.linkHistory.map((h) => h.ticketId));
+  // every ticket holder (buyer and each friend) of approved orders who has not been sent a link yet
+  const waiting = db.orders
+    .filter((o) => o.status === "approved" && o.ticketIds.length > 0)
+    .flatMap((o) => (o.holders ?? o.ticketIds.map((ticketId) => ({ ticketId, name: o.name, email: o.email }))).map((h) => ({ ...h, order: o })))
+    .filter((h) => !sent.has(h.ticketId));
+  const h = waiting[0];
+  const current = h
+    ? { ticketId: h.ticketId, recipientName: h.name, recipientShort: h.name.split(" ")[0], email: h.email, amount: h.ticketId === h.order.id ? h.order.amount : 790, linkRef: `LINK-${h.ticketId.slice(-4)}`, linkMasked: `event.example/t/••••-${h.ticketId.slice(-4)}` }
     : ticketLinks.current;
-  return { ...ticketLinks, current, history: db.linkHistory };
+  return { ...ticketLinks, current, waiting: waiting.length, history: db.linkHistory };
 }
 
 export async function getTokenCash() {
@@ -175,7 +192,8 @@ const seededSales = new Set(storeSales.sales.map((r) => r.id));
 function financeFigures(db: Db) {
   const approvedOrders = db.orders.filter((o) => o.status === "approved");
   const newTicketMoney = approvedOrders.reduce((n, o) => n + o.amount, 0);
-  const newTickets = approvedOrders.reduce((n, o) => n + Math.max(o.ticketIds.length, o.qty), 0);
+  const newTickets = approvedOrders.reduce((n, o) => n + o.ticketIds.length, 0);
+  const newShirts = approvedOrders.reduce((n, o) => n + (o.shirts?.length ?? 0), 0);
   const fresh = db.topups.filter((t) => t.status === "สำเร็จ" && !seededTopups.has(`${t.id}|${t.status}`));
   const newCash = fresh.filter((t) => t.channel === "เงินสด").reduce((n, t) => n + (t.received ?? 0), 0);
   const newBank = fresh.filter((t) => t.channel !== "เงินสด").reduce((n, t) => n + (t.received ?? 0), 0);
@@ -184,7 +202,7 @@ function financeFigures(db: Db) {
 
   const [ticketRow, cashRow, bankRow] = financeRevenue.revenue;
   const revenue = [
-    { ...ticketRow, amount: ticketRow.amount + newTicketMoney },
+    { ...ticketRow, type: newShirts ? "ค่าบัตรเข้างานและเสื้อรุ่น" : ticketRow.type, amount: ticketRow.amount + newTicketMoney },
     { ...cashRow, amount: cashRow.amount + newCash },
     { ...bankRow, amount: bankRow.amount + newBank },
   ];
@@ -203,7 +221,7 @@ function financeFigures(db: Db) {
   return {
     revenue,
     total: revenue.reduce((n, r) => n + r.amount, 0),
-    tickets: { ...financeRevenue.tickets, count: financeRevenue.tickets.count + newTickets },
+    tickets: { ...financeRevenue.tickets, count: financeRevenue.tickets.count + newTickets, shirts: newShirts },
     tokens: { toppedUp: financeRevenue.tokens.toppedUp + newCash + newBank, spent: financeRevenue.tokens.spent + newSpent },
     spendingByCategory: spending,
   };
@@ -224,4 +242,24 @@ export async function getFinanceRevenue() {
 export async function getFinanceAttendance() {
   const db = readDb();
   return { ...financeAttendance, ...attendanceTotals(db), attendees: [...db.checkins, ...financeAttendance.attendees] };
+}
+
+/** Every order that includes shirts, for Super Admin › ออเดอร์เสื้อรุ่น. */
+export async function getShirtOrders() {
+  const orders = readDb()
+    .orders.filter((o) => o.shirts?.length)
+    .map((o) => ({
+      id: o.id,
+      name: o.name,
+      email: o.email,
+      submittedAt: o.submittedAt,
+      paid: o.status,
+      sizes: o.shirts!.map((x) => x.size),
+      delivery: o.delivery ?? "pickup",
+      address: o.address ?? null,
+      hasTicket: o.ticketIds.length > 0 || o.qty > 0,
+      shirtStatus: o.shirtStatus ?? "waiting",
+      shirtUpdatedAt: o.shirtUpdatedAt ?? "",
+    }));
+  return { orders, sizes: ["S", "M", "L", "XL", "2XL"] };
 }

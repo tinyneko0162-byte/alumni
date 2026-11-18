@@ -3,6 +3,9 @@ import { BrandMark, MobileShell } from "@/components/user/MobileShell";
 import { AttendeeNav, Pill } from "@/components/user/AttendeeNav";
 import { Icon } from "@/components/ui/Icon";
 
+/** always read fresh data: staff top-ups and purchases change this page */
+export const dynamic = "force-dynamic";
+
 /** Figma: user / ผู้ร่วมงาน · ประวัติรายการ (4069:358) */
 export default async function HistoryPage() {
   const { profile, wallet, history } = await getAttendee();

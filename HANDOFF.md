@@ -51,6 +51,7 @@ npm run lint
 | `/admin/super/stores` | Super Admin · จัดการและสร้างร้านค้า | `4011:37079` |
 | `/admin/super/products` | Super Admin · สินค้าและราคา Token | `4011:37270` |
 | `/admin/super/logs` | Super Admin · บันทึกระบบ | `4011:37486` |
+| `/admin/super/shirts` | Super Admin · ออเดอร์เสื้อรุ่น | ไม่มีใน Figma (เพิ่มเพื่อดูไซซ์/ที่อยู่จัดส่ง) |
 | `/admin/finance/revenue` | Finance · รายได้ภายในงาน | `4011:38733` |
 | `/admin/finance/attendance` | Finance · ประวัติการเข้าร่วม | `4011:38946` |
 | `/admin/ticketing/slips` | Ticketing · ตรวจสลิปค่าบัตร | `4011:37710` |
@@ -144,11 +145,11 @@ export async function getStores() {
 | การกระทำ | ไฟล์ | ตอนนี้ทำอะไร |
 |---|---|---|
 | ลงทะเบียน / ล็อกอินผู้ใช้ | `app/register-form.tsx` | ตรวจฟอร์มแล้ว `router.push('/shop')` |
-| ตะกร้า / คำสั่งซื้อ | `lib/cart.ts` | เก็บใน `sessionStorage` |
+| ตะกร้า / คำสั่งซื้อ | `lib/cart.ts` → `submitOrder` | ตะกร้าอยู่ใน `sessionStorage` ตอนส่งสลิปจะบันทึกคำสั่งซื้อทั้งหมด (บัตร เพื่อน ไซซ์เสื้อ ที่อยู่) ลง db และคำนวณยอดใหม่ที่เซิร์ฟเวอร์ |
 | อัปโหลดสลิป | `components/user/SlipUpload.tsx` | อ่านชื่อ/ขนาดไฟล์อย่างเดียว ไม่อัปโหลด |
 | ล็อกอินพนักงาน | `app/admin/login/login-form.tsx` | ไม่มีการตรวจรหัส มี dropdown เลือกบทบาท |
 | สร้าง/แก้ไข/เปิด-ปิด/ลบร้าน, แก้ราคา | `admin/super/*/…-view.tsx` → `lib/actions.ts` | บันทึกลง `.data/db.json` แล้ว (ร้านที่ปิดรับชำระที่ POS ไม่ได้, ลบได้เฉพาะร้านที่ไม่มีสินค้า/ประวัติขาย) |
-| อนุมัติสลิป, ส่งอีเมล | `admin/ticketing/*` | แก้ state ในหน้า |
+| อนุมัติสลิป, ส่งอีเมล | `admin/ticketing/*` | บันทึกลง db แล้ว ออกบัตรให้ผู้ซื้อและเพื่อนแต่ละคน (ซื้อเสื้ออย่างเดียวไม่ได้บัตร) ถ้ายังไม่ตั้งค่า SMTP ระบบบันทึกการส่งแบบจำลองและให้ลิงก์บัตรแทน |
 | เติม Token (สด/โอน) | `admin/token/*` | แก้ state ในหน้า, สแกน QR เป็นปุ่มจำลอง |
 | ขาย/ตัด Wallet | `admin/store/*`, `lib/store-cart.ts` | sessionStorage + state |
 | ส่งออก CSV | `components/admin/history.tsx` → `downloadCsv` | สร้าง CSV ฝั่ง client จากข้อมูลที่แสดง |

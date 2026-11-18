@@ -2,7 +2,8 @@
 
 import { redirect } from "next/navigation";
 import roles from "@/data/admin/roles.json";
-import { addLog, nextId, nowStamp, nowTime, readDb, shortWallet, updateDb, type CatalogProduct, type RoleKey, type StoreRow } from "@/lib/db";
+import shopProducts from "@/data/products.json";
+import { addLog, findHolder, nextId, nowStamp, nowTime, readDb, shortWallet, updateDb, type CatalogProduct, type RoleKey, type ShipAddress, type StoreRow } from "@/lib/db";
 import demo from "@/data/demo.json";
 import financeAttendance from "@/data/admin/finance-attendance.json";
 import { signTicket } from "@/lib/ticket-token";
@@ -258,29 +259,78 @@ export async function registerUser(input: { fullName: string; email: string }): 
   return { ok: true };
 }
 
-/** Attendee sends the transfer slip for a ticket order; it appears in Ticketing › ตรวจสอบสลิปค่าบัตร. */
-export async function submitOrder(input: { name: string; email: string; ticketType: string; qty: number; amount: number; slipFile: string }): Promise<Result<{ id: string }>> {
-  const qty = Math.floor(input.qty);
-  const amount = Math.round(input.amount);
-  if (!input.name.trim() || !input.email.includes("@") || !(qty > 0) || !(amount > 0) || !input.slipFile.trim()) return { ok: false, error: "ข้อมูลคำสั่งซื้อไม่ครบ" };
+export type OrderInput = {
+  name: string;
+  email: string;
+  purchaseType: "ticket" | "shirt" | "both";
+  /** friends the buyer pays a ticket for (buyer's own ticket is always 1) */
+  friends: { name: string; email: string; phone?: string }[];
+  shirts: { size: string }[];
+  delivery: "pickup" | "delivery";
+  address: ShipAddress | null;
+  slipFile: string;
+};
+
+const SIZES = new Set(shopProducts.shirt.sizes);
+
+/**
+ * Attendee sends the transfer slip; it appears in Ticketing › ตรวจสอบสลิปค่าบัตร.
+ * The amount is worked out again here from the price list, so a changed page cannot underpay.
+ */
+export async function submitOrder(input: OrderInput): Promise<Result<{ id: string; amount: number }>> {
+  const name = input.name?.trim() ?? "";
+  const email = input.email?.trim() ?? "";
+  if (!name || !email.includes("@")) return { ok: false, error: "ไม่พบชื่อหรืออีเมลผู้ซื้อ กรุณาลงทะเบียนก่อน" };
+  if (!["ticket", "shirt", "both"].includes(input.purchaseType)) return { ok: false, error: "ประเภทการซื้อไม่ถูกต้อง" };
+  if (!input.slipFile?.trim()) return { ok: false, error: "กรุณาแนบสลิปก่อนส่ง" };
+
+  const withTicket = input.purchaseType !== "shirt";
+  const withShirt = input.purchaseType !== "ticket";
+  const friends = withTicket ? (input.friends ?? []).map((f) => ({ name: f.name?.trim() ?? "", email: f.email?.trim() ?? "", phone: f.phone?.trim() || undefined })) : [];
+  if (friends.some((f) => !f.name || !f.email.includes("@"))) return { ok: false, error: "กรอกชื่อและอีเมลของเพื่อนให้ครบทุกคน" };
+  const shirts = withShirt ? (input.shirts ?? []).filter((x) => SIZES.has(x.size)) : [];
+  if (withShirt && shirts.length === 0) return { ok: false, error: "เลือกไซซ์เสื้ออย่างน้อย 1 ตัว" };
+  // no ticket = not at the event, so the shirt can only be shipped
+  const delivery = withShirt ? (withTicket ? input.delivery : "delivery") : undefined;
+  const a = input.address;
+  if (withShirt && delivery === "delivery" && (!a || !a.name?.trim() || !a.line?.trim() || !a.province?.trim() || !/^\d{5}$/.test(a.zip ?? ""))) {
+    return { ok: false, error: withTicket ? "กรอกที่อยู่จัดส่งเสื้อให้ครบ" : "ซื้อเสื้ออย่างเดียวต้องเลือกส่งที่บ้าน กรุณากรอกที่อยู่" };
+  }
+
+  const ticketQty = withTicket ? 1 + friends.length : 0;
+  const amount = ticketQty * shopProducts.ticket.price + shirts.length * shopProducts.shirt.price;
+  const label = [ticketQty ? `บัตร ${ticketQty} ใบ` : "", shirts.length ? `เสื้อ ${shirts.length} ตัว` : ""].filter(Boolean).join(" + ");
+
   return updateDb((db) => {
     const id = nextId("TKT", db.orders.map((o) => o.id));
     const d = new Date();
     db.orders.unshift({
-      id, submittedAt: d.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" }), name: input.name.trim().slice(0, 60), email: input.email.trim().slice(0, 80),
-      ticketType: input.ticketType, qty, amount, slipFile: input.slipFile.slice(0, 80), fromAccount: "xxx-x-xx482-1", paidAt: `${nowStamp()} น.`, ref: `SPU-T-${Math.floor(100 + Math.random() * 900)}`,
+      id, submittedAt: d.toLocaleTimeString("th-TH", { timeZone: "Asia/Bangkok", hour: "2-digit", minute: "2-digit" }), name: name.slice(0, 60), email: email.slice(0, 80),
+      ticketType: label, qty: ticketQty, amount, slipFile: input.slipFile.slice(0, 80), fromAccount: "xxx-x-xx482-1", paidAt: `${nowStamp()} น.`, ref: `SPU-T-${Math.floor(100 + Math.random() * 900)}`,
       duplicateRef: false, status: "pending", ticketIds: [], fromAttendee: true,
+      purchaseType: input.purchaseType, friends, shirts, delivery, address: delivery === "delivery" ? a : null,
+      shirtStatus: shirts.length ? "waiting" : undefined,
     });
-    addLog(db, { event: `ผู้ร่วมงานส่งสลิปค่าบัตร ฿${amount}`, role: "ผู้ร่วมงาน", actor: input.name.slice(0, 40), ref: id, result: "รอตรวจ" });
-    return { ok: true as const, id };
+    addLog(db, { event: `ผู้ร่วมงานส่งสลิป ${label} ฿${amount}`, role: "ผู้ร่วมงาน", actor: name.slice(0, 40), ref: id, result: "รอตรวจ" });
+    return { ok: true as const, id, amount };
   });
 }
 
 /** Attendee polls this to see what ticketing staff decided. */
-export async function orderStatus(id: string): Promise<{ status: "pending" | "approved" | "rejected" | "unknown"; link?: string; ticketIds?: string[] }> {
+export async function orderStatus(id: string): Promise<{
+  status: "pending" | "approved" | "rejected" | "unknown";
+  link?: string;
+  ticketIds?: string[];
+  holders?: { ticketId: string; name: string; email: string }[];
+  shirt?: { count: number; delivery?: string; status?: string };
+  sentAt?: string;
+}> {
   const o = readDb().orders.find((x) => x.id === id);
   if (!o) return { status: "unknown" };
-  return o.status === "approved" ? { status: "approved", link: `/t/${signTicket(o.ticketIds[0] ?? o.id)}`, ticketIds: o.ticketIds } : { status: o.status };
+  const shirt = o.shirts?.length ? { count: o.shirts.length, delivery: o.delivery, status: o.shirtStatus } : undefined;
+  if (o.status !== "approved") return { status: o.status, shirt, sentAt: o.paidAt };
+  const holders = (o.holders ?? o.ticketIds.map((ticketId) => ({ ticketId, name: o.name, email: o.email }))).map(({ ticketId, name, email }) => ({ ticketId, name, email }));
+  return { status: "approved", link: o.ticketIds[0] ? `/t/${signTicket(o.ticketIds[0])}` : undefined, ticketIds: o.ticketIds, holders, shirt, sentAt: o.paidAt };
 }
 
 export async function resolveSlip(id: string, decision: "approve" | "reject"): Promise<Result<{ ticketIds: string[] }>> {
@@ -290,8 +340,13 @@ export async function resolveSlip(id: string, decision: "approve" | "reject"): P
     if (!o || o.status !== "pending") return { ok: false as const, error: "รายการนี้ถูกดำเนินการไปแล้ว" };
     if (decision === "approve") {
       o.status = "approved";
+      // shirt-only orders get no ticket; ticket 1 is the buyer's, the rest go to the friends listed
       o.ticketIds = Array.from({ length: o.qty }, (_, i) => (i === 0 ? o.id : `${o.id}-${i + 1}`));
-      addLog(db, { event: `อนุมัติสลิปค่าบัตร ฿${o.amount}`, role: "Ticketing Officer", actor: "พั••", ref: o.id });
+      o.holders = o.ticketIds.map((ticketId, i) => {
+        const f = i === 0 ? null : o.friends?.[i - 1];
+        return f ? { ticketId, name: f.name, email: f.email, phone: f.phone } : { ticketId, name: o.name, email: o.email };
+      });
+      addLog(db, { event: `อนุมัติสลิป ${o.ticketType} ฿${o.amount}`, detail: o.ticketIds.length ? `ออกบัตร ${o.ticketIds.join(", ")}` : "ไม่มีบัตรเข้างาน (ซื้อเสื้ออย่างเดียว)", role: "Ticketing Officer", actor: "พั••", ref: o.id });
     } else {
       o.status = "rejected";
       addLog(db, { event: `ปฏิเสธสลิปค่าบัตร ฿${o.amount}`, role: "Ticketing Officer", actor: "พั••", ref: o.id });
@@ -302,20 +357,40 @@ export async function resolveSlip(id: string, decision: "approve" | "reject"): P
 
 // ---------- gate check-in ----------
 
-export async function checkIn(ticketId: string): Promise<Result<{ status: "ok" | "dup"; name: string; time: string }>> {
+export async function checkIn(ticketId: string): Promise<Result<{ status: "ok" | "dup"; name: string; time: string; shirt?: string }>> {
   if (!(await requireRole("ticketing"))) return { ok: false, error: "ไม่มีสิทธิ์สแกนบัตร" };
   const id = ticketId.trim().toUpperCase();
   return updateDb((db) => {
     const seeded = financeAttendance.attendees.find((a) => a.ticket === id);
     const prior = db.checkins.find((a) => a.ticket === id);
     if (seeded || prior) return { ok: true as const, status: "dup" as const, name: (prior ?? seeded)!.name, time: (prior ?? seeded)!.time ?? "" };
-    const order = db.orders.find((o) => o.status === "approved" && o.ticketIds.includes(id));
-    const name = order?.name ?? demo.tickets.find((t) => t.id === id)?.name;
+    const holder = findHolder(db, id);
+    const name = holder?.name ?? demo.tickets.find((t) => t.id === id)?.name;
+    // the buyer's own ticket: remind the gate staff about shirts waiting to be picked up
+    const o = holder?.order;
+    const shirt = o && o.ticketIds[0] === id && o.delivery === "pickup" && o.shirts?.length && o.shirtStatus !== "picked" ? `มีเสื้อรุ่นรอรับ ${o.shirts.map((x) => x.size).join(", ")}` : undefined;
     if (!name) return { ok: false as const, error: `ไม่พบบัตร ${id} ในระบบ หรือยังไม่ได้รับการอนุมัติ` };
     const time = nowTime();
     const recordId = nextId("ATT", [...db.checkins.map((a) => a.recordId), ...financeAttendance.attendees.map((a) => a.recordId)].filter((x): x is string => !!x));
     db.checkins.unshift({ name, initials: name.slice(0, 2), ticket: id, class: "ศิษย์เก่า", time, checkpoint: "ประตูหลัก", staff: "พั•• · จุดเช็กอิน", recordId });
     addLog(db, { event: "บันทึกเข้างาน · ประตูหลัก", role: "จุดเช็กอิน", actor: "พั••", ref: recordId });
-    return { ok: true as const, status: "ok" as const, name, time };
+    return { ok: true as const, status: "ok" as const, name, time, shirt };
+  });
+}
+
+// ---------- shirt orders (Super Admin) ----------
+
+/** Record that an order's shirts were handed over at the event or shipped. */
+export async function setShirtStatus(orderId: string, status: "waiting" | "picked" | "shipped"): Promise<Result> {
+  if (!(await requireRole())) return { ok: false, error: "เฉพาะ Super Admin เท่านั้น" };
+  return updateDb((db) => {
+    const o = db.orders.find((x) => x.id === orderId);
+    if (!o || !o.shirts?.length) return { ok: false as const, error: "ไม่พบออเดอร์เสื้อนี้" };
+    if (o.status !== "approved") return { ok: false as const, error: "ออเดอร์นี้ยังไม่ได้อนุมัติการชำระเงิน" };
+    o.shirtStatus = status;
+    o.shirtUpdatedAt = nowStamp();
+    const what = status === "shipped" ? "ส่งเสื้อแล้ว" : status === "picked" ? "มอบเสื้อที่หน้างานแล้ว" : "ย้อนสถานะเสื้อเป็นรอดำเนินการ";
+    addLog(db, { event: `${what} ${o.shirts.length} ตัว`, detail: o.shirts.map((x) => x.size).join(", "), role: "Super Admin", actor: "สุ••", ref: o.id });
+    return { ok: true as const };
   });
 }

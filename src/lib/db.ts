@@ -37,12 +37,36 @@ export type TopupRecord = {
 };
 export type TransferReq = (typeof tokenTransfers.requests)[number] & { state: "pending" | "done" | "resubmit" };
 
+export type ShipAddress = { name: string; phone: string; line: string; subdistrict: string; district: string; province: string; zip: string };
+/** Person a ticket belongs to: the buyer for the first ticket, a friend for the rest. */
+export type TicketHolder = { ticketId: string; name: string; email: string; phone?: string };
+
 export type Order = (typeof ticketSlips.requests)[number] & {
   status: "pending" | "approved" | "rejected";
   ticketIds: string[];
   fromAttendee?: boolean;
   linkSent?: boolean;
+  // filled for orders placed from the attendee pages
+  purchaseType?: "ticket" | "shirt" | "both";
+  shirts?: { size: string }[];
+  delivery?: "pickup" | "delivery";
+  address?: ShipAddress | null;
+  friends?: { name: string; email: string; phone?: string }[];
+  holders?: TicketHolder[];
+  /** shirt hand-over: picked up at the event or shipped */
+  shirtStatus?: "waiting" | "picked" | "shipped";
+  shirtUpdatedAt?: string;
 };
+
+/** Name/email for a ticket id, looking through every approved order. */
+export function findHolder(db: Db, ticketId: string): (TicketHolder & { order: Order }) | null {
+  for (const o of db.orders) {
+    if (o.status !== "approved" || !o.ticketIds.includes(ticketId)) continue;
+    const h = o.holders?.find((x) => x.ticketId === ticketId);
+    return { ticketId, name: h?.name ?? o.name, email: h?.email ?? o.email, phone: h?.phone, order: o };
+  }
+  return null;
+}
 export type Attendee = (typeof financeAttendance.attendees)[number];
 export type LinkRecord = (typeof ticketLinks.history)[number];
 
@@ -107,10 +131,10 @@ export function nextId(prefix: string, ids: string[], pad = 4): string {
 }
 
 export const shortWallet = (id: string) => `W-•••-${id.slice(-4)}`;
-export const nowTime = () => new Date().toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+export const nowTime = () => new Date().toLocaleTimeString("th-TH", { timeZone: "Asia/Bangkok", hour: "2-digit", minute: "2-digit", second: "2-digit" });
 export const nowStamp = () => {
   const d = new Date();
-  return `${d.toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric" })} · ${d.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" })}`;
+  return `${d.toLocaleDateString("th-TH", { timeZone: "Asia/Bangkok", day: "numeric", month: "short", year: "numeric" })} · ${d.toLocaleTimeString("th-TH", { timeZone: "Asia/Bangkok", hour: "2-digit", minute: "2-digit" })}`;
 };
 
 function resolveFile(): string {
@@ -148,7 +172,7 @@ export function updateDb<T>(fn: (db: Db) => T): T {
 
 /** Append an entry to the system log page. */
 export function addLog(db: Db, e: Omit<LogEvent, "time" | "result"> & { result?: string }) {
-  const time = new Date().toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  const time = new Date().toLocaleTimeString("th-TH", { timeZone: "Asia/Bangkok", hour: "2-digit", minute: "2-digit", second: "2-digit" });
   db.logs.unshift({ time, result: "สำเร็จ", ...e } as LogEvent);
   db.logs.splice(200);
 }

@@ -40,7 +40,11 @@ export default async function RevenuePage() {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Tile label="รายรับเงินจริงรวม" value={`฿${fmt(total)}`} note="ยืนยันแล้ว · ไม่รวมรายการรอตรวจ" noteClass="text-admin-ok" />
-        <Tile label="รายรับค่าบัตร" value={`฿${fmt(ticket)}`} note={`${d.tickets.count} ใบ × ฿${d.tickets.price} = ฿${fmt(d.tickets.count * d.tickets.price)}`} />
+        <Tile
+          label={d.tickets.shirts ? "รายรับค่าบัตรและเสื้อ" : "รายรับค่าบัตร"}
+          value={`฿${fmt(ticket)}`}
+          note={d.tickets.shirts ? `บัตร ${fmt(d.tickets.count)} ใบ · เสื้อ ${d.tickets.shirts} ตัว` : `${d.tickets.count} ใบ × ฿${d.tickets.price} = ฿${fmt(d.tickets.count * d.tickets.price)}`}
+        />
         <Tile label="เงินรับจากการเติม Token" value={`฿${fmt(topUp)}`} note={`เงินสด ฿${fmt(d.revenue[1].amount)} + โอน ฿${fmt(d.revenue[2].amount)} = ฿${fmt(topUp)}`} />
         <Tile label="การใช้จ่ายในงาน" value={fmt(d.tokens.spent)} note={`${fmt(d.tokens.spent)} Token · ไม่นับซ้ำเป็นรายได้เงินจริง`} />
       </div>

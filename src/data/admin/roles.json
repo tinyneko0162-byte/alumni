@@ -40,6 +40,11 @@
           "icon": "users"
         },
         {
+          "href": "/admin/super/shirts",
+          "label": "ออเดอร์เสื้อรุ่น",
+          "icon": "shirt"
+        },
+        {
           "href": "/admin/super/logs",
           "label": "บันทึกระบบ",
           "icon": "scroll-text"
@@ -52,7 +57,7 @@
         {
           "href": "/admin/finance/attendance",
           "label": "ประวัติการเข้าร่วม",
-          "icon": "users"
+          "icon": "user-check-menu"
         }
       ]
     },

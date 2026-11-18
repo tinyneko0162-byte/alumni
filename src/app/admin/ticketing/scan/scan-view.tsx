@@ -23,7 +23,7 @@ export function ScanView() {
     if (!res.ok) return setResult({ tone: "bad", title: "เข้างานไม่ได้", detail: res.error });
     if (res.status === "dup") return setResult({ tone: "dup", title: "บัตรนี้เช็กอินไปแล้ว", detail: `${res.name} · ${qr.id} · เข้าเมื่อ ${res.time}` });
     setLog((l) => [{ id: qr.id, name: res.name, time: res.time }, ...l]);
-    setResult({ tone: "ok", title: "เข้างานได้", detail: `${res.name} · ${qr.id}` });
+    setResult({ tone: "ok", title: "เข้างานได้", detail: `${res.name} · ${qr.id}${res.shirt ? ` · ${res.shirt}` : ""}` });
   };
 
   const submitManual = () => {

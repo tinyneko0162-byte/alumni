@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { BrandButton, Chip, DataTable, Field, Guidance, PageHeading, Panel } from "@/components/admin/ui";
 import { Icon } from "@/components/ui/Icon";
 import type { AdminConfig, getTicketLinks } from "@/lib/admin-data";
@@ -12,6 +13,16 @@ export function LinksView({ data, event }: { data: Data; event: AdminConfig["eve
   const [to, setTo] = useState(c.email);
   const [subject, setSubject] = useState(data.subject);
   const [sent, setSent] = useState(false);
+  const [demoLink, setDemoLink] = useState<string | null>(null);
+  const router = useRouter();
+  const [lastSent, setLastSent] = useState<string | null>(null);
+
+  // after a send the page refreshes with the next ticket holder: reset the form for them
+  useEffect(() => {
+    setTo(c.email);
+    setSent(false);
+  }, [c.ticketId, c.email]);
+  useEffect(() => setHistory(data.history), [data.history]);
   const [history, setHistory] = useState(data.history);
 
   const [sending, setSending] = useState(false);
@@ -26,7 +37,7 @@ export function LinksView({ data, event }: { data: Data; event: AdminConfig["eve
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ticketId: c.ticketId, to, subject, name: c.recipientShort }),
       });
-      const json = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string };
+      const json = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string; simulated?: boolean; link?: string };
       if (!res.ok || !json.ok) {
         setError(json.error ?? "ส่งอีเมลไม่สำเร็จ");
         return;
@@ -34,6 +45,9 @@ export function LinksView({ data, event }: { data: Data; event: AdminConfig["eve
       const time = new Date().toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
       setHistory((h) => [{ ticketId: c.ticketId, email: to, time, status: "ส่งแล้ว" }, ...h.filter((x) => x.ticketId !== c.ticketId)]);
       setSent(true);
+      setDemoLink(json.simulated && json.link ? json.link : null);
+      setLastSent(`${c.ticketId} → ${to}`);
+      router.refresh(); // loads the next ticket holder still waiting for a link
     } catch {
       setError("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ ลองใหม่อีกครั้ง");
     } finally {
@@ -51,6 +65,21 @@ export function LinksView({ data, event }: { data: Data; event: AdminConfig["eve
           {c.ticketId} อนุมัติค่าบัตรแล้ว • ฿{c.amount.toFixed(2)} • {sent ? "ส่งลิงก์ให้ลูกค้าแล้ว" : "พร้อมส่งลิงก์ให้ลูกค้า"}
         </p>
       </div>
+
+      {lastSent && (
+        <div role="status" className="rounded-lg border border-admin-line bg-white p-3 text-[12px] leading-[1.55] text-admin-ink">
+          ส่งลิงก์ {lastSent} แล้ว
+          {demoLink && (
+            <>
+              {" "}(ยังไม่ได้ตั้งค่าอีเมลระบบ จึงบันทึกแบบจำลอง){" "}
+              <a href={demoLink} target="_blank" rel="noreferrer" className="font-semibold text-admin-indigo hover:underline">
+                เปิดลิงก์บัตรที่ส่ง
+              </a>
+            </>
+          )}
+          {" · "}เหลือรอส่ง {data.waiting} ใบ
+        </div>
+      )}
 
       <div className="flex flex-col gap-5 xl:flex-row xl:items-start">
         <div className="flex flex-col gap-5 xl:w-[400px]">

@@ -5,6 +5,9 @@ import { Icon } from "@/components/ui/Icon";
 import { QrCode } from "@/components/ui/QrCode";
 import { entryPayload } from "@/lib/qr-payload";
 
+/** always read fresh data: staff top-ups and purchases change this page */
+export const dynamic = "force-dynamic";
+
 /** Figma: user / ผู้ร่วมงาน · บัตรของฉัน (4069:558) */
 export default async function MyTicketPage() {
   const { profile, ticket } = await getAttendee();

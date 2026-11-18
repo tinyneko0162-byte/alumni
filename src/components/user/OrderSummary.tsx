@@ -17,7 +17,7 @@ export function OrderSummary({
     <section className="flex flex-col gap-3 rounded-[20px] border border-line bg-white p-[18px]">
       <div className="flex items-center justify-between">
         <h2 className="text-[15px] font-semibold text-ink">สรุปรายการ</h2>
-        <p className="font-latin text-[11px] text-black">#{orderId}</p>
+        <p className="font-latin text-[11px] text-black">{orderId ? `#${orderId}` : "คำสั่งซื้อใหม่"}</p>
       </div>
       <div className="flex flex-col gap-[10px]">
         {items.length === 0 && (

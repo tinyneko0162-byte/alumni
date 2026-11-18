@@ -25,28 +25,59 @@
     "status": "พร้อมใช้งาน"
   },
   "history": {
-    "currentBalance": 130,
-    "formula": "ยอดเริ่มต้น 0 + เติม 150 - ใช้ 20 = 130",
-    "topUpTotal": 150,
-    "spendTotal": 25,
+    "currentBalance": 1120,
+    "formula": "ยอดเริ่มต้น 0 + เติม 1,300 − ใช้ 180 = 1,120",
+    "topUpTotal": 1300,
+    "spendTotal": 180,
     "dayLabel": "วันงาน (ตัวอย่าง)",
     "topUps": [
-      { "id": "TU-002", "label": "เติมด้วยตัวเอง", "time": "18:30", "balanceAfter": 135, "amount": 50 },
-      { "id": "TU-001", "label": "เติมผ่านเจ้าหน้าที่", "time": "18:00", "balanceAfter": 100, "amount": 100 }
+      {
+        "id": "TU-003",
+        "label": "เติมด้วยตัวเอง (โอนเงิน)",
+        "time": "18:00",
+        "balanceAfter": 1300,
+        "amount": 600
+      },
+      {
+        "id": "TU-002",
+        "label": "เติมผ่านเจ้าหน้าที่ (เงินสด)",
+        "time": "17:20",
+        "balanceAfter": 700,
+        "amount": 500
+      },
+      {
+        "id": "TU-001",
+        "label": "Token ที่มากับบัตรเข้างาน",
+        "time": "17:05",
+        "balanceAfter": 200,
+        "amount": 200
+      }
     ],
     "purchases": [
-      { "id": "TX-002", "label": "ยากิโซบะ × 1", "time": "18:45", "balanceAfter": 125, "amount": 80 },
-      { "id": "TX-001", "label": "เบียร์สด × 1", "time": "18:15", "balanceAfter": 85, "amount": 100 }
+      {
+        "id": "TX-002",
+        "label": "ยากิโซบะ × 1",
+        "time": "18:45",
+        "balanceAfter": 1120,
+        "amount": 80
+      },
+      {
+        "id": "TX-001",
+        "label": "เบียร์สด × 1",
+        "time": "18:15",
+        "balanceAfter": 1200,
+        "amount": 100
+      }
     ],
     "receipt": {
       "shop": "ร้านยากิโซบะ",
       "time": "18:45",
       "line": "ยากิโซบะ 1 × 80",
       "amount": 80,
-      "balanceBefore": 150,
-      "balanceAfter": 70,
+      "balanceBefore": 1200,
+      "balanceAfter": 1120,
       "status": "ชำระสำเร็จ",
-      "footer": "ผู้ขาย ณ****ี • ST-02 • ใบเสร็จตัวอย่าง"
+      "footer": "ผู้ขาย ณ****ี • ST-01 • ใบเสร็จ TX-002"
     },
     "notice": "โทเคนใช้เฉพาะอีเวนต์นี้ ไม่สามารถแลกคืนเป็นเงินสดได้"
   }

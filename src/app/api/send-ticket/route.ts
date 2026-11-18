@@ -21,12 +21,19 @@ export async function POST(req: Request) {
   }
 
   const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, MAIL_FROM } = process.env;
-  if (!SMTP_HOST || !SMTP_USER || !SMTP_PASS) {
-    return Response.json({ ok: false, error: "ยังไม่ได้ตั้งค่าอีเมลของระบบ (SMTP_HOST / SMTP_USER / SMTP_PASS ใน .env.local)" }, { status: 503 });
-  }
-
   const base = (process.env.APP_URL ?? new URL(req.url).origin).replace(/\/$/, "");
   const link = `${base}/t/${signTicket(ticketId)}`;
+  if (!SMTP_HOST || !SMTP_USER || !SMTP_PASS) {
+    // demo mode: no mail server configured → record the send and hand the link back so staff can open it
+    updateDb((db) => {
+      db.linkHistory.unshift({ ticketId, email: to, time: nowTime().slice(0, 5), status: "จำลอง (ยังไม่ตั้งค่าอีเมล)" });
+      db.orders.forEach((o) => {
+        if (o.id === ticketId || o.ticketIds.includes(ticketId)) o.linkSent = true;
+      });
+    });
+    return Response.json({ ok: true, simulated: true, link });
+  }
+
   const qr = await QRCode.toBuffer(entryPayload(ticketId), { margin: 2, width: 360, errorCorrectionLevel: "M" });
   const name = esc(body?.name ?? "ผู้ร่วมงาน");
 

@@ -7,6 +7,7 @@ import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { getAdminConfig, getOverview, type RoleKey } from "@/lib/admin-data";
 import { cx } from "@/lib/format";
 import { NotificationBell } from "./NotificationBell";
+import { LiveClock } from "./LiveClock";
 import { Chip } from "./ui";
 
 /**
@@ -85,7 +86,7 @@ export async function AdminShell({
               type="submit"
               className="w-full rounded-lg border border-admin-side-line bg-brand p-3 text-left text-[12px] leading-[1.55] text-white transition hover:brightness-95"
             >
-              LOG OUT
+              ออกจากระบบ
             </button>
           </form>
           <div className="flex flex-col gap-1.5 rounded-lg border border-admin-side-line p-3 leading-[1.55]">
@@ -106,7 +107,7 @@ export async function AdminShell({
           </div>
           <div className="flex items-center gap-[18px]">
             <Chip tone="ok">ระบบพร้อมใช้งาน</Chip>
-            <p className="text-[11px] text-admin-muted max-sm:hidden">{cfg.event.now}</p>
+            <LiveClock className="text-[11px] text-admin-muted max-sm:hidden" />
             <ThemeToggle />
             <NotificationBell items={overview.queues} />
           </div>

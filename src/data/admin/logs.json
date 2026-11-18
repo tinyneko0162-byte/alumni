@@ -15,6 +15,6 @@
     { "time": "18:40:32", "event": "อนุมัติสลิปค่าบัตร ฿790", "role": "Ticketing Officer", "actor": "พั••", "ref": "TKT-0399", "result": "สำเร็จ" },
     { "time": "18:38:11", "event": "เติมเงินโอน ฿1,000 · +1,000 Token", "role": "Token Staff", "actor": "อร••", "ref": "TOP-0233", "result": "สำเร็จ" },
     { "time": "18:36:20", "event": "บันทึกเข้างาน · ประตูหลัก", "role": "จุดเช็กอิน", "actor": "เจ้าหน้าที่ ก••", "ref": "ATT-0312", "result": "สำเร็จ" },
-    { "time": "16:30:00", "event": "กำหนดราคาป๊อปคอร์นคาราเมล", "detail": "60 Token / ชิ้น", "role": "Super Admin", "actor": "สุ••", "ref": "SN-001", "result": "สำเร็จ" }
+    { "time": "16:30:00", "event": "กำหนดราคาไก่ป๊อป", "detail": "60 Token / ชิ้น", "role": "Super Admin", "actor": "สุ••", "ref": "POP-01", "result": "สำเร็จ" }
   ]
 }

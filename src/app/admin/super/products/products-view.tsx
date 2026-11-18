@@ -64,6 +64,11 @@ export function ProductsView({ data }: { data: Data }) {
       ),
     [products, tab, query],
   );
+  const [page, setPage] = useState(1);
+  const per = data.pageSize;
+  const pages = Math.max(1, Math.ceil(shown.length / per));
+  const cur = Math.min(page, pages); // a filter can shrink the list below the current page
+  const paged = shown.slice((cur - 1) * per, cur * per);
 
   const save = async () => {
     const price = Number(form.price);
@@ -121,7 +126,7 @@ export function ProductsView({ data }: { data: Data }) {
               </tr>
             </thead>
             <tbody>
-              {shown.map((p) => (
+              {paged.map((p) => (
                 <tr key={p.sku}>
                   <td className="h-16 border-b border-admin-line px-3 text-admin-ink">
                     <p className="font-medium">{p.name}</p>
@@ -146,12 +151,12 @@ export function ProductsView({ data }: { data: Data }) {
         </div>
         <div className="mt-auto flex flex-wrap items-center justify-between gap-3">
           <p className="text-[11px] leading-[1.55] text-admin-muted">
-            แสดง 1–{Math.min(data.pageSize, shown.length)} จาก {data.totalProducts} สินค้า
+            {shown.length ? `แสดง ${(cur - 1) * per + 1}–${Math.min(cur * per, shown.length)} จาก ${shown.length} สินค้า` : "ไม่พบสินค้า"}
           </p>
           <div className="flex gap-2">
-            <OutlineButton icon="a-chevron-left" disabled>ก่อนหน้า</OutlineButton>
-            <span className="rounded-md bg-admin-indigo-tint p-2.5 text-[12px] leading-[1.55] text-admin-indigo">1</span>
-            <OutlineButton icon="a-chevron-right-dark" disabled>ถัดไป</OutlineButton>
+            <OutlineButton icon="a-chevron-left" disabled={cur <= 1} onClick={() => setPage(cur - 1)}>ก่อนหน้า</OutlineButton>
+            <span className="rounded-md bg-admin-indigo-tint p-2.5 text-[12px] leading-[1.55] text-admin-indigo">{cur}</span>
+            <OutlineButton icon="a-chevron-right-dark" disabled={cur >= pages} onClick={() => setPage(cur + 1)}>ถัดไป</OutlineButton>
           </div>
         </div>
       </Panel>

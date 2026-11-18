@@ -7,7 +7,7 @@ import { BankAccount } from "@/components/user/BankAccount";
 import { OrderSummary } from "@/components/user/OrderSummary";
 import { PrimaryButton } from "@/components/user/PrimaryButton";
 import { SlipUpload } from "@/components/user/SlipUpload";
-import { summarize, useCart } from "@/lib/cart";
+import { deliveryOf, includesShirt, includesTicket, summarize, useCart } from "@/lib/cart";
 import type { EventInfo } from "@/lib/data";
 import { num } from "@/lib/format";
 
@@ -32,19 +32,19 @@ export function PaymentView({ event }: { event: EventInfo }) {
     } catch {
       /* use sample profile */
     }
-    const qty =
-      items
-        .filter((i) => i.label.includes("บัตร"))
-        .reduce((n, i) => n + i.qty, 0) || 1;
     const res = await submitOrder({
       ...profile,
-      ticketType: items[0]?.label ?? "บัตร",
-      qty,
-      amount: total,
+      purchaseType: cart.purchaseType,
+      friends: includesTicket(cart) ? cart.friends.slice(0, cart.friendTicketQty) : [],
+      shirts: includesShirt(cart) ? cart.shirts : [],
+      delivery: deliveryOf(cart),
+      address: cart.address,
       slipFile: cart.slip.fileName,
     });
     setBusy(false);
     if (!res.ok) return setError(res.error);
+    // the server's order number is what staff see, so the attendee sees the same one from now on
+    update({ orderId: res.id });
     try {
       sessionStorage.setItem("alumni-order-id", res.id);
     } catch {

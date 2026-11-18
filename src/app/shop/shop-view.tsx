@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Dialog } from "@/components/ui/Dialog";
 import { Icon } from "@/components/ui/Icon";
 import { OrderSummary } from "@/components/user/OrderSummary";
 import { PrimaryButton } from "@/components/user/PrimaryButton";
-import { includesShirt, includesTicket, summarize, useCart, type PurchaseType } from "@/lib/cart";
+import { deliveryOf, includesShirt, includesTicket, summarize, useCart, type PurchaseType } from "@/lib/cart";
 import type { Products } from "@/lib/data";
 import { baht, cx } from "@/lib/format";
 
@@ -18,6 +18,12 @@ export function ShopView({ eventName, products }: { eventName: string; products:
   const hasTicket = includesTicket(cart);
   const hasShirt = includesShirt(cart);
   const needsFriendInfo = hasTicket && cart.friendTicketQty > 0;
+  const delivery = deliveryOf(cart);
+
+  // coming back after a finished order starts a new one (new number, new slip)
+  useEffect(() => {
+    if (cart.orderId) update({ orderId: "", slip: null });
+  }, [cart.orderId, update]);
 
   // ===== ที่อยู่จัดส่ง =====
   const [addrOpen, setAddrOpen] = useState(false);
@@ -39,7 +45,7 @@ const addrSaved = !!cart.address;
 };
   // ปิด popup โดยยังไม่เคยบันทึกที่อยู่ → กลับไปเลือก "รับเสื้อที่หน้างาน"
   const closeAddress = () => {
-    if (!addrSaved) update({ delivery: "pickup" });
+    if (!addrSaved && hasTicket) update({ delivery: "pickup" });
     setAddrOpen(false);
   };
 
@@ -66,7 +72,11 @@ const addrSaved = !!cart.address;
               key={t.id}
               role="radio"
               aria-checked={on}
-              onClick={() => update({ purchaseType: t.id as PurchaseType })}
+              onClick={() => {
+                update({ purchaseType: t.id as PurchaseType });
+                // shirt only: no ticket, so the shirt has to be shipped → ask for the address
+                if (t.id === "shirt" && !cart.address) setAddrOpen(true);
+              }}
               className={cx(
                 "h-[39px] flex-1 rounded-[9px] text-[11px] font-semibold transition",
                 on ? "bg-brand-deep text-white" : "bg-brand-tint-2 text-black hover:brightness-95",
@@ -134,14 +144,16 @@ const addrSaved = !!cart.address;
           </div>
           <div role="radiogroup" aria-label="การรับเสื้อ" className="flex justify-end gap-4">
             {products.shirt.deliveryOptions.map((d) => {
-              const on = cart.delivery === d.id;
+              const on = delivery === d.id;
+              const locked = d.id === "pickup" && !hasTicket;
               return (
-                <label key={d.id} className="flex cursor-pointer items-center gap-1 text-[12px] text-black">
+                <label key={d.id} className={cx("flex items-center gap-1 text-[12px] text-black", locked ? "cursor-not-allowed opacity-40" : "cursor-pointer")}>
                   <input
                     type="radio"
                     name="delivery"
                     className="sr-only"
                     checked={on}
+                    disabled={locked}
                     onChange={() => {
                       update({ delivery: d.id as "pickup" | "delivery" });
                       if (d.id === "delivery") setAddrOpen(true); // เลือกส่งที่บ้าน → เปิด popup
@@ -162,7 +174,15 @@ const addrSaved = !!cart.address;
           </div>
 
           {/* สรุปที่อยู่ที่กรอกแล้ว */}
-          {cart.delivery === "delivery" && cart.address && (
+          {!hasTicket && (
+            <p className="text-right text-[11px] text-brand-deep">ซื้อเสื้ออย่างเดียว (ไม่ได้มางาน) ต้องเลือกส่งที่บ้าน</p>
+          )}
+          {delivery === "delivery" && !cart.address && (
+            <button type="button" onClick={() => setAddrOpen(true)} className="self-end text-[12px] font-semibold text-brand-deep hover:underline">
+              กรอกที่อยู่จัดส่ง
+            </button>
+          )}
+          {delivery === "delivery" && cart.address && (
   <div className="flex items-start justify-between gap-3 rounded-xl bg-surface-muted p-3">
     <div className="flex flex-col gap-0.5 text-[12px] leading-[1.55] text-ink">
       <p className="font-semibold">
@@ -207,7 +227,7 @@ const addrSaved = !!cart.address;
       <PrimaryButton
         softBorder
         href={needsFriendInfo ? "/shop/friend" : "/checkout/payment"}
-        disabled={items.length === 0 || (hasShirt && cart.delivery === "delivery" && !addrSaved)}
+        disabled={items.length === 0 || (hasShirt && delivery === "delivery" && !addrSaved)}
       >
         {needsFriendInfo ? "กรอกข้อมูลของเพื่อน" : "ดำเนินการชำระเงิน"}
       </PrimaryButton>
