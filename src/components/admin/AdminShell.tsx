@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { logoutStaff } from "@/lib/actions";
+import { getStaffRole } from "@/lib/session";
 import { Icon } from "@/components/ui/Icon";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { getAdminConfig, getOverview, type RoleKey } from "@/lib/admin-data";
@@ -25,6 +28,11 @@ export async function AdminShell({
   children: React.ReactNode;
 }) {
   const [cfg, overview] = await Promise.all([getAdminConfig(), getOverview()]);
+  const signedIn = await getStaffRole();
+  if (!signedIn) redirect("/admin/login");
+  if (!cfg.enabled[signedIn]) redirect("/admin/login?disabled=1");
+  // a role may only open its own pages (Super Admin can open all of them)
+  if (signedIn !== role && signedIn !== "super") redirect(cfg.roles[signedIn].home);
   const r = cfg.roles[role];
   const account = "account" in r ? (r.account as typeof cfg.account) : cfg.account;
 
@@ -72,12 +80,14 @@ export async function AdminShell({
               <p className="text-[10px] text-admin-side-muted">สิทธิ์เฉพาะ {r.label}</p>
             </div>
           </div>
-          <Link
-            href="/admin/login"
-            className="rounded-lg border border-admin-side-line bg-brand p-3 text-[12px] leading-[1.55] text-white transition hover:brightness-95"
-          >
-            LOG OUT
-          </Link>
+          <form action={logoutStaff}>
+            <button
+              type="submit"
+              className="w-full rounded-lg border border-admin-side-line bg-brand p-3 text-left text-[12px] leading-[1.55] text-white transition hover:brightness-95"
+            >
+              LOG OUT
+            </button>
+          </form>
           <div className="flex flex-col gap-1.5 rounded-lg border border-admin-side-line p-3 leading-[1.55]">
             <p className="text-[12px] text-admin-side-ink">{cfg.event.name}</p>
             <p className="text-[10px] text-admin-side-muted">{cfg.event.environment}</p>

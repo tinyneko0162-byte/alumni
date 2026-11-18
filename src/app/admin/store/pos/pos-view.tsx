@@ -13,6 +13,7 @@ export function PosView({ boothName, store, stores }: { boothName: string; store
   const { qty, setQty } = usePosCart(store.id);
   const p = store.product;
   const total = qty * p.price;
+  const onSale = p.status === "ขายอยู่" && p.stock > 0;
 
   return (
     <>
@@ -28,6 +29,7 @@ export function PosView({ boothName, store, stores }: { boothName: string; store
         <div className="flex min-w-[160px] flex-1 flex-col gap-1.5 leading-[1.55]">
           <p className="text-[22px] font-bold text-admin-ink">{p.name}</p>
           <p className="text-[14px] text-admin-side-muted">{p.tagline}</p>
+          <p className={`text-[12px] ${onSale ? "text-admin-muted" : "text-[#c2414b]"}`}>{onSale ? `คงเหลือ ${p.stock} ${p.unit}` : p.status !== "ขายอยู่" ? "หยุดขายชั่วคราว" : "สินค้าหมด"}</p>
         </div>
         <div className="flex items-center gap-4">
           <div className="flex flex-col items-end gap-0.5 leading-[1.55]">
@@ -36,8 +38,9 @@ export function PosView({ boothName, store, stores }: { boothName: string; store
           </div>
           <button
             type="button"
-            onClick={() => setQty(qty + 1)}
-            className="flex h-[72px] w-[88px] flex-col items-center justify-center rounded-[10px] bg-brand transition hover:brightness-95 active:scale-[0.98]"
+            onClick={() => setQty(Math.min(qty + 1, p.stock))}
+            disabled={!onSale || qty >= p.stock}
+            className="flex h-[72px] w-[88px] flex-col items-center justify-center rounded-[10px] bg-brand transition hover:brightness-95 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
           >
             <Icon name="a-plus-white-lg" size={22} />
             <span className="text-[11px] font-semibold leading-[1.4] text-white">เพิ่มลงตะกร้า</span>
@@ -96,10 +99,10 @@ export function PosView({ boothName, store, stores }: { boothName: string; store
             </p>
           </div>
           <Link
-            href={qty > 0 ? `/admin/store/checkout?store=${store.id}` : "#"}
-            aria-disabled={qty === 0}
+            href={qty > 0 && onSale ? `/admin/store/checkout?store=${store.id}` : "#"}
+            aria-disabled={qty === 0 || !onSale}
             className={`flex h-[84px] items-center justify-center gap-2.5 rounded-[10px] bg-brand px-6 text-[24px] font-bold leading-[1.55] text-white transition hover:brightness-95 ${
-              qty === 0 ? "pointer-events-none opacity-50" : ""
+              qty === 0 || !onSale ? "pointer-events-none opacity-50" : ""
             }`}
           >
             ไปหน้าชำระเงิน <span className="text-[16px]">→</span>

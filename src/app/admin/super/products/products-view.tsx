@@ -4,18 +4,12 @@ import { useMemo, useState } from "react";
 import { BrandButton, Chip, Field, OutlineButton, PageHeading, Panel, SearchBox } from "@/components/admin/ui";
 import { Dialog } from "@/components/ui/Dialog";
 import { Icon } from "@/components/ui/Icon";
+import { createProduct, saveProduct } from "@/lib/actions";
 import type { getProductCatalog } from "@/lib/admin-data";
 import { cx } from "@/lib/format";
 
 type Data = Awaited<ReturnType<typeof getProductCatalog>>;
 type Product = Data["products"][number];
-
-const nowLabel = () => {
-  const d = new Date();
-  const date = d.toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric" });
-  const time = d.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
-  return `${date} · ${time}`;
-};
 
 export function ProductsView({ data }: { data: Data }) {
   const [products, setProducts] = useState<Product[]>(data.products);
@@ -31,28 +25,22 @@ export function ProductsView({ data }: { data: Data }) {
   const addPrice = Number(add.price);
   const addValid = add.name.trim() !== "" && Number.isFinite(addPrice) && addPrice > 0;
 
-  const create = () => {
-    if (!addValid) return;
-    const stock = Number(add.stock);
-    const sku = `NEW-${String(products.length + 1).padStart(2, "0")}`;
-    const p: Product = {
-      sku,
-      name: add.name.trim(),
-      store: add.store,
-      storeCode: products.find((x) => x.store === add.store)?.storeCode ?? "ST-00",
-      category: add.category,
-      price: addPrice,
-      stock: Number.isFinite(stock) && stock > 0 ? stock : 0,
-      unit: "ชิ้น",
-      status: "ขายอยู่",
-      updatedAt: nowLabel(),
-    };
-    setProducts((all) => [...all, p]);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
+
+  const create = async () => {
+    if (!addValid || saving) return;
+    setSaving(true);
+    const res = await createProduct({ name: add.name, store: add.store, category: add.category, price: addPrice, stock: Number(add.stock) });
+    setSaving(false);
+    if (!res.ok) return setMessage({ ok: false, text: res.error });
+    setProducts((all) => [...all, res.product]);
     setTab("ทุกร้าน");
     setQuery("");
-    select(p);
+    select(res.product);
     setAdd(blank);
     setAddOpen(false);
+    setMessage({ ok: true, text: `เพิ่ม "${res.product.name}" แล้ว` });
   };
 
   const select = (p: Product) => {
@@ -68,19 +56,27 @@ export function ProductsView({ data }: { data: Data }) {
     [products, tab, query],
   );
 
-  const save = () => {
+  const save = async () => {
     const price = Number(form.price);
     const stock = Number(form.stock);
-    if (!Number.isFinite(price) || price <= 0) return;
-    setProducts((all) =>
-      all.map((p) => (p.sku === current.sku ? { ...p, price, stock: Number.isFinite(stock) ? stock : p.stock, status: form.status, updatedAt: nowLabel() } : p)),
-    );
+    if (!Number.isFinite(price) || price <= 0 || saving) return;
+    setSaving(true);
+    const res = await saveProduct(current.sku, { price, stock: Number.isFinite(stock) ? stock : current.stock, status: form.status });
+    setSaving(false);
+    if (!res.ok) return setMessage({ ok: false, text: res.error });
+    setProducts((all) => all.map((p) => (p.sku === current.sku ? res.product : p)));
+    setMessage({ ok: true, text: `บันทึกแล้ว · หน้าขายสินค้าจะใช้ราคา ${res.product.price} Token ทันที` });
   };
 
   return (
     <>
       <PageHeading title={data.title} description={data.description} actions={<BrandButton icon="a-plus-white" onClick={() => setAddOpen(true)}>เพิ่มสินค้า</BrandButton>} />
 
+      {message && (
+        <p role="status" className={cx("rounded-lg p-3 text-[13px]", message.ok ? "bg-admin-ok-tint text-admin-ok" : "bg-[#fdecee] text-[#c2414b]")}>
+          {message.text}
+        </p>
+      )}
       <div className="flex items-start gap-2.5 rounded-lg bg-brand-soft p-3">
         <Icon name="a-info-dark" size={18} />
         <p className="flex-1 text-[12px] leading-[1.55] text-black">{data.guidance}</p>

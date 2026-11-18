@@ -4,7 +4,10 @@ import Link from "next/link";
 import { useState } from "react";
 import { BrandButton, Chip, DataTable, Field, OutlineButton, PageHeading, Panel } from "@/components/admin/ui";
 import { Icon } from "@/components/ui/Icon";
+import { QrScanner } from "@/components/ui/QrScanner";
+import { cashTopup, lookupWallet } from "@/lib/actions";
 import type { getTokenCash } from "@/lib/admin-data";
+import { parseQr } from "@/lib/qr-payload";
 
 type Data = Awaited<ReturnType<typeof getTokenCash>>;
 type Wallet = Data["wallets"][number];
@@ -14,39 +17,51 @@ const baht2 = (n: number) => `฿${n.toLocaleString("en-US", { minimumFractionDi
 const shortWallet = (id: string) => `W-•••-${id.slice(-4)}`;
 
 export function CashView({ data }: { data: Data }) {
-  const [wallets, setWallets] = useState<Wallet[]>(data.wallets);
-  const [walletId, setWalletId] = useState<string | null>(data.wallets[0].id);
+  const [wallet, setWallet] = useState<Wallet | null>(null);
+  const [notFound, setNotFound] = useState(false);
   const [cash, setCash] = useState(String(data.defaultCash));
   const [received, setReceived] = useState(true);
   const [saved, setSaved] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [recent, setRecent] = useState(data.recent);
-  const [scanIdx, setScanIdx] = useState(0);
-
-  const wallet = wallets.find((w) => w.id === walletId) ?? null;
   const amount = Math.max(0, Math.floor(Number(cash) || 0));
 
+  const find = async (id: string) => {
+    const res = await lookupWallet(id);
+    setNotFound(!res.ok);
+    setSaved(false);
+    setError(null);
+    if (res.ok) setWallet(res.wallet);
+  };
+
+  const onScan = (text: string) => {
+    const qr = parseQr(text);
+    if (qr?.kind === "wallet") void find(qr.id);
+    else setNotFound(true);
+  };
+
   const rescan = () => {
-    // Mock camera: cycle through the sample wallets
-    const next = (scanIdx + 1) % wallets.length;
-    setScanIdx(next);
-    setWalletId(wallets[next].id);
+    setWallet(null);
+    setNotFound(false);
     setSaved(false);
   };
 
   const manual = () => {
-    const id = prompt("กรอก Wallet ID (เช่น WLT-xxxx-0842)")?.trim();
-    if (!id) return;
-    const found = wallets.find((w) => w.id.toLowerCase() === id.toLowerCase() || w.id.endsWith(id));
-    setWalletId(found?.id ?? null);
-    setSaved(false);
+    const id = prompt("กรอก Wallet ID (เช่น WLT-RF26-0842)")?.trim();
+    if (id) void find(id);
   };
 
-  const confirm = () => {
-    if (!wallet || amount <= 0 || !received) return;
-    setWallets((ws) => ws.map((w) => (w.id === wallet.id ? { ...w, balance: w.balance + amount } : w)));
-    const nextNo = Math.max(...recent.map((r) => Number(r.id.slice(4)))) + 1;
+  const confirm = async () => {
+    if (!wallet || amount <= 0 || !received || busy) return;
+    setBusy(true);
+    setError(null);
+    const res = await cashTopup({ walletId: wallet.id, amount });
+    setBusy(false);
+    if (!res.ok) return setError(res.error);
     const time = new Date().toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
-    setRecent((r) => [{ id: `TOP-${String(nextNo).padStart(4, "0")}`, wallet: shortWallet(wallet.id), cash: amount, tokens: amount, time, status: "สำเร็จ" }, ...r]);
+    setWallet({ ...wallet, balance: res.balance });
+    setRecent((r) => [{ id: res.id, wallet: shortWallet(wallet.id), cash: amount, tokens: amount, time, status: "สำเร็จ" }, ...r]);
     setSaved(true);
     setReceived(false);
   };
@@ -58,17 +73,7 @@ export function CashView({ data }: { data: Data }) {
       <div className="flex flex-col gap-5 xl:flex-row xl:items-start">
         <div className="flex flex-col gap-5 xl:w-[415px]">
           <Panel title="สแกน Wallet ลูกค้า" aside={<Icon name="a-camera" size={18} />}>
-            <div className="flex h-[280px] flex-col items-center justify-center gap-4 rounded-xl bg-[#10182a]">
-              <div className="flex items-center gap-1.5">
-                <Icon name="a-camera-dot" size={5} />
-                <p className="text-[11px] leading-[1.55] text-[#c5cde0]">กล้องพร้อม • สแกน Wallet QR</p>
-              </div>
-              <div className="relative flex h-[150px] w-[172px] items-center justify-center rounded-[14px] border-2 border-[#a7a0f9]">
-                <Icon name="a-scan-qr-code" size={58} />
-                <span className="absolute top-[86px] left-2.5 h-0.5 w-[148px] animate-pulse bg-[#b1a9ff]" />
-              </div>
-              <p className="text-[11px] leading-[1.55] text-[#c5cde0]">วาง QR ของลูกค้าให้อยู่ในกรอบ</p>
-            </div>
+            <QrScanner onScan={onScan} className="h-[280px]" />
             <div className="flex gap-2.5">
               <OutlineButton icon="a-refresh-cw" className="flex-1" onClick={rescan}>
                 สแกนใหม่
@@ -84,7 +89,7 @@ export function CashView({ data }: { data: Data }) {
               <p className="flex-1 text-[12px] leading-[1.55] text-admin-ok">พบ Wallet แล้ว • ตรวจชื่อและรหัสกับลูกค้าก่อนรับเงิน</p>
             </div>
           ) : (
-            <div className="rounded-lg bg-[#fdecee] p-3 text-[12px] leading-[1.55] text-[#c2414b]">ไม่พบ Wallet นี้ • ลองสแกนใหม่หรือตรวจรหัสอีกครั้ง</div>
+            <div className={notFound ? "rounded-lg bg-[#fdecee] p-3 text-[12px] leading-[1.55] text-[#c2414b]" : "rounded-lg bg-admin-head p-3 text-[12px] leading-[1.55] text-admin-muted"}>{notFound ? "ไม่พบ Wallet นี้ • ลองสแกนใหม่หรือตรวจรหัสอีกครั้ง" : "ยังไม่ได้สแกน Wallet ลูกค้า"}</div>
           )}
         </div>
 
@@ -137,8 +142,9 @@ export function CashView({ data }: { data: Data }) {
             {received ? <Icon name="a-square-check" size={19} /> : <span className="size-[19px] rounded-[4px] border-2 border-admin-side-muted" />}
             <span className="text-[12px] leading-[1.55] text-admin-ink">ได้รับเงินสด {baht2(amount)} ครบถ้วนแล้ว</span>
           </label>
-          <BrandButton icon="a-plus-white" onClick={confirm} disabled={!wallet || amount <= 0 || !received} className="w-full">
-            ยืนยันเติม
+          {error && <p role="alert" className="text-[12px] text-danger">{error}</p>}
+          <BrandButton icon="a-plus-white" onClick={confirm} disabled={!wallet || amount <= 0 || !received || busy} className="w-full">
+            {busy ? "กำลังบันทึก…" : "ยืนยันเติม"}
           </BrandButton>
           <p className="text-[11px] leading-[1.55] text-admin-muted">บันทึกเงินสดและเพิ่ม Token เพียงครั้งเดียวหลังยืนยัน</p>
         </Panel>

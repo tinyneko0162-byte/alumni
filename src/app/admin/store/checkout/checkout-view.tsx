@@ -5,44 +5,51 @@ import { useState } from "react";
 import { Chip, DataTable, OutlineButton, PageHeading, Panel } from "@/components/admin/ui";
 import { Icon } from "@/components/ui/Icon";
 import { QrScanner } from "@/components/ui/QrScanner";
-import demo from "@/data/demo.json";
+import { lookupWallet, payPos } from "@/lib/actions";
 import { parseQr } from "@/lib/qr-payload";
 import type { getStorePos } from "@/lib/admin-data";
 import { usePosCart } from "@/lib/store-cart";
 
 type Data = Awaited<ReturnType<typeof getStorePos>>;
 
-export function CheckoutView({ store, wallet, recent: initialRecent }: { store: Data["stores"][number]; wallet: Data["wallet"]; recent: Data["recent"] }) {
+export function CheckoutView({ store, recent: initialRecent }: { store: Data["stores"][number]; recent: Data["recent"] }) {
   const { qty, setQty } = usePosCart(store.id);
-  const [scanned, setScanned] = useState(false);
-  const [scanMsg, setScanMsg] = useState<string | null>(null);
+  const [wallet, setWallet] = useState<{ id: string; owner: string; balance: number; status: string } | null>(null);
+  const scanned = wallet !== null;
+  const [scanMsg, setScanMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [paid, setPaid] = useState<string | null>(null);
-  const [balance, setBalance] = useState(wallet.balance);
+  const [payError, setPayError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
   const [recent, setRecent] = useState(initialRecent);
   const p = store.product;
   const total = qty * p.price;
+  const balance = wallet?.balance ?? 0;
   const enough = balance >= total;
+  const onSale = p.status === "ขายอยู่" && p.stock >= qty;
 
-  const onScan = (text: string) => {
+  const onScan = async (text: string) => {
     const qr = parseQr(text);
-    if (qr?.kind === "wallet" && qr.id.toUpperCase() === demo.wallet.id) {
-      setScanned(true);
-      setScanMsg(`สแกนสำเร็จ · ${demo.wallet.owner}`);
-    } else if (qr?.kind === "entry") {
-      setScanMsg("นี่คือ QR บัตรเข้างาน ไม่ใช่ QR กระเป๋า Token");
-    } else {
-      setScanMsg("ไม่พบ Wallet นี้ในระบบ");
-    }
+    if (qr?.kind === "entry") return setScanMsg({ ok: false, text: "นี่คือ QR บัตรเข้างาน ไม่ใช่ QR กระเป๋า Token" });
+    if (qr?.kind !== "wallet") return setScanMsg({ ok: false, text: "ไม่ใช่ QR กระเป๋า Token" });
+    const res = await lookupWallet(qr.id);
+    if (!res.ok) return setScanMsg({ ok: false, text: res.error });
+    setWallet(res.wallet);
+    setPaid(null);
+    setPayError(null);
+    setScanMsg({ ok: true, text: `สแกนสำเร็จ · ${res.wallet.owner}` });
   };
 
-  const pay = () => {
-    if (!scanned || qty === 0 || !enough) return;
-    const no = Math.max(...recent.map((r) => Number(r.id.split("-")[1]))) + 1;
-    const id = `SALE-${String(no).padStart(4, "0")}`;
+  const pay = async () => {
+    if (!wallet || qty === 0 || !enough || !onSale || busy) return;
+    setBusy(true);
+    setPayError(null);
+    const res = await payPos({ storeId: store.id, walletId: wallet.id, qty });
+    setBusy(false);
+    if (!res.ok) return setPayError(res.error);
     const time = new Date().toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
-    setRecent((r) => [{ id, wallet: wallet.id, amount: total, time, status: "สำเร็จ" }, ...r]);
-    setBalance((b) => b - total);
-    setPaid(id);
+    setRecent((r) => [{ id: res.saleId, wallet: `W-•••-${wallet.id.slice(-4)}`, amount: res.total, time, status: "สำเร็จ" }, ...r]);
+    setWallet({ ...wallet, balance: res.balance });
+    setPaid(res.saleId);
     setQty(0);
   };
 
@@ -53,14 +60,14 @@ export function CheckoutView({ store, wallet, recent: initialRecent }: { store: 
       <div className="flex flex-col gap-5 xl:flex-row xl:items-start">
         <div className="flex flex-col gap-5 xl:w-[611px]">
           <Panel title="สแกน Wallet ลูกค้า" aside={<Icon name="a-camera" size={18} />}>
-            <QrScanner onScan={onScan} paused={scanned} className="h-[280px]" />
+            <QrScanner onScan={onScan} className="h-[280px]" />
             {scanMsg && (
-              <p role="status" className={scanned ? "text-[12px] text-admin-ok" : "text-[12px] text-[#c2414b]"}>
-                {scanMsg}
+              <p role="status" className={scanMsg.ok ? "text-[12px] text-admin-ok" : "text-[12px] text-[#c2414b]"}>
+                {scanMsg.text}
               </p>
             )}
             <div className="flex gap-2.5">
-              <OutlineButton icon="a-refresh-cw" className="flex-1" onClick={() => { setScanned(false); setScanMsg(null); }}>
+              <OutlineButton icon="a-refresh-cw" className="flex-1" onClick={() => { setWallet(null); setScanMsg(null); setPaid(null); }}>
                 สแกนใหม่
               </OutlineButton>
               <OutlineButton icon="a-keyboard" onClick={() => { const id = prompt("กรอก Wallet ID")?.trim(); if (id) onScan(`ALUMNI-WALLET:${id}`); }}>
@@ -96,7 +103,7 @@ export function CheckoutView({ store, wallet, recent: initialRecent }: { store: 
           aside={paid ? <Chip tone="ok">บันทึกแล้ว</Chip> : <Chip tone="warn">ยังไม่บันทึก</Chip>}
           className="min-h-[640px] flex-1 [&_h2]:text-[16px]"
         >
-          {scanned ? (
+          {wallet ? (
             <div className="flex items-center gap-[13px] rounded-lg bg-brand-tint p-[15px]">
               <span className="flex size-10 items-center justify-center rounded-[10px] bg-white">
                 <Icon name="a-wallet" size={20} />
@@ -160,15 +167,17 @@ export function CheckoutView({ store, wallet, recent: initialRecent }: { store: 
               <p className="text-[24px] text-admin-ink">ยอดชำระ</p>
               <p className="font-latin text-[29px] text-black">{total} Token</p>
             </div>
-            {scanned && qty > 0 && !enough && <p className="text-[12px] text-danger">ยอด Token ใน Wallet ไม่พอ</p>}
+            {scanned && qty > 0 && !enough && <p className="text-[12px] text-danger">ยอด Token ใน Wallet ไม่พอ (มี {balance.toLocaleString("en-US")} Token)</p>}
+            {qty > 0 && !onSale && <p className="text-[12px] text-danger">สินค้าหยุดขายหรือเหลือไม่พอ (คงเหลือ {p.stock} {p.unit})</p>}
+            {payError && <p role="alert" className="text-[12px] text-danger">{payError}</p>}
             <button
               type="button"
               onClick={pay}
-              disabled={!scanned || qty === 0 || !enough}
+              disabled={!scanned || qty === 0 || !enough || !onSale || busy}
               className="mx-auto mt-2 flex h-[72px] w-full max-w-[388px] items-center justify-center gap-2 rounded-lg bg-brand text-[20px] font-semibold leading-[1.55] text-white transition hover:brightness-95 disabled:opacity-50"
             >
               <Icon name="a-scan-line-white" size={17} />
-              สแกน Wallet เพื่อชำระ
+              {scanned ? (busy ? "กำลังตัดยอด…" : "ยืนยันชำระ") : "สแกน Wallet เพื่อชำระ"}
             </button>
             {paid && (
               <Link href={`/admin/store/pos?store=${store.id}`} className="text-center text-[12px] text-admin-indigo hover:underline">

@@ -35,6 +35,11 @@
           "icon": "tags"
         },
         {
+          "href": "/admin/super/roles",
+          "label": "จัดการบทบาท",
+          "icon": "users"
+        },
+        {
           "href": "/admin/super/logs",
           "label": "บันทึกระบบ",
           "icon": "scroll-text"
