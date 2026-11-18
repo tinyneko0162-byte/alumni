@@ -186,6 +186,25 @@ export async function payPos(input: { storeId: string; walletId: string; qty: nu
   });
 }
 
+/** Store operator cancels a sale: refund the wallet and put the stock back. */
+export async function cancelSale(saleId: string): Promise<Result<{ id: string }>> {
+  if (!(await requireRole("store"))) return { ok: false, error: "ไม่มีสิทธิ์ยกเลิกรายการ" };
+  return updateDb((db) => {
+    const s = db.sales.find((x) => x.id === saleId);
+    if (!s || s.amount === undefined || !s.storeId) return { ok: false as const, error: "ยกเลิกได้เฉพาะรายการที่ขายผ่านระบบนี้" };
+    if (s.status !== "ชำระแล้ว") return { ok: false as const, error: "รายการนี้ไม่ได้อยู่ในสถานะชำระแล้ว" };
+    const st = storePos.stores.find((x) => x.id === s.storeId);
+    const w = db.wallets.find((x) => shortWallet(x.id) === s.wallet);
+    const p = db.catalog.find((c) => c.sku === st?.product.sku);
+    if (w) w.balance += s.amount;
+    if (p) p.stock += s.qty;
+    s.status = "ยกเลิก";
+    s.audit = `${s.audit ?? ""} → ${nowTime()} ยกเลิกรายการ คืน ${s.amount} Token และคืนสต็อก`.trim();
+    addLog(db, { event: `ยกเลิกรายการขาย · คืน ${s.amount} Token`, detail: `${s.productName} × ${s.qty} · ${s.wallet}`, role: "Store Operator", actor: `${s.seller} · ${s.storeId}`, ref: s.id });
+    return { ok: true as const, id: s.id };
+  });
+}
+
 // ---------- token top-up ----------
 
 export async function cashTopup(input: { walletId: string; amount: number }): Promise<Result<{ id: string; balance: number }>> {

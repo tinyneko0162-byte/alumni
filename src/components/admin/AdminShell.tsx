@@ -4,9 +4,8 @@ import { logoutStaff } from "@/lib/actions";
 import { getStaffRole } from "@/lib/session";
 import { Icon } from "@/components/ui/Icon";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
-import { getAdminConfig, getOverview, type RoleKey } from "@/lib/admin-data";
+import { getAdminConfig, type RoleKey } from "@/lib/admin-data";
 import { cx } from "@/lib/format";
-import { NotificationBell } from "./NotificationBell";
 import { Chip } from "./ui";
 
 /**
@@ -27,7 +26,7 @@ export async function AdminShell({
   crumb?: string;
   children: React.ReactNode;
 }) {
-  const [cfg, overview] = await Promise.all([getAdminConfig(), getOverview()]);
+  const cfg = await getAdminConfig();
   const signedIn = await getStaffRole();
   if (!signedIn) redirect("/admin/login");
   if (!cfg.enabled[signedIn]) redirect("/admin/login?disabled=1");
@@ -106,9 +105,7 @@ export async function AdminShell({
           </div>
           <div className="flex items-center gap-[18px]">
             <Chip tone="ok">ระบบพร้อมใช้งาน</Chip>
-            <p className="text-[11px] text-admin-muted max-sm:hidden">{cfg.event.now}</p>
             <ThemeToggle />
-            <NotificationBell items={overview.queues} />
           </div>
         </header>
         {/* compact role menu for small screens */}
