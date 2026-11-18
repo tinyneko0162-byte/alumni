@@ -13,6 +13,7 @@ type Sale = Data["sales"][number] & { debitId?: string; audit?: string };
 const amt = (s: { qty: number; unitPrice?: number; amount?: number }) => s.amount ?? s.qty * (s.unitPrice ?? 0);
 const fmt = (n: number) => n.toLocaleString("en-US");
 
+/** ไม่มีปุ่มเลือกร้านในหน้านี้ — ร้านมาจากหน้าขายสินค้า (cookie alumni-store) */
 export function SalesView({ data }: { data: Data }) {
   const sales = data.sales as Sale[];
   const [q, setQ] = useState("");
