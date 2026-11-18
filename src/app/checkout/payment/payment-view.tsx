@@ -7,7 +7,7 @@ import { BankAccount } from "@/components/user/BankAccount";
 import { OrderSummary } from "@/components/user/OrderSummary";
 import { PrimaryButton } from "@/components/user/PrimaryButton";
 import { SlipUpload } from "@/components/user/SlipUpload";
-import { deliveryOf, includesShirt, includesTicket, summarize, useCart } from "@/lib/cart";
+import { deliveryOf, summarize, useCart } from "@/lib/cart";
 import type { EventInfo } from "@/lib/data";
 import { num } from "@/lib/format";
 
@@ -24,9 +24,9 @@ export function PaymentView({ event }: { event: EventInfo }) {
     setError(null);
     // the buyer is the signed-in account (checked again on the server)
     const res = await submitOrder({
-      purchaseType: cart.purchaseType,
-      friends: includesTicket(cart) ? cart.friends.slice(0, cart.friendTicketQty) : [],
-      shirts: includesShirt(cart) ? cart.shirts : [],
+      self: cart.self,
+      friends: cart.friends,
+      shirts: cart.shirts,
       delivery: deliveryOf(cart),
       address: cart.address,
       slipFile: cart.slip.fileName,

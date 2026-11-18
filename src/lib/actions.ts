@@ -315,8 +315,9 @@ export async function logoutUser() {
 }
 
 export type OrderInput = {
-  purchaseType: "ticket" | "shirt" | "both";
-  /** friends the buyer pays a ticket for (buyer's own ticket is always 1) */
+  /** buyer's own entry ticket */
+  self: boolean;
+  /** friends the buyer pays a ticket for (one ticket each) */
   friends: { name: string; email: string; phone?: string }[];
   shirts: { size: string }[];
   delivery: "pickup" | "delivery";
@@ -334,23 +335,22 @@ export async function submitOrder(input: OrderInput): Promise<Result<{ id: strin
   const user = await getUser();
   if (!user) return { ok: false, error: "กรุณาเข้าสู่ระบบก่อนส่งคำสั่งซื้อ" };
   const { name, email } = user;
-  if (!["ticket", "shirt", "both"].includes(input.purchaseType)) return { ok: false, error: "ประเภทการซื้อไม่ถูกต้อง" };
   if (!input.slipFile?.trim()) return { ok: false, error: "กรุณาแนบสลิปก่อนส่ง" };
 
-  const withTicket = input.purchaseType !== "shirt";
-  const withShirt = input.purchaseType !== "ticket";
-  const friends = withTicket ? (input.friends ?? []).map((f) => ({ name: f.name?.trim() ?? "", email: f.email?.trim() ?? "", phone: f.phone?.trim() || undefined })) : [];
+  const self = !!input.self;
+  const friends = (input.friends ?? []).slice(0, 10).map((f) => ({ name: f.name?.trim() ?? "", email: f.email?.trim() ?? "", phone: f.phone?.trim() || undefined }));
   if (friends.some((f) => !f.name || !f.email.includes("@"))) return { ok: false, error: "กรอกชื่อและอีเมลของเพื่อนให้ครบทุกคน" };
-  const shirts = withShirt ? (input.shirts ?? []).filter((x) => SIZES.has(x.size)) : [];
-  if (withShirt && shirts.length === 0) return { ok: false, error: "เลือกไซซ์เสื้ออย่างน้อย 1 ตัว" };
-  // no ticket = not at the event, so the shirt can only be shipped
-  const delivery = withShirt ? (withTicket ? input.delivery : "delivery") : undefined;
+  const shirts = (input.shirts ?? []).slice(0, 10).filter((x) => SIZES.has(x.size));
+  if (!self && friends.length === 0 && shirts.length === 0) return { ok: false, error: "เลือกบัตรหรือเสื้ออย่างน้อย 1 รายการ" };
+  // a buyer without their own ticket is not at the event, so the shirt can only be shipped
+  const delivery = shirts.length ? (self ? input.delivery : "delivery") : undefined;
   const a = input.address;
-  if (withShirt && delivery === "delivery" && (!a || !a.name?.trim() || !a.line?.trim() || !a.province?.trim() || !/^\d{5}$/.test(a.zip ?? ""))) {
-    return { ok: false, error: withTicket ? "กรอกที่อยู่จัดส่งเสื้อให้ครบ" : "ซื้อเสื้ออย่างเดียวต้องเลือกส่งที่บ้าน กรุณากรอกที่อยู่" };
+  if (shirts.length && delivery === "delivery" && (!a || !a.name?.trim() || !a.line?.trim() || !a.province?.trim() || !/^\d{5}$/.test(a.zip ?? ""))) {
+    return { ok: false, error: self ? "กรอกที่อยู่จัดส่งเสื้อให้ครบ" : "ไม่ได้ซื้อบัตรของตัวเองต้องส่งเสื้อที่บ้าน กรุณากรอกที่อยู่" };
   }
 
-  const ticketQty = withTicket ? 1 + friends.length : 0;
+  const ticketQty = (self ? 1 : 0) + friends.length;
+  const purchaseType: "ticket" | "shirt" | "both" = ticketQty && shirts.length ? "both" : ticketQty ? "ticket" : "shirt";
   const amount = ticketQty * shopProducts.ticket.price + shirts.length * shopProducts.shirt.price;
   const label = [ticketQty ? `บัตร ${ticketQty} ใบ` : "", shirts.length ? `เสื้อ ${shirts.length} ตัว` : ""].filter(Boolean).join(" + ");
 
@@ -361,7 +361,7 @@ export async function submitOrder(input: OrderInput): Promise<Result<{ id: strin
       id, submittedAt: d.toLocaleTimeString("th-TH", { timeZone: "Asia/Bangkok", hour: "2-digit", minute: "2-digit" }), name: name.slice(0, 60), email: email.slice(0, 80),
       ticketType: label, qty: ticketQty, amount, slipFile: input.slipFile.slice(0, 80), fromAccount: "xxx-x-xx482-1", paidAt: `${nowStamp()} น.`, ref: `SPU-T-${Math.floor(100 + Math.random() * 900)}`,
       duplicateRef: false, status: "pending", ticketIds: [], fromAttendee: true,
-      purchaseType: input.purchaseType, friends, shirts, delivery, address: delivery === "delivery" ? a : null,
+      purchaseType, self, friends, shirts, delivery, address: delivery === "delivery" ? a : null,
       shirtStatus: shirts.length ? "waiting" : undefined,
     });
     addLog(db, { event: `ผู้ร่วมงานส่งสลิป ${label} ฿${amount}`, role: "ผู้ร่วมงาน", actor: name.slice(0, 40), ref: id, result: "รอตรวจ" });
@@ -377,13 +377,15 @@ export async function orderStatus(id: string): Promise<{
   holders?: { ticketId: string; name: string; email: string }[];
   shirt?: { count: number; delivery?: string; status?: string };
   sentAt?: string;
+  /** buyer also has their own ticket (it is listed first) */
+  self?: boolean;
 }> {
   const o = readDb().orders.find((x) => x.id === id);
   if (!o) return { status: "unknown" };
   const shirt = o.shirts?.length ? { count: o.shirts.length, delivery: o.delivery, status: o.shirtStatus } : undefined;
   if (o.status !== "approved") return { status: o.status, shirt, sentAt: o.paidAt };
   const holders = (o.holders ?? o.ticketIds.map((ticketId) => ({ ticketId, name: o.name, email: o.email }))).map(({ ticketId, name, email }) => ({ ticketId, name, email }));
-  return { status: "approved", link: o.ticketIds[0] ? `/t/${signTicket(o.ticketIds[0])}` : undefined, ticketIds: o.ticketIds, holders, shirt, sentAt: o.paidAt };
+  return { status: "approved", link: o.ticketIds[0] ? `/t/${signTicket(o.ticketIds[0])}` : undefined, ticketIds: o.ticketIds, holders, shirt, sentAt: o.paidAt, self: o.self !== false };
 }
 
 export async function resolveSlip(id: string, decision: "approve" | "reject"): Promise<Result<{ ticketIds: string[] }>> {
@@ -393,11 +395,13 @@ export async function resolveSlip(id: string, decision: "approve" | "reject"): P
     if (!o || o.status !== "pending") return { ok: false as const, error: "รายการนี้ถูกดำเนินการไปแล้ว" };
     if (decision === "approve") {
       o.status = "approved";
-      // shirt-only orders get no ticket; ticket 1 is the buyer's, the rest go to the friends listed
+      // shirt-only orders get no ticket
       o.ticketIds = Array.from({ length: o.qty }, (_, i) => (i === 0 ? o.id : `${o.id}-${i + 1}`));
+      // the buyer's own ticket first (when bought), then one per friend in the order they were entered
+      const people = [...(o.self !== false ? [{ name: o.name, email: o.email, phone: undefined as string | undefined }] : []), ...(o.friends ?? [])];
       o.holders = o.ticketIds.map((ticketId, i) => {
-        const f = i === 0 ? null : o.friends?.[i - 1];
-        return f ? { ticketId, name: f.name, email: f.email, phone: f.phone } : { ticketId, name: o.name, email: o.email };
+        const p = people[i] ?? { name: o.name, email: o.email, phone: undefined };
+        return { ticketId, name: p.name, email: p.email, phone: p.phone };
       });
       // every ticket comes with 200 Token in its holder's wallet (ready even before a friend signs up)
       for (const h of o.holders) {
@@ -428,7 +432,7 @@ export async function checkIn(ticketId: string): Promise<Result<{ status: "ok" |
     const name = holder?.name ?? demo.tickets.find((t) => t.id === id)?.name;
     // the buyer's own ticket: remind the gate staff about shirts waiting to be picked up
     const o = holder?.order;
-    const shirt = o && o.ticketIds[0] === id && o.delivery === "pickup" && o.shirts?.length && o.shirtStatus !== "picked" ? `มีเสื้อรุ่นรอรับ ${o.shirts.map((x) => x.size).join(", ")}` : undefined;
+    const shirt = o && o.self !== false && o.ticketIds[0] === id && o.delivery === "pickup" && o.shirts?.length && o.shirtStatus !== "picked" ? `มีเสื้อรุ่นรอรับ ${o.shirts.map((x) => x.size).join(", ")}` : undefined;
     if (!name) return { ok: false as const, error: `ไม่พบบัตร ${id} ในระบบ หรือยังไม่ได้รับการอนุมัติ` };
     const time = nowTime();
     const recordId = nextId("ATT", [...db.checkins.map((a) => a.recordId), ...financeAttendance.attendees.map((a) => a.recordId)].filter((x): x is string => !!x));

@@ -259,7 +259,7 @@ export async function getShirtOrders() {
       sizes: o.shirts!.map((x) => x.size),
       delivery: o.delivery ?? "pickup",
       address: o.address ?? null,
-      hasTicket: o.ticketIds.length > 0 || o.qty > 0,
+      hasTicket: o.self !== false && o.qty > 0, // buyer comes to the event
       shirtStatus: o.shirtStatus ?? "waiting",
       shirtUpdatedAt: o.shirtUpdatedAt ?? "",
     }));

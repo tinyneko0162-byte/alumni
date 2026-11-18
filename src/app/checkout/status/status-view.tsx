@@ -28,7 +28,7 @@ export function StatusView({ uploadedAt }: { uploadedAt: string }) {
   const approved = state.status === "approved";
   const rejected = state.status === "rejected";
   const tickets = state.holders ?? [];
-  const friendTickets = tickets.slice(1);
+  const friendTickets = state.self === false ? tickets : tickets.slice(1);
   const shirt = state.shirt;
   const tone = approved ? "ok" : rejected ? "bad" : "wait";
 
@@ -47,8 +47,10 @@ export function StatusView({ uploadedAt }: { uploadedAt: string }) {
           <h2 className="text-[26px] font-bold text-ink">{approved ? "อนุมัติแล้ว ยินดีต้อนรับ!" : rejected ? "สลิปไม่ผ่านการตรวจสอบ" : "ส่งหลักฐานเรียบร้อยแล้ว"}</h2>
           <p className="text-[12px] leading-[1.7] text-black">
             {approved
-              ? tickets.length
+              ? tickets.length > friendTickets.length
                 ? "ทีมงานตรวจสลิปเรียบร้อยแล้ว เปิดบัตรเข้างานและ QR ของคุณได้เลย"
+                : friendTickets.length
+                ? "ทีมงานตรวจสลิปเรียบร้อยแล้ว ระบบส่งลิงก์บัตรให้เพื่อนทางอีเมล"
                 : "ทีมงานตรวจสลิปเรียบร้อยแล้ว เราจะจัดส่งเสื้อตามที่อยู่ที่คุณกรอกไว้"
               : rejected ? "กรุณาติดต่อทีมงานหรือส่งหลักฐานใหม่อีกครั้ง" : "เราได้รับสลิปของคุณแล้วทีมงานกำลังรอตรวจสอบข้อมูลการโอน"}
           </p>
@@ -86,7 +88,7 @@ export function StatusView({ uploadedAt }: { uploadedAt: string }) {
                 : ["ทีมงานตรวจสอบยอดโอนและสลิป", "หน้านี้จะอัปเดตเองเมื่อทีมงานอนุมัติ และแจ้งผลทางอีเมลที่คุณลงทะเบียน"],
             ]
           : [
-              ...(tickets.length ? [["แสดง QR ที่ประตูงาน", `บัตร ${tickets.map((t) => t.ticketId).join(", ")} ใช้เข้างานได้คนละ 1 ครั้ง`]] : []),
+              ...(tickets.length > friendTickets.length ? [["แสดง QR ที่ประตูงาน", `บัตร ${tickets[0]?.ticketId} ของคุณ ใช้เข้างานได้ 1 ครั้ง`]] : []),
               ...(friendTickets.length ? [["เพื่อนได้รับลิงก์บัตรทางอีเมล", friendTickets.map((t) => `${t.name} (${t.email})`).join(", ")]] : []),
               ...(shirt ? [[shirt.delivery === "delivery" ? "จัดส่งเสื้อถึงบ้าน" : "รับเสื้อที่หน้างาน", shirt.status === "shipped" ? "ส่งเสื้อแล้ว" : shirt.status === "picked" ? "รับเสื้อแล้ว" : `เสื้อ ${shirt.count} ตัว ${shirt.delivery === "delivery" ? "จะส่งภายใน 14 วันหลังวันงาน" : "แสดงบัตรที่จุดรับเสื้อ"}`]] : []),
             ]
@@ -103,7 +105,7 @@ export function StatusView({ uploadedAt }: { uploadedAt: string }) {
         ))}
       </section>
 
-      {approved && tickets.length ? (
+      {approved && tickets.length > friendTickets.length ? (
         <Link href="/me/ticket" className="text-center text-[12px] font-semibold text-brand-deep underline-offset-2 hover:underline">
           เปิดบัตรของฉัน
         </Link>

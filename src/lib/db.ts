@@ -53,6 +53,8 @@ export type Order = (typeof ticketSlips.requests)[number] & {
   linkSent?: boolean;
   // filled for orders placed from the attendee pages
   purchaseType?: "ticket" | "shirt" | "both";
+  /** buyer bought their own ticket (false = only for friends and/or shirts) */
+  self?: boolean;
   shirts?: { size: string }[];
   delivery?: "pickup" | "delivery";
   address?: ShipAddress | null;

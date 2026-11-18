@@ -120,7 +120,7 @@ export function ShirtsView({ data }: { data: Data }) {
                 header: "การรับเสื้อ",
                 render: (r) =>
                   r.delivery === "delivery" ? (
-                    <span className="flex flex-col"><span className="text-admin-ink">ส่งที่บ้าน{!r.hasTicket && " (ซื้อเสื้ออย่างเดียว)"}</span><span>{fullAddress(r)}</span></span>
+                    <span className="flex flex-col"><span className="text-admin-ink">ส่งที่บ้าน{!r.hasTicket && " (ผู้ซื้อไม่ได้มางาน)"}</span><span>{fullAddress(r)}</span></span>
                   ) : (
                     <span className="text-admin-ink">รับที่หน้างาน</span>
                   ),
@@ -151,7 +151,7 @@ export function ShirtsView({ data }: { data: Data }) {
         )}
       </Panel>
 
-      <Guidance>ซื้อเสื้ออย่างเดียว (ไม่มีบัตรเข้างาน) ระบบบังคับให้ส่งที่บ้าน • ทุกครั้งที่บันทึกสถานะเสื้อ ระบบจะลงหน้า “บันทึกระบบ” อัตโนมัติ</Guidance>
+      <Guidance>ผู้ซื้อที่ไม่มีบัตรเข้างานของตัวเอง ระบบบังคับให้ส่งเสื้อที่บ้าน • ทุกครั้งที่บันทึกสถานะเสื้อ ระบบจะลงหน้า “บันทึกระบบ” อัตโนมัติ</Guidance>
     </>
   );
 }
