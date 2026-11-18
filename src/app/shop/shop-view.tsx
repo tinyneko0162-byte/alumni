@@ -9,6 +9,8 @@ import { includesShirt, includesTicket, summarize, useCart, type PurchaseType } 
 import type { Products } from "@/lib/data";
 import { baht, cx } from "@/lib/format";
 
+const emptyAddress = { name: "", phone: "", line: "", subdistrict: "", district: "", province: "", zip: "" };
+
 export function ShopView({ eventName, products }: { eventName: string; products: Products }) {
   const { cart, update } = useCart();
   const [chartOpen, setChartOpen] = useState(false);
@@ -16,6 +18,30 @@ export function ShopView({ eventName, products }: { eventName: string; products:
   const hasTicket = includesTicket(cart);
   const hasShirt = includesShirt(cart);
   const needsFriendInfo = hasTicket && cart.friendTicketQty > 0;
+
+  // ===== ที่อยู่จัดส่ง =====
+  const [addrOpen, setAddrOpen] = useState(false);
+const [addr, setAddr] = useState(cart.address ?? emptyAddress);
+const addrSaved = !!cart.address;
+  const addrValid =
+    addr.name.trim() !== "" &&
+    addr.phone.replace(/\D/g, "").length >= 9 &&
+    addr.line.trim() !== "" &&
+    addr.subdistrict.trim() !== "" &&
+    addr.district.trim() !== "" &&
+    addr.province.trim() !== "" &&
+    /^\d{5}$/.test(addr.zip);
+
+ const saveAddress = () => {
+  if (!addrValid) return;
+  update({ address: addr });
+  setAddrOpen(false);
+};
+  // ปิด popup โดยยังไม่เคยบันทึกที่อยู่ → กลับไปเลือก "รับเสื้อที่หน้างาน"
+  const closeAddress = () => {
+    if (!addrSaved) update({ delivery: "pickup" });
+    setAddrOpen(false);
+  };
 
   const setShirtQty = (qty: number) =>
     update((c) => {
@@ -116,7 +142,10 @@ export function ShopView({ eventName, products }: { eventName: string; products:
                     name="delivery"
                     className="sr-only"
                     checked={on}
-                    onChange={() => update({ delivery: d.id as "pickup" | "delivery" })}
+                    onChange={() => {
+                      update({ delivery: d.id as "pickup" | "delivery" });
+                      if (d.id === "delivery") setAddrOpen(true); // เลือกส่งที่บ้าน → เปิด popup
+                    }}
                   />
                   <span
                     className={cx(
@@ -131,6 +160,30 @@ export function ShopView({ eventName, products }: { eventName: string; products:
               );
             })}
           </div>
+
+          {/* สรุปที่อยู่ที่กรอกแล้ว */}
+          {cart.delivery === "delivery" && cart.address && (
+  <div className="flex items-start justify-between gap-3 rounded-xl bg-surface-muted p-3">
+    <div className="flex flex-col gap-0.5 text-[12px] leading-[1.55] text-ink">
+      <p className="font-semibold">
+        {cart.address.name} · {cart.address.phone}
+      </p>
+      <p className="text-ink/70">
+        {cart.address.line} ต.{cart.address.subdistrict} อ.{cart.address.district} จ.{cart.address.province} {cart.address.zip}
+      </p>
+    </div>
+    <button
+      type="button"
+      onClick={() => {
+        setAddr(cart.address!);
+        setAddrOpen(true);
+      }}
+      className="shrink-0 text-[11px] text-brand-deep hover:underline"
+    >
+      แก้ไข
+    </button>
+  </div>
+)}
         </ProductCard>
       )}
 
@@ -154,11 +207,12 @@ export function ShopView({ eventName, products }: { eventName: string; products:
       <PrimaryButton
         softBorder
         href={needsFriendInfo ? "/shop/friend" : "/checkout/payment"}
-        disabled={items.length === 0}
+        disabled={items.length === 0 || (hasShirt && cart.delivery === "delivery" && !addrSaved)}
       >
         {needsFriendInfo ? "กรอกข้อมูลของเพื่อน" : "ดำเนินการชำระเงิน"}
       </PrimaryButton>
 
+      {/* ===== Popup ตารางไซซ์ ===== */}
       <Dialog open={chartOpen} onClose={() => setChartOpen(false)} title="ตารางไซซ์เสื้อ">
         <table className="w-full text-center text-[13px] text-ink">
           <thead>
@@ -180,7 +234,74 @@ export function ShopView({ eventName, products }: { eventName: string; products:
         </table>
         <p className="mt-3 text-[11px] leading-[1.55] text-ink/60">{products.shirt.sizeChart.note}</p>
       </Dialog>
+
+      {/* ===== Popup รายละเอียดการจัดส่ง ===== */}
+      <Dialog open={addrOpen} onClose={closeAddress} title="รายละเอียดการจัดส่ง">
+        <div className="flex flex-col gap-3.5">
+          <TextInput label="ชื่อผู้รับ *" value={addr.name} onChange={(v) => setAddr({ ...addr, name: v })} />
+          <TextInput label="เบอร์โทรศัพท์ *" inputMode="tel" value={addr.phone} onChange={(v) => setAddr({ ...addr, phone: v })} />
+          <TextInput label="ที่อยู่ (บ้านเลขที่ / ซอย / ถนน) *" value={addr.line} onChange={(v) => setAddr({ ...addr, line: v })} />
+          <div className="flex gap-3">
+            <TextInput label="ตำบล / แขวง *" value={addr.subdistrict} onChange={(v) => setAddr({ ...addr, subdistrict: v })} />
+            <TextInput label="อำเภอ / เขต *" value={addr.district} onChange={(v) => setAddr({ ...addr, district: v })} />
+          </div>
+          <div className="flex gap-3">
+            <TextInput label="จังหวัด *" value={addr.province} onChange={(v) => setAddr({ ...addr, province: v })} />
+            <TextInput
+              label="รหัสไปรษณีย์ *"
+              inputMode="numeric"
+              maxLength={5}
+              value={addr.zip}
+              onChange={(v) => setAddr({ ...addr, zip: v.replace(/\D/g, "") })}
+            />
+          </div>
+          <div className="mt-1 flex gap-2.5">
+            <button
+              type="button"
+              onClick={closeAddress}
+              className="h-11 flex-1 rounded-xl border border-line text-[13px] font-semibold text-ink hover:bg-surface-muted"
+            >
+              ยกเลิก
+            </button>
+            <button
+              type="button"
+              onClick={saveAddress}
+              disabled={!addrValid}
+              className="h-11 flex-1 rounded-xl bg-brand-deep text-[13px] font-semibold text-white transition disabled:opacity-40"
+            >
+              บันทึกที่อยู่
+            </button>
+          </div>
+        </div>
+      </Dialog>
     </div>
+  );
+}
+
+function TextInput({
+  label,
+  value,
+  onChange,
+  inputMode,
+  maxLength,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"];
+  maxLength?: number;
+}) {
+  return (
+    <label className="flex min-w-0 flex-1 flex-col gap-1.5">
+      <span className="text-[12px] font-semibold leading-[1.55] text-ink">{label}</span>
+      <input
+        value={value}
+        inputMode={inputMode}
+        maxLength={maxLength}
+        onChange={(e) => onChange(e.target.value)}
+        className="h-11 w-full rounded-lg border border-line bg-transparent px-3 text-[13px] text-ink outline-none focus:border-brand-deep"
+      />
+    </label>
   );
 }
 

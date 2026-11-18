@@ -22,15 +22,27 @@ export function PaymentView({ event }: { event: EventInfo }) {
     if (!cart.slip || busy) return;
     setBusy(true);
     setError(null);
-    let profile = { name: "กิตติพงศ์ วัฒนกุล", email: "kittiphong@example.com" };
+    let profile = {
+      name: "กิตติพงศ์ วัฒนกุล",
+      email: "kittiphong@example.com",
+    };
     try {
       const raw = localStorage.getItem("alumni-profile");
       if (raw) profile = { ...profile, ...JSON.parse(raw) };
     } catch {
       /* use sample profile */
     }
-    const qty = items.filter((i) => i.label.includes("บัตร")).reduce((n, i) => n + i.qty, 0) || 1;
-    const res = await submitOrder({ ...profile, ticketType: items[0]?.label ?? "บัตร", qty, amount: total, slipFile: cart.slip.fileName });
+    const qty =
+      items
+        .filter((i) => i.label.includes("บัตร"))
+        .reduce((n, i) => n + i.qty, 0) || 1;
+    const res = await submitOrder({
+      ...profile,
+      ticketType: items[0]?.label ?? "บัตร",
+      qty,
+      amount: total,
+      slipFile: cart.slip.fileName,
+    });
     setBusy(false);
     if (!res.ok) return setError(res.error);
     try {
@@ -55,13 +67,45 @@ export function PaymentView({ event }: { event: EventInfo }) {
       <section className="overflow-hidden rounded-[20px] border border-line bg-white">
         <div className="flex flex-col items-center gap-[5px] bg-brand-deep p-[18px]">
           <p className="text-[12px] text-brand-lilac">ยอดที่ต้องโอน (บาท)</p>
-          <p className="font-latin text-[36px] font-bold text-white">{num(total)}</p>
-          <p className="text-[10px] text-brand-lilac">กรุณาโอนให้ตรงยอด เพื่อความรวดเร็วในการตรวจสอบ</p>
+          <p className="font-latin text-[36px] font-bold text-white">
+            {num(total)}
+          </p>
+          <p className="text-[10px] text-brand-lilac">
+            กรุณาโอนให้ตรงยอด เพื่อความรวดเร็วในการตรวจสอบ
+          </p>
         </div>
         <BankAccount account={event.bankAccount} />
       </section>
 
-      <OrderSummary orderId={cart.orderId} items={items} note={note} total={total} />
+      <OrderSummary
+        orderId={cart.orderId}
+        items={items}
+        note={note}
+        total={total}
+      />
+      {cart.delivery === "delivery" && cart.address && (
+        <section className="flex flex-col gap-2 rounded-[20px] border border-line bg-white p-4">
+          <div className="flex items-center justify-between">
+            <p className="text-[15px] font-semibold text-ink">
+              ที่อยู่จัดส่งเสื้อ
+            </p>
+            <button
+              type="button"
+              onClick={() => router.push("/shop")}
+              className="text-[11px] text-brand-deep hover:underline"
+            >
+              แก้ไข
+            </button>
+          </div>
+          <p className="text-[13px] font-medium text-ink">
+            {cart.address.name} · {cart.address.phone}
+          </p>
+          <p className="text-[12px] leading-[1.55] text-ink/70">
+            {cart.address.line} ต.{cart.address.subdistrict} อ.
+            {cart.address.district} จ.{cart.address.province} {cart.address.zip}
+          </p>
+        </section>
+      )}
 
       <SlipUpload
         value={cart.slip}

@@ -7,6 +7,15 @@ import type { SummaryItem } from "@/components/user/OrderSummary";
 
 export type PurchaseType = "ticket" | "shirt" | "both";
 export type Delivery = "pickup" | "delivery";
+export type Address = {
+  name: string;
+  phone: string;
+  line: string;
+  subdistrict: string;
+  district: string;
+  province: string;
+  zip: string;
+};
 
 export type Cart = {
   orderId: string;
@@ -15,6 +24,7 @@ export type Cart = {
   friendTicketQty: number;
   shirts: { size: string }[];
   delivery: Delivery;
+  address: Address | null;
   slip: { fileName: string; sizeLabel: string } | null;
 };
 
@@ -27,6 +37,7 @@ const initialCart: Cart = {
   friendTicketQty: order.friendTicketQty,
   shirts: order.shirts,
   delivery: order.delivery as Delivery,
+  address: null, 
   slip: { fileName: order.slip.fileName, sizeLabel: order.slip.sizeLabel },
 };
 
