@@ -19,6 +19,8 @@ export function ProductsView({ data }: { data: Data }) {
   const current = products.find((p) => p.sku === selected) ?? products[0];
   const [form, setForm] = useState({ stock: String(current.stock), price: String(current.price), status: current.status });
 
+  const [editOpen, setEditOpen] = useState(false); // popup แก้ไขสินค้า
+
   const [addOpen, setAddOpen] = useState(false);
   const blank = { name: "", store: data.storeTabs[0], category: "สิ่งของ", price: "", stock: "" };
   const [add, setAdd] = useState(blank);
@@ -48,6 +50,13 @@ export function ProductsView({ data }: { data: Data }) {
     setForm({ stock: String(p.stock), price: String(p.price), status: p.status });
   };
 
+  // กดปุ่ม "แก้ไข" ในตาราง → เลือกสินค้า + เปิด popup
+  const openEdit = (p: Product) => {
+    select(p);
+    setMessage(null);
+    setEditOpen(true);
+  };
+
   const shown = useMemo(
     () =>
       products.filter(
@@ -65,6 +74,7 @@ export function ProductsView({ data }: { data: Data }) {
     setSaving(false);
     if (!res.ok) return setMessage({ ok: false, text: res.error });
     setProducts((all) => all.map((p) => (p.sku === current.sku ? res.product : p)));
+    setEditOpen(false); // บันทึกสำเร็จแล้วปิด popup
     setMessage({ ok: true, text: `บันทึกแล้ว · หน้าขายสินค้าจะใช้ราคา ${res.product.price} Token ทันที` });
   };
 
@@ -72,8 +82,8 @@ export function ProductsView({ data }: { data: Data }) {
     <>
       <PageHeading title={data.title} description={data.description} actions={<BrandButton icon="a-plus-white" onClick={() => setAddOpen(true)}>เพิ่มสินค้า</BrandButton>} />
 
-      {message && (
-        <p role="status" className={cx("rounded-lg p-3 text-[13px]", message.ok ? "bg-admin-ok-tint text-admin-ok" : "bg-[#fdecee] text-[#c2414b]")}>
+      {message && message.ok && (
+        <p role="status" className="rounded-lg bg-admin-ok-tint p-3 text-[13px] text-admin-ok">
           {message.text}
         </p>
       )}
@@ -82,115 +92,125 @@ export function ProductsView({ data }: { data: Data }) {
         <p className="flex-1 text-[12px] leading-[1.55] text-black">{data.guidance}</p>
       </div>
 
-      <div className="flex flex-col gap-5 xl:flex-row xl:items-start">
-        <Panel title="รายการสินค้า" className="min-h-[600px] flex-1">
-          <div role="tablist" className="flex gap-2 overflow-x-auto border-b border-admin-line">
-            {["ทุกร้าน", ...data.storeTabs].map((t) => (
-              <button
-                key={t}
-                role="tab"
-                aria-selected={tab === t}
-                onClick={() => setTab(t)}
-                className={cx(
-                  "-mb-px shrink-0 border-b-2 px-4 py-[11px] text-[13px] leading-[1.55]",
-                  tab === t ? "border-admin-indigo font-semibold text-admin-indigo" : "border-transparent text-admin-muted hover:text-admin-ink",
-                )}
-              >
-                {t}
-              </button>
-            ))}
-          </div>
-          <SearchBox value={query} onChange={setQuery} placeholder="ค้นหาชื่อสินค้า / ร้านค้า" />
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[520px] border-separate border-spacing-0 text-left text-[12px] leading-[1.55]">
-              <thead>
-                <tr className="text-[11px] text-admin-muted">
-                  <th className="rounded-l-md bg-admin-head px-3 py-2.5 font-semibold">สินค้า / ร้านค้า / SKU</th>
-                  <th className="w-[119px] bg-admin-head px-3 py-2.5 font-semibold">ราคา Token / บาท</th>
-                  <th className="w-[124px] bg-admin-head px-3 py-2.5 font-semibold">สถานะ / Stock</th>
-                  <th className="w-[74px] rounded-r-md bg-admin-head px-3 py-2.5 font-semibold">แก้ไข</th>
+      <Panel title="รายการสินค้า" className="min-h-[600px]">
+        <div role="tablist" className="flex gap-2 overflow-x-auto border-b border-admin-line">
+          {["ทุกร้าน", ...data.storeTabs].map((t) => (
+            <button
+              key={t}
+              role="tab"
+              aria-selected={tab === t}
+              onClick={() => setTab(t)}
+              className={cx(
+                "-mb-px shrink-0 border-b-2 px-4 py-[11px] text-[13px] leading-[1.55]",
+                tab === t ? "border-admin-indigo font-semibold text-admin-indigo" : "border-transparent text-admin-muted hover:text-admin-ink",
+              )}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
+        <SearchBox value={query} onChange={setQuery} placeholder="ค้นหาชื่อสินค้า / ร้านค้า" />
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[520px] border-separate border-spacing-0 text-left text-[12px] leading-[1.55]">
+            <thead>
+              <tr className="text-[11px] text-admin-muted">
+                <th className="rounded-l-md bg-admin-head px-3 py-2.5 font-semibold">สินค้า / ร้านค้า / SKU</th>
+                <th className="w-[119px] bg-admin-head px-3 py-2.5 font-semibold">ราคา Token / บาท</th>
+                <th className="w-[124px] bg-admin-head px-3 py-2.5 font-semibold">สถานะ / Stock</th>
+                <th className="w-[74px] rounded-r-md bg-admin-head px-3 py-2.5 font-semibold">แก้ไข</th>
+              </tr>
+            </thead>
+            <tbody>
+              {shown.map((p) => (
+                <tr key={p.sku}>
+                  <td className="h-16 border-b border-admin-line px-3 text-admin-ink">
+                    <p className="font-medium">{p.name}</p>
+                    <p className="font-bold">{p.store}</p>
+                  </td>
+                  <td className="border-b border-admin-line px-3 text-admin-muted">
+                    <p>{p.price} Token</p>
+                    <p>{p.price} บาท</p>
+                  </td>
+                  <td className="border-b border-admin-line px-3">
+                    <Chip tone={p.status === "ขายอยู่" ? "ok" : "muted"}>{p.status}</Chip>
+                  </td>
+                  <td className="border-b border-admin-line px-3">
+                    <button type="button" onClick={() => openEdit(p)} className="text-admin-muted hover:text-brand">
+                      แก้ไข
+                    </button>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {shown.map((p) => (
-                  <tr key={p.sku} className={p.sku === current.sku ? "bg-brand-tint/50" : undefined}>
-                    <td className="h-16 border-b border-admin-line px-3 text-admin-ink">
-                      <p className="font-medium">{p.name}</p>
-                      <p className="font-bold">{p.store}</p>
-                    </td>
-                    <td className="border-b border-admin-line px-3 text-admin-muted">
-                      <p>{p.price} Token</p>
-                      <p>{p.price} บาท</p>
-                    </td>
-                    <td className="border-b border-admin-line px-3">
-                      <Chip tone={p.status === "ขายอยู่" ? "ok" : "muted"}>{p.status}</Chip>
-                    </td>
-                    <td className="border-b border-admin-line px-3">
-                      <button type="button" onClick={() => select(p)} className="text-admin-muted hover:text-brand">
-                        แก้ไข
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="mt-auto flex flex-wrap items-center justify-between gap-3">
+          <p className="text-[11px] leading-[1.55] text-admin-muted">
+            แสดง 1–{Math.min(data.pageSize, shown.length)} จาก {data.totalProducts} สินค้า
+          </p>
+          <div className="flex gap-2">
+            <OutlineButton icon="a-chevron-left" disabled>ก่อนหน้า</OutlineButton>
+            <span className="rounded-md bg-admin-indigo-tint p-2.5 text-[12px] leading-[1.55] text-admin-indigo">1</span>
+            <OutlineButton icon="a-chevron-right-dark" disabled>ถัดไป</OutlineButton>
           </div>
-          <div className="mt-auto flex flex-wrap items-center justify-between gap-3">
-            <p className="text-[11px] leading-[1.55] text-admin-muted">
-              แสดง 1–{Math.min(data.pageSize, shown.length)} จาก {data.totalProducts} สินค้า
-            </p>
-            <div className="flex gap-2">
-              <OutlineButton icon="a-chevron-left" disabled>ก่อนหน้า</OutlineButton>
-              <span className="rounded-md bg-admin-indigo-tint p-2.5 text-[12px] leading-[1.55] text-admin-indigo">1</span>
-              <OutlineButton icon="a-chevron-right-dark" disabled>ถัดไป</OutlineButton>
-            </div>
-          </div>
-        </Panel>
+        </div>
+      </Panel>
 
-        <div className="flex flex-col gap-5 xl:w-[350px]">
-          <Panel title="แก้ไขราคาสินค้า">
-            <LockedField label="ชื่อสินค้า" value={current.name} />
-            <LockedField label="ร้านค้า" value={`${current.store} · ${current.storeCode}`} />
-            <LockedField label="หมวดหมู่" value={current.category} />
-            <Field label="Stock" inputMode="numeric" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} hint={`หน่วย: ${current.unit}`} />
-            <Field
-              label="ราคา Token / บาท *"
-              inputMode="numeric"
-              value={form.price}
-              onChange={(e) => setForm({ ...form, price: e.target.value })}
-              hint="ใช้ราคาเดียวกันทุกอุปกรณ์ของร้าน • 1 Token = 1 บาท"
-            />
-            <label className="flex flex-col gap-1.5">
-              <span className="text-[12px] font-semibold leading-[1.55] text-admin-ink">สถานะการขาย</span>
-              <select
-                value={form.status}
-                onChange={(e) => setForm({ ...form, status: e.target.value })}
-                className="min-h-[44px] rounded-lg border border-admin-line bg-white px-3 text-[13px] text-admin-ink outline-none focus:border-brand-soft"
-              >
-                <option value="ขายอยู่">เปิดขาย</option>
-                <option value="ปิดขาย">ปิดขาย</option>
-              </select>
-            </label>
-            <div className="h-px bg-admin-line" />
-            <Detail label="ราคาปัจจุบัน" value={`${current.price} Token / ${current.price} บาท`} />
-            <Detail label="อัปเดตล่าสุด" value={current.updatedAt} />
-            <BrandButton icon="a-save-white" onClick={save} className="w-full">
+      {/* การตั้งค่าเติม Token ย้ายมาอยู่ใต้ตารางแทน */}
+      <Panel title="การตั้งค่าเติม Token">
+        <div className="flex items-center justify-between leading-[1.55]">
+          <p className="text-[12px] text-admin-muted">อัตราแลกเปลี่ยนของงาน</p>
+          <p className="text-[13px] font-medium text-admin-indigo">{data.exchangeRate}</p>
+        </div>
+        <div className="flex items-start gap-2.5 rounded-lg bg-warning-tint p-3">
+          <Icon name="a-info-warn" size={18} />
+          <p className="flex-1 text-[12px] leading-[1.55] text-admin-warn">{data.topUpNote}</p>
+        </div>
+      </Panel>
+
+      {/* ===== Popup แก้ไขราคาสินค้า ===== */}
+      <Dialog open={editOpen} onClose={() => setEditOpen(false)} title="แก้ไขราคาสินค้า">
+        <div className="flex flex-col gap-4">
+          {message && !message.ok && (
+            <p role="alert" className="rounded-lg bg-[#fdecee] p-3 text-[13px] text-[#c2414b]">
+              {message.text}
+            </p>
+          )}
+          <LockedField label="ชื่อสินค้า" value={current.name} />
+          <LockedField label="ร้านค้า" value={`${current.store} · ${current.storeCode}`} />
+          <LockedField label="หมวดหมู่" value={current.category} />
+          <Field label="Stock" inputMode="numeric" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} hint={`หน่วย: ${current.unit}`} />
+          <Field
+            label="ราคา Token / บาท *"
+            inputMode="numeric"
+            value={form.price}
+            onChange={(e) => setForm({ ...form, price: e.target.value })}
+            hint="ใช้ราคาเดียวกันทุกอุปกรณ์ของร้าน • 1 Token = 1 บาท"
+          />
+          <label className="flex flex-col gap-1.5">
+            <span className="text-[12px] font-semibold leading-[1.55] text-admin-ink">สถานะการขาย</span>
+            <select
+              value={form.status}
+              onChange={(e) => setForm({ ...form, status: e.target.value })}
+              className="min-h-[44px] rounded-lg border border-admin-line bg-white px-3 text-[13px] text-admin-ink outline-none focus:border-brand-soft"
+            >
+              <option value="ขายอยู่">เปิดขาย</option>
+              <option value="ปิดขาย">ปิดขาย</option>
+            </select>
+          </label>
+          <div className="h-px bg-admin-line" />
+          <Detail label="ราคาปัจจุบัน" value={`${current.price} Token / ${current.price} บาท`} />
+          <Detail label="อัปเดตล่าสุด" value={current.updatedAt} />
+          <div className="flex gap-2.5">
+            <OutlineButton onClick={() => setEditOpen(false)}>ยกเลิก</OutlineButton>
+            <BrandButton icon="a-save-white" onClick={save} className="flex-1">
               บันทึกราคาสินค้า
             </BrandButton>
-          </Panel>
-
-          <Panel title="การตั้งค่าเติม Token">
-            <div className="flex items-center justify-between leading-[1.55]">
-              <p className="text-[12px] text-admin-muted">อัตราแลกเปลี่ยนของงาน</p>
-              <p className="text-[13px] font-medium text-admin-indigo">{data.exchangeRate}</p>
-            </div>
-            <div className="flex items-start gap-2.5 rounded-lg bg-warning-tint p-3">
-              <Icon name="a-info-warn" size={18} />
-              <p className="flex-1 text-[12px] leading-[1.55] text-admin-warn">{data.topUpNote}</p>
-            </div>
-          </Panel>
+          </div>
         </div>
-      </div>
+      </Dialog>
+
+      {/* ===== Popup เพิ่มสินค้า (ของเดิม) ===== */}
       <Dialog open={addOpen} onClose={() => setAddOpen(false)} title="เพิ่มสินค้าใหม่">
         <div className="flex flex-col gap-4">
           <Field label="ชื่อสินค้า *" value={add.name} onChange={(e) => setAdd({ ...add, name: e.target.value })} />

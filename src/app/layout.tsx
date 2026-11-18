@@ -1,3 +1,4 @@
+
 import type { Metadata } from "next";
 import { Inter, Noto_Sans_Thai } from "next/font/google";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
