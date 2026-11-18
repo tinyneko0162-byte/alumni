@@ -4,6 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import roles from "@/data/admin/roles.json";
 import products from "@/data/admin/products.json";
+import storesJson from "@/data/admin/stores.json";
 import logs from "@/data/admin/logs.json";
 import ticketSlips from "@/data/admin/ticket-slips.json";
 import ticketLinks from "@/data/admin/ticket-links.json";
@@ -26,6 +27,7 @@ export type RoleKey = keyof typeof roles.roles;
 export type CatalogProduct = (typeof products.products)[number];
 export type LogEvent = (typeof logs.events)[number];
 
+export type StoreRow = { id: string; name: string; owner: string; detail: string; status: "open" | "closed" };
 export type Wallet = { id: string; owner: string; balance: number; status: string };
 export type Sale = (typeof storeSales.sales)[number] & { storeId?: string; productName?: string; unitPrice?: number; amount?: number };
 export type TopupRecord = {
@@ -49,6 +51,7 @@ export type Db = {
   checkins: Attendee[];
   linkHistory: LinkRecord[];
   roleEnabled: Record<RoleKey, boolean>;
+  stores: StoreRow[];
   catalog: CatalogProduct[];
   logs: LogEvent[];
   wallets: Wallet[];
@@ -75,7 +78,15 @@ const seed = (): Db => {
       updatedAt: "24 ต.ค. 2569 · 16:40",
     });
   }
+  // stores Super Admin manages; booths that exist only in the POS data (e.g. ST-04) are added too
+  const storeRows: StoreRow[] = storesJson.stores.map((x) => ({ ...x, status: x.status === "closed" ? "closed" : "open" }));
+  for (const st of storePos.stores) {
+    if (!storeRows.some((x) => x.id === st.id)) storeRows.push({ id: st.id, name: st.name, owner: st.operator.name.split(" ")[0], detail: st.product.name, status: "open" });
+  }
+  storeRows.sort((a, b) => a.id.localeCompare(b.id));
+  for (const c of catalog) c.store = storeRows.find((x) => x.id === c.storeCode)?.name ?? c.store;
   return {
+    stores: storeRows,
     orders: ticketSlips.requests.map((r) => ({ ...r, status: "pending" as const, ticketIds: [] })),
     checkins: [],
     linkHistory: structuredClone(ticketLinks.history),

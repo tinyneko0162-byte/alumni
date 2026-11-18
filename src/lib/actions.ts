@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import roles from "@/data/admin/roles.json";
-import { addLog, nextId, nowStamp, nowTime, readDb, shortWallet, updateDb, type CatalogProduct, type RoleKey } from "@/lib/db";
+import { addLog, nextId, nowStamp, nowTime, readDb, shortWallet, updateDb, type CatalogProduct, type RoleKey, type StoreRow } from "@/lib/db";
 import demo from "@/data/demo.json";
 import financeAttendance from "@/data/admin/finance-attendance.json";
 import { signTicket } from "@/lib/ticket-token";
@@ -70,7 +70,7 @@ export async function createProduct(input: { name: string; store: string; catego
       sku,
       name: input.name.trim(),
       store: input.store,
-      storeCode: db.catalog.find((c) => c.store === input.store)?.storeCode ?? "ST-00",
+      storeCode: db.stores.find((x) => x.name === input.store)?.id ?? db.catalog.find((c) => c.store === input.store)?.storeCode ?? "ST-00",
       category: input.category,
       price: Math.round(input.price),
       stock: Math.max(0, Math.round(input.stock) || 0),
@@ -81,6 +81,69 @@ export async function createProduct(input: { name: string; store: string; catego
     db.catalog.push(p);
     addLog(db, { event: `เพิ่มสินค้า ${p.name}`, detail: `${p.price} Token / ${p.unit}`, role: "Super Admin", actor: "สุ••", ref: sku });
     return { ok: true as const, product: p };
+  });
+}
+
+// ---------- stores (Super Admin) ----------
+
+const cleanStore = (v: { name: string; owner: string; detail: string }) => ({ name: v.name.trim(), owner: v.owner.trim(), detail: v.detail.trim() });
+
+export async function createStore(input: { code: string; name: string; owner: string; detail: string }): Promise<Result<{ store: StoreRow }>> {
+  if (!(await requireRole())) return { ok: false, error: "เฉพาะ Super Admin เท่านั้น" };
+  const v = cleanStore(input);
+  const code = input.code.trim().toUpperCase();
+  if (!v.name || !v.owner) return { ok: false, error: "กรอกชื่อร้านและผู้ดูแลร้าน" };
+  if (!/^ST-\d{2,3}$/.test(code)) return { ok: false, error: "รหัสร้านต้องเป็นรูปแบบ ST-05" };
+  return updateDb((db) => {
+    if (db.stores.some((x) => x.id === code)) return { ok: false as const, error: `มีรหัสร้าน ${code} อยู่แล้ว` };
+    if (db.stores.some((x) => x.name === v.name)) return { ok: false as const, error: `มีร้านชื่อ ${v.name} อยู่แล้ว` };
+    const store: StoreRow = { id: code, ...v, status: "open" };
+    db.stores.push(store);
+    db.stores.sort((a, b) => a.id.localeCompare(b.id));
+    addLog(db, { event: `สร้างร้านค้า ${store.name}`, detail: `ผู้ดูแล ${store.owner}`, role: "Super Admin", actor: "สุ••", ref: code });
+    return { ok: true as const, store };
+  });
+}
+
+export async function updateStore(id: string, input: { name: string; owner: string; detail: string }): Promise<Result<{ store: StoreRow }>> {
+  if (!(await requireRole())) return { ok: false, error: "เฉพาะ Super Admin เท่านั้น" };
+  const v = cleanStore(input);
+  if (!v.name || !v.owner) return { ok: false, error: "กรอกชื่อร้านและผู้ดูแลร้าน" };
+  return updateDb((db) => {
+    const st = db.stores.find((x) => x.id === id);
+    if (!st) return { ok: false as const, error: "ไม่พบร้านค้า" };
+    if (db.stores.some((x) => x.id !== id && x.name === v.name)) return { ok: false as const, error: `มีร้านชื่อ ${v.name} อยู่แล้ว` };
+    Object.assign(st, v);
+    for (const c of db.catalog) if (c.storeCode === id) c.store = st.name; // keep product pages in step
+    addLog(db, { event: `แก้ไขข้อมูลร้าน ${st.name}`, detail: `ผู้ดูแล ${st.owner}`, role: "Super Admin", actor: "สุ••", ref: id });
+    return { ok: true as const, store: { ...st } };
+  });
+}
+
+/** Open or close a store. A closed store keeps its history but its booth cannot take payments. */
+export async function setStoreStatus(id: string, status: "open" | "closed"): Promise<Result<{ store: StoreRow }>> {
+  if (!(await requireRole())) return { ok: false, error: "เฉพาะ Super Admin เท่านั้น" };
+  return updateDb((db) => {
+    const st = db.stores.find((x) => x.id === id);
+    if (!st) return { ok: false as const, error: "ไม่พบร้านค้า" };
+    st.status = status;
+    addLog(db, { event: `${status === "open" ? "เปิด" : "ปิด"}การขาย ${st.name}`, role: "Super Admin", actor: "สุ••", ref: id });
+    return { ok: true as const, store: { ...st } };
+  });
+}
+
+/** Delete only stores that never sold anything; otherwise they must be closed so the money trail stays intact. */
+export async function deleteStore(id: string): Promise<Result> {
+  if (!(await requireRole())) return { ok: false, error: "เฉพาะ Super Admin เท่านั้น" };
+  return updateDb((db) => {
+    const st = db.stores.find((x) => x.id === id);
+    if (!st) return { ok: false as const, error: "ไม่พบร้านค้า" };
+    const products = db.catalog.filter((c) => c.storeCode === id).length;
+    const hasBooth = storePos.stores.some((b) => b.id === id) || db.sales.some((x) => x.storeId === id);
+    if (products > 0 || hasBooth) return { ok: false as const, error: `ลบไม่ได้ ร้านนี้มีสินค้า ${products} รายการหรือมีประวัติการขาย ให้ปิดการขายแทน` };
+    db.stores = db.stores.filter((x) => x.id !== id);
+    addLog(db, { event: `ลบร้านค้า ${st.name}`, role: "Super Admin", actor: "สุ••", ref: id });
+    return { ok: true as const };
   });
 }
 
@@ -101,6 +164,7 @@ export async function payPos(input: { storeId: string; walletId: string; qty: nu
   return updateDb((db) => {
     const p = db.catalog.find((c) => c.sku === st.product.sku);
     const w = db.wallets.find((x) => x.id === input.walletId);
+    if (db.stores.find((x) => x.id === st.id)?.status === "closed") return { ok: false as const, error: "ร้านนี้ถูก Super Admin ปิดการขายอยู่" };
     if (!p || p.status !== "ขายอยู่") return { ok: false as const, error: "สินค้านี้หยุดขายอยู่" };
     if (!w) return { ok: false as const, error: "ไม่พบ Wallet" };
     if (p.stock < qty) return { ok: false as const, error: `สินค้าเหลือ ${p.stock} ${p.unit} ไม่พอ` };

@@ -111,7 +111,7 @@ public/
 | `data/order.json` | checkout | คำสั่งซื้อตัวอย่าง `CF26-0148` (ใช้เป็นค่าเริ่มต้นของตะกร้า) |
 | `data/attendee.json` | `/me/*` | โปรไฟล์, บัตร, Wallet, ประวัติเติม/ใช้จ่าย, ใบเสร็จ |
 | `data/admin/roles.json` | ทุกหน้า admin | ข้อมูลงาน, บัญชีที่ล็อกอิน, **เมนูของแต่ละบทบาท** |
-| `data/admin/overview.json` | ภาพรวม | KPI, กราฟเช็กอิน, คิวงาน, กิจกรรมล่าสุด |
+| `data/admin/overview.json` | ภาพรวม | ค่าเริ่มต้นของกราฟเช็กอิน (KPI, คิวงาน, กิจกรรมล่าสุด คำนวณสดจาก db แล้ว) |
 | `data/admin/stores.json` | จัดการร้าน | ร้านค้า + draft ฟอร์ม |
 | `data/admin/products.json` | สินค้าและราคา | สินค้า/ราคา/stock |
 | `data/admin/logs.json` | บันทึกระบบ | audit log |
@@ -122,7 +122,7 @@ public/
 | `data/admin/token-history.json` | ประวัติเติม | รายการเติม + audit trail |
 | `data/admin/store-pos.json` | POS | 4 ร้าน (สินค้า/รูป/ผู้ขาย), Wallet ลูกค้า, รายการล่าสุด |
 | `data/admin/store-sales.json` | ประวัติการขาย | ใบเสร็จการขาย |
-| `data/admin/finance-revenue.json` | รายได้ | รายรับแยกประเภท, Token เติม/ใช้, ยอดตามหมวด |
+| `data/admin/finance-revenue.json` | รายได้ | ยอดตั้งต้น + บวกรายการจริงจาก db (อนุมัติบัตร, เติม Token, ขาย) |
 | `data/admin/finance-attendance.json` | การเข้าร่วม | รายชื่อ + เวลาเช็กอิน |
 
 ### วิธีต่อฐานข้อมูล
@@ -147,7 +147,7 @@ export async function getStores() {
 | ตะกร้า / คำสั่งซื้อ | `lib/cart.ts` | เก็บใน `sessionStorage` |
 | อัปโหลดสลิป | `components/user/SlipUpload.tsx` | อ่านชื่อ/ขนาดไฟล์อย่างเดียว ไม่อัปโหลด |
 | ล็อกอินพนักงาน | `app/admin/login/login-form.tsx` | ไม่มีการตรวจรหัส มี dropdown เลือกบทบาท |
-| สร้าง/ลบร้าน, แก้ราคา | `admin/super/*/…-view.tsx` | แก้ state ในหน้า |
+| สร้าง/แก้ไข/เปิด-ปิด/ลบร้าน, แก้ราคา | `admin/super/*/…-view.tsx` → `lib/actions.ts` | บันทึกลง `.data/db.json` แล้ว (ร้านที่ปิดรับชำระที่ POS ไม่ได้, ลบได้เฉพาะร้านที่ไม่มีสินค้า/ประวัติขาย) |
 | อนุมัติสลิป, ส่งอีเมล | `admin/ticketing/*` | แก้ state ในหน้า |
 | เติม Token (สด/โอน) | `admin/token/*` | แก้ state ในหน้า, สแกน QR เป็นปุ่มจำลอง |
 | ขาย/ตัด Wallet | `admin/store/*`, `lib/store-cart.ts` | sessionStorage + state |

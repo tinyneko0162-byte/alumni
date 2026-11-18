@@ -7,7 +7,7 @@ import overview from "@/data/admin/overview.json";
 import stores from "@/data/admin/stores.json";
 import products from "@/data/admin/products.json";
 import logs from "@/data/admin/logs.json";
-import { readDb } from "@/lib/db";
+import { readDb, type Db } from "@/lib/db";
 import ticketSlips from "@/data/admin/ticket-slips.json";
 import ticketLinks from "@/data/admin/ticket-links.json";
 import tokenCash from "@/data/admin/token-cash.json";
@@ -25,22 +25,69 @@ export async function getAdminConfig(): Promise<AdminConfig & { enabled: Record<
   return { ...roles, enabled: readDb().roleEnabled };
 }
 
+const nowHm = () => new Date().toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
+
+/** Approved tickets and check-ins: sample numbers from the JSON plus everything done in the app since. */
+function attendanceTotals(db: Db) {
+  const approved = financeAttendance.approved + db.orders.filter((o) => o.status === "approved").reduce((n, o) => n + o.ticketIds.length, 0);
+  return { approved, checkedIn: financeAttendance.checkedIn + db.checkins.length };
+}
+
 export async function getOverview() {
   const db = readDb();
-  const live: Record<string, number> = {
-    "/admin/ticketing/slips": db.orders.filter((o) => o.status === "pending").length,
-    "/admin/token/transfer": db.transfers.filter((t) => t.state === "pending").length,
+  const fin = financeFigures(db);
+  const att = attendanceTotals(db);
+  const pendingSlips = db.orders.filter((o) => o.status === "pending").length;
+  const pendingTransfers = db.transfers.filter((t) => t.state === "pending").length;
+  const live: Record<string, number> = { "/admin/ticketing/slips": pendingSlips, "/admin/token/transfer": pendingTransfers };
+
+  // new check-ins go into 15-minute slots next to the sample ones
+  const slots = overview.attendance.slots.map((x) => ({ ...x }));
+  for (const c of db.checkins) {
+    const [h, m] = (c.time ?? "").split(":").map(Number);
+    if (!Number.isFinite(h) || !Number.isFinite(m)) continue;
+    const time = `${String(h).padStart(2, "0")}:${String(m - (m % 15)).padStart(2, "0")}`;
+    const slot = slots.find((x) => x.time === time);
+    if (slot) slot.count += 1;
+    else slots.push({ time, count: 1 });
+  }
+  slots.sort((a, b) => a.time.localeCompare(b.time));
+
+  return {
+    ...overview,
+    metrics: [
+      { label: "รายรับเงินจริงที่ยืนยันแล้ว", value: `฿${fin.total.toLocaleString("en-US")}`, note: "ค่าบัตร + เงินเติม Token" },
+      { label: "ผู้เข้างานแล้ว", value: `${att.checkedIn}/${att.approved}`, note: `คิดเป็น ${((att.checkedIn / Math.max(att.approved, 1)) * 100).toFixed(0)}% ของบัตรที่อนุมัติ` },
+      { label: "Token ใช้จ่ายในร้าน", value: fin.tokens.spent.toLocaleString("en-US"), note: "หน่วย Token • ไม่ใช่รายรับเงินบาท" },
+      { label: "รายการรอตรวจสอบ", value: String(pendingSlips + pendingTransfers), note: `สลิปค่าบัตร ${pendingSlips} · เติม Token ${pendingTransfers}`, noteTone: pendingSlips + pendingTransfers > 0 ? "warning" : undefined },
+    ],
+    attendance: { total: att.checkedIn, updatedAt: `${nowHm()} น.`, slots },
+    queues: overview.queues.map((q) => {
+      const count = live[q.href] ?? q.count;
+      return { ...q, count, note: count === 0 ? "ไม่มีรายการค้าง" : q.note };
+    }),
+    activity: db.logs.slice(0, 5).map((l) => ({ time: l.time, action: l.event, actor: l.role, ref: l.ref, result: l.result })),
   };
-  return { ...overview, queues: overview.queues.map((q) => ({ ...q, count: live[q.href] ?? q.count })) };
 }
 
 export async function getStores() {
-  return stores;
+  const db = readDb();
+  const names = [...new Set(db.catalog.map((c) => c.name))];
+  return {
+    ...stores,
+    stores: db.stores,
+    productCount: db.catalog.length,
+    productNames: names.join(" "),
+    categoryCount: new Set(db.catalog.map((c) => c.category)).size,
+    productsByStore: Object.fromEntries(db.stores.map((x) => [x.id, db.catalog.filter((c) => c.storeCode === x.id).length])),
+  };
 }
 
 export async function getProductCatalog() {
-  const catalog = readDb().catalog;
-  return { ...products, products: catalog, totalProducts: catalog.length };
+  const db = readDb();
+  const catalog = db.catalog;
+  // store tabs follow the stores Super Admin manages (closed stores still listed so their products stay editable)
+  return { ...products, products: catalog, totalProducts: catalog.length, storeTabs: db.stores.map((x) => x.name) };
 }
 
 export async function getLogs() {
@@ -84,7 +131,9 @@ export async function getStorePos() {
   // price / stock / on-sale status always come from the catalog Super Admin edits
   const stores = storePos.stores.map((s) => {
     const c = db.catalog.find((x) => x.sku === s.product.sku);
-    return { ...s, product: { ...s.product, name: c?.name ?? s.product.name, price: c?.price ?? s.product.price, unit: c?.unit ?? s.product.unit, stock: c?.stock ?? 0, status: c?.status ?? "ขายอยู่" } };
+    const row = db.stores.find((x) => x.id === s.id);
+    const closed = row?.status === "closed";
+    return { ...s, name: row?.name ?? s.name, product: { ...s.product, name: c?.name ?? s.product.name, price: c?.price ?? s.product.price, unit: c?.unit ?? s.product.unit, stock: c?.stock ?? 0, status: closed ? "ร้านปิด" : c?.status ?? "ขายอยู่" } };
   });
   const recent = db.sales
     .filter((s) => s.amount !== undefined)
@@ -97,12 +146,63 @@ export async function getStoreSales() {
   return { ...storeSales, sales: readDb().sales };
 }
 
+const seededTopups = new Set(tokenHistory.records.map((r) => `${r.id}|${r.status}`));
+const seededSales = new Set(storeSales.sales.map((r) => r.id));
+
+/**
+ * Money figures for Super Admin: the sample totals from finance-revenue.json
+ * plus every ticket approval, top-up and sale recorded in the app since.
+ */
+function financeFigures(db: Db) {
+  const approvedOrders = db.orders.filter((o) => o.status === "approved");
+  const newTicketMoney = approvedOrders.reduce((n, o) => n + o.amount, 0);
+  const newTickets = approvedOrders.reduce((n, o) => n + Math.max(o.ticketIds.length, o.qty), 0);
+  const fresh = db.topups.filter((t) => t.status === "สำเร็จ" && !seededTopups.has(`${t.id}|${t.status}`));
+  const newCash = fresh.filter((t) => t.channel === "เงินสด").reduce((n, t) => n + (t.received ?? 0), 0);
+  const newBank = fresh.filter((t) => t.channel !== "เงินสด").reduce((n, t) => n + (t.received ?? 0), 0);
+  const newSales = db.sales.filter((x) => !seededSales.has(x.id) && x.amount !== undefined);
+  const newSpent = newSales.reduce((n, x) => n + (x.amount ?? 0), 0);
+
+  const [ticketRow, cashRow, bankRow] = financeRevenue.revenue;
+  const revenue = [
+    { ...ticketRow, amount: ticketRow.amount + newTicketMoney },
+    { ...cashRow, amount: cashRow.amount + newCash },
+    { ...bankRow, amount: bankRow.amount + newBank },
+  ];
+
+  // spending per category: product category from the catalog, booth status from the store list
+  const spending = financeRevenue.spendingByCategory.map((x) => ({ ...x }));
+  for (const sale of newSales) {
+    const booth = storePos.stores.find((b) => b.id === sale.storeId);
+    const category = db.catalog.find((c) => c.sku === booth?.product.sku)?.category ?? "อื่นๆ";
+    const row = spending.find((x) => x.category === category);
+    if (row) row.tokens += sale.amount ?? 0;
+    else spending.push({ category, tokens: sale.amount ?? 0, status: "เปิดขาย" });
+  }
+  spending.sort((a, b) => b.tokens - a.tokens);
+
+  return {
+    revenue,
+    total: revenue.reduce((n, r) => n + r.amount, 0),
+    tickets: { ...financeRevenue.tickets, count: financeRevenue.tickets.count + newTickets },
+    tokens: { toppedUp: financeRevenue.tokens.toppedUp + newCash + newBank, spent: financeRevenue.tokens.spent + newSpent },
+    spendingByCategory: spending,
+  };
+}
+
 export async function getFinanceRevenue() {
-  return financeRevenue;
+  const f = financeFigures(readDb());
+  return {
+    ...financeRevenue,
+    description: `ยอดที่ยืนยันแล้ว ณ ${nowHm()} น. • ดูรายรับเงินจริงแยกจากการหมุนเวียน Token (1 Token = 1 บาท)`,
+    revenue: f.revenue,
+    tickets: f.tickets,
+    tokens: f.tokens,
+    spendingByCategory: f.spendingByCategory,
+  };
 }
 
 export async function getFinanceAttendance() {
   const db = readDb();
-  const approved = financeAttendance.approved + db.orders.filter((o) => o.status === "approved").reduce((n, o) => n + o.ticketIds.length, 0);
-  return { ...financeAttendance, approved, checkedIn: financeAttendance.checkedIn + db.checkins.length, attendees: [...db.checkins, ...financeAttendance.attendees] };
+  return { ...financeAttendance, ...attendanceTotals(db), attendees: [...db.checkins, ...financeAttendance.attendees] };
 }
