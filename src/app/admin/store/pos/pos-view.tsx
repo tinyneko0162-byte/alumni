@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Icon } from "@/components/ui/Icon";
@@ -12,6 +13,10 @@ type Store = Awaited<ReturnType<typeof getStorePos>>["stores"][number];
 export function PosView({ boothName, store, stores }: { boothName: string; store: Store; stores: { id: string; name: string }[] }) {
   const { qty, setQty } = usePosCart(store.id);
   const p = store.product;
+  // จำร้านล่าสุดไว้ ให้หน้าประวัติการขายเปิดร้านเดียวกัน
+  useEffect(() => {
+    document.cookie = `alumni-store=${store.id}; path=/; max-age=31536000; samesite=lax`;
+  }, [store.id]);
   const total = qty * p.price;
   const onSale = p.status === "ขายอยู่" && p.stock > 0;
 

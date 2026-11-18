@@ -35,17 +35,6 @@ export function SalesView({ data }: { data: Data }) {
 
   return (
     <>
-      <div className="flex flex-wrap gap-2">
-        {data.stores.map((st) => (
-          <a
-            key={st.id}
-            href={`/admin/store/history?store=${st.id}`}
-            className={cx("rounded-full border px-4 py-1.5 text-[12px]", st.id === data.store.id ? "border-admin-indigo bg-admin-indigo text-white" : "border-admin-line bg-white text-admin-ink hover:bg-admin-head")}
-          >
-            {st.name}
-          </a>
-        ))}
-      </div>
       <PageHeading
         title="ประวัติการขาย"
         description={data.description}
