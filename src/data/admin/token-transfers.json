@@ -1,11 +1,11 @@
 {
-  "description": "ตรวจสลิปที่ลูกค้าแนบและ Wallet ID ก่อนเครดิต Token • แยกจากการชำระค่าบัตร",
+  "description": "ตรวจสลิปที่ลูกค้าแนบและ Wallet ID ก่อนเครดิต Token, แยกจากการชำระค่าบัตร",
   "pendingTotal": 8,
   "companyName": "บริษัท รุ่นเรา จำกัด",
-  "companyAccount": "ธนาคารตัวอย่าง • xxx-x-xx900-2",
+  "companyAccount": "ธนาคารตัวอย่าง, xxx-x-xx900-2",
   "requests": [
-    { "id": "TOP-0242", "time": "18:40", "wallet": "W-•••-9056", "owner": "ธน•• ศิษย์เก่า", "amount": 500, "balance": 80, "slipFile": "slip_••7365.jpg", "fromAccount": "ธนาคารตัวอย่าง • xxx-x-xx482-1", "paidAt": "24 ต.ค. 2569 · 18:32 น.", "reference": "TRX-••••-7365" },
-    { "id": "TOP-0241", "time": "18:41", "wallet": "W-•••-3382", "owner": "มณ•• ศิษย์เก่า", "amount": 500, "balance": 20, "slipFile": "slip_••3382.jpg", "fromAccount": "ธนาคารตัวอย่าง • xxx-x-xx210-5", "paidAt": "24 ต.ค. 2569 · 18:36 น.", "reference": "TRX-••••-3382" },
-    { "id": "TOP-0240", "time": "18:42", "wallet": "W-•••-6621", "owner": "วร•• ศิษย์เก่า", "amount": 1000, "balance": 150, "slipFile": "slip_••6621.jpg", "fromAccount": "ธนาคารตัวอย่าง • xxx-x-xx671-9", "paidAt": "24 ต.ค. 2569 · 18:38 น.", "reference": "TRX-••••-6621" }
+    { "id": "TOP-0242", "time": "18:40", "wallet": "W-•••-9056", "owner": "ธน•• ศิษย์เก่า", "amount": 500, "balance": 80, "slipFile": "slip_••7365.jpg", "fromAccount": "ธนาคารตัวอย่าง, xxx-x-xx482-1", "paidAt": "24 ต.ค. 2569, 18:32 น.", "reference": "TRX-••••-7365" },
+    { "id": "TOP-0241", "time": "18:41", "wallet": "W-•••-3382", "owner": "มณ•• ศิษย์เก่า", "amount": 500, "balance": 20, "slipFile": "slip_••3382.jpg", "fromAccount": "ธนาคารตัวอย่าง, xxx-x-xx210-5", "paidAt": "24 ต.ค. 2569, 18:36 น.", "reference": "TRX-••••-3382" },
+    { "id": "TOP-0240", "time": "18:42", "wallet": "W-•••-6621", "owner": "วร•• ศิษย์เก่า", "amount": 1000, "balance": 150, "slipFile": "slip_••6621.jpg", "fromAccount": "ธนาคารตัวอย่าง, xxx-x-xx671-9", "paidAt": "24 ต.ค. 2569, 18:38 น.", "reference": "TRX-••••-6621" }
   ]
 }

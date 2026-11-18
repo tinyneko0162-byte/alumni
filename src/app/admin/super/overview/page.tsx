@@ -2,7 +2,6 @@ import Link from "next/link";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { ExportButton } from "@/components/admin/ExportButton";
 import { Chip, DataTable, Metric, PageHeading, Panel } from "@/components/admin/ui";
-import { Icon } from "@/components/ui/Icon";
 import { getAdminConfig, getOverview } from "@/lib/admin-data";
 
 /** Figma: admin / Super Admin · ภาพรวมระบบ (4011:36883) */
@@ -29,17 +28,12 @@ export default async function OverviewPage() {
         }
       />
 
-      <section className="flex flex-wrap items-center justify-between gap-4 rounded-xl bg-brand-deep p-[22px]">
-        <div className="flex items-center gap-4">
-          <span className="flex size-12 items-center justify-center rounded-xl bg-brand">
-            <Icon name="a-graduation-cap" size={26} />
-          </span>
-          <div className="flex flex-col gap-[3px] leading-[1.55] text-white">
-            <p className="text-[18px] font-semibold">{cfg.event.name}</p>
-            <p className="text-[12px]">
-              {cfg.event.dateLong} · {cfg.event.time} · {cfg.event.venue}
-            </p>
-          </div>
+      <section className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-admin-line bg-white p-[22px]">
+        <div className="flex flex-col gap-[3px] leading-[1.55]">
+          <p className="text-[18px] font-semibold text-admin-ink">{cfg.event.name}</p>
+          <p className="text-[13px] text-admin-muted">
+            {cfg.event.dateLong} เวลา {cfg.event.time} ที่{cfg.event.venue}
+          </p>
         </div>
         <Chip tone="ok">{d.eventStatus}</Chip>
       </section>
@@ -53,7 +47,7 @@ export default async function OverviewPage() {
       <div className="flex flex-col gap-5 xl:flex-row xl:items-start">
         <Panel title="ผู้เข้างานตามช่วงเวลา" aside={<Chip tone="indigo">สะสม {d.attendance.total} คน</Chip>} className="flex-1">
           <div className="flex justify-between text-[11px] leading-[1.55] text-admin-muted">
-            <p>จำนวนเช็กอินในแต่ละช่วง • คน</p>
+            <p>จำนวนเช็กอินในแต่ละช่วง, คน</p>
             <p>อัปเดต {d.attendance.updatedAt}</p>
           </div>
           <div className="flex h-[170px] items-end gap-5 px-3" role="img" aria-label="กราฟจำนวนเช็กอินตามช่วงเวลา">
@@ -90,7 +84,7 @@ export default async function OverviewPage() {
         title="ความเคลื่อนไหวล่าสุด"
         aside={
           <Link href="/admin/super/logs" className="text-[12px] text-admin-indigo hover:underline">
-            ดูบันทึกระบบทั้งหมด →
+            ดูบันทึกระบบทั้งหมด
           </Link>
         }
       >

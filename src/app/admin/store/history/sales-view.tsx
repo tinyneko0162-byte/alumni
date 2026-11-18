@@ -55,7 +55,7 @@ export function SalesView({ data }: { data: Data }) {
       />
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <Stat label="ยอดขายยืนยันตามตัวกรอง" value={`${fmt(paidTokens)} Token`} note={`${paid.length} ใบเสร็จชำระแล้ว · เทียบเท่า ฿${fmt(paidTokens)}`} dark />
+        <Stat label="ยอดขายยืนยันตามตัวกรอง" value={`${fmt(paidTokens)} Token`} note={`${paid.length} ใบเสร็จชำระแล้ว, เทียบเท่า ฿${fmt(paidTokens)}`} dark />
         <Stat label="สินค้าขายสำเร็จตามตัวกรอง" value={`${paidQty} ชิ้น`} note="นับเฉพาะใบเสร็จที่ตัด Token สำเร็จ" />
         <Stat label="สถานะการขาย" value={`${pct}%`} note={`ทำรายการสำเร็จ ${paid.length} จาก ${shown.length} รายการ`} />
       </div>
@@ -91,7 +91,7 @@ export function SalesView({ data }: { data: Data }) {
           <BrandButton type="submit">ใช้ตัวกรอง</BrandButton>
         </form>
         <div className="flex flex-wrap justify-between gap-2 text-[11px] leading-[1.55]">
-          <p className="text-admin-muted">ผลลัพธ์ {shown.length} รายการ · {data.store.name} · เรียงเวลาล่าสุดก่อน · ยอดสรุปนับเฉพาะชำระแล้ว</p>
+          <p className="text-admin-muted">ผลลัพธ์ {shown.length} รายการ, {data.store.name}, เรียงเวลาล่าสุดก่อน, ยอดสรุปนับเฉพาะชำระแล้ว</p>
           <button
             type="button"
             className="text-admin-indigo hover:underline"
@@ -123,7 +123,7 @@ export function SalesView({ data }: { data: Data }) {
                 const on = s.id === sel?.id;
                 const ok = s.status === "ชำระแล้ว";
                 return (
-                  <tr key={s.id} onClick={() => setSelectedId(s.id)} className={cx("cursor-pointer text-admin-ink", on ? "bg-brand-soft" : "bg-white hover:bg-admin-head")}>
+                  <tr key={s.id} onClick={() => setSelectedId(s.id)} className={cx("cursor-pointer text-admin-ink", on ? "bg-brand-tint" : "bg-white hover:bg-admin-head")}>
                     <td className="h-[66px] border-b border-admin-line px-3">
                       <p>{s.time}</p>
                       <p className="text-[10px] text-admin-muted">{data.date}</p>
@@ -149,7 +149,7 @@ export function SalesView({ data }: { data: Data }) {
         </div>
         <div className="flex flex-wrap items-center justify-between gap-3 text-[11px] leading-[1.55] text-admin-muted">
           <p>
-            แสดง 1–{shown.length} จาก {shown.length} รายการ · ยอดขายยืนยันหน้านี้ {fmt(paidTokens)} Token / {paidQty} ชิ้น
+            แสดง 1–{shown.length} จาก {shown.length} รายการ, ยอดขายยืนยันหน้านี้ {fmt(paidTokens)} Token / {paidQty} ชิ้น
           </p>
           <div className="flex items-center gap-2">
             <span>10 รายการ / หน้า</span>
@@ -170,7 +170,7 @@ export function SalesView({ data }: { data: Data }) {
             </div>
             <Chip tone={isPaid ? "ok" : "warn"}>{sel.status}</Chip>
           </div>
-          <Detail label="วันและเวลาขาย" value={`${data.date} · ${sel.time} น.`} />
+          <Detail label="วันและเวลาขาย" value={`${data.date}, ${sel.time} น.`} />
           <div>
             <div className="flex gap-3 bg-admin-head py-2 text-[11px] text-admin-muted">
               <p className="flex-1 pl-2">สินค้า</p>
@@ -182,7 +182,7 @@ export function SalesView({ data }: { data: Data }) {
               <div className="flex flex-1 flex-col gap-0.5 pl-2 leading-[1.55]">
                 <p className="text-[13px] font-medium text-admin-ink">{sel.productName}</p>
                 <p className="text-[10px] text-admin-muted">
-                  {data.store.id} · {sel.productName}
+                  {data.store.id}, {sel.productName}
                 </p>
               </div>
               <p className="text-[12px] text-admin-ink">{sel.unitPrice ?? "-"}</p>
@@ -193,12 +193,12 @@ export function SalesView({ data }: { data: Data }) {
           <div className="mt-auto flex items-center justify-between leading-[1.55]">
             <div className="flex flex-col gap-0.5">
               <p className="text-[12px] font-semibold text-admin-ink">รวมชำระ</p>
-              <p className="text-[11px] text-admin-muted">1 รายการ · {sel.qty} ชิ้น · 1 Token = ฿1</p>
+              <p className="text-[11px] text-admin-muted">1 รายการ, {sel.qty} ชิ้น, 1 Token = ฿1</p>
             </div>
             <p className="text-[28px] font-semibold text-black">{selTotal} Token</p>
           </div>
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-[11px] leading-[1.55] text-admin-muted">สำเนาใบเสร็จ · ปกปิดข้อมูลลูกค้า</p>
+            <p className="text-[11px] leading-[1.55] text-admin-muted">สำเนาใบเสร็จ, ปกปิดข้อมูลลูกค้า</p>
             <BrandButton icon="a-download-white" className="border border-admin-indigo" onClick={() => window.print()}>
               ส่งออกใบเสร็จ PDF
             </BrandButton>
@@ -206,7 +206,7 @@ export function SalesView({ data }: { data: Data }) {
         </Panel>
 
         <Panel title="การตัด Token และผู้ดำเนินการ" aside={<Icon name="a-shield-check-indigo" size={18} />} className="flex-1">
-          <Detail label="Wallet ลูกค้า" value={`${sel.wallet} · ${sel.customer}`} />
+          <Detail label="Wallet ลูกค้า" value={`${sel.wallet}, ${sel.customer}`} />
           <LedgerStrip
             className="bg-brand"
             labelClass="text-[#4a4d55]"
@@ -216,16 +216,16 @@ export function SalesView({ data }: { data: Data }) {
               { label: "หลังชำระ", value: fmt(isPaid ? sel.balanceBefore - selTotal : sel.balanceBefore) },
             ]}
           />
-          <Detail label="ผู้ขาย / เครื่องขาย" value={`${sel.seller} · ${sel.sellerCode} / ${sel.pos}`} />
-          <Detail label="รายการตัด Wallet" value={sel.debitId ? `${sel.debitId} · ยืนยันครั้งเดียว` : "ยังไม่ตัดยอด"} />
+          <Detail label="ผู้ขาย / เครื่องขาย" value={`${sel.seller}, ${sel.sellerCode} / ${sel.pos}`} />
+          <Detail label="รายการตัด Wallet" value={sel.debitId ? `${sel.debitId}, ยืนยันครั้งเดียว` : "ยังไม่ตัดยอด"} />
           <div className="h-px bg-admin-line" />
           <div className="flex flex-col gap-[7px] leading-[1.55]">
             <p className="text-[12px] font-semibold text-admin-ink">ลำดับการชำระ</p>
             <p className="text-[11px] text-admin-muted">{sel.audit ?? (isPaid ? `${sel.time} ${sel.seller} ยืนยันยอด ${selTotal} Token → ตัดยอดสำเร็จและออกใบเสร็จ` : "รอลูกค้าสแกน Wallet เพื่อชำระ")}</p>
             {isPaid ? (
-              <p className="text-[11px] text-admin-ok">บันทึกการขายและตัด Wallet สำเร็จ · ไม่มีการตัดซ้ำ</p>
+              <p className="text-[11px] text-admin-ok">บันทึกการขายและตัด Wallet สำเร็จ, ไม่มีการตัดซ้ำ</p>
             ) : (
-              <p className="text-[11px] text-admin-warn">ยังไม่ตัด Token · ยอด Wallet ไม่เปลี่ยน</p>
+              <p className="text-[11px] text-admin-warn">ยังไม่ตัด Token, ยอด Wallet ไม่เปลี่ยน</p>
             )}
           </div>
         </Panel>
@@ -238,12 +238,12 @@ export function SalesView({ data }: { data: Data }) {
 
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-admin-line bg-white p-4 leading-[1.55]">
         <div className="flex flex-col gap-0.5">
-          <p className="text-[12px] font-semibold text-admin-ink">ยอดขายยืนยันสะสม {data.store.name} ทั้งงาน · {fmt(data.storeTotal)} Token</p>
-          <p className="text-[11px] text-admin-muted">ยอดขายรวมทุกหมวดหมู่สินค้าทั้งงาน · ยอดสะสมไม่ใช่ยอดตามตัวกรองหรือยอดหน้านี้</p>
+          <p className="text-[12px] font-semibold text-admin-ink">ยอดขายยืนยันสะสม {data.store.name} ทั้งงาน, {fmt(data.storeTotal)} Token</p>
+          <p className="text-[11px] text-admin-muted">ยอดขายรวมทุกหมวดหมู่สินค้าทั้งงาน, ยอดสะสมไม่ใช่ยอดตามตัวกรองหรือยอดหน้านี้</p>
         </div>
         <div className="flex flex-col items-end gap-0.5">
-          <p className="text-[14px] font-semibold text-admin-indigo">1 Token = ฿1 · อัตราคงที่</p>
-          <p className="text-[11px] text-admin-muted">งานเลี้ยงรุ่นศิษย์เก่า · บัตรเข้างาน ฿790/คน</p>
+          <p className="text-[14px] font-semibold text-admin-indigo">1 Token = ฿1, อัตราคงที่</p>
+          <p className="text-[11px] text-admin-muted">งานเลี้ยงรุ่นศิษย์เก่า, บัตรเข้างาน ฿790/คน</p>
         </div>
       </div>
     </>

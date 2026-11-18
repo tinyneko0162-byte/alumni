@@ -36,7 +36,7 @@ export function SlipUpload({
     <div className="flex w-full flex-col gap-2.5">
       <div className="flex items-start justify-between">
         <p className="text-[16px] text-ink">แนบสลิปโอนเงิน</p>
-        <p className="text-[11px] text-black">จำเป็น • 1 ไฟล์</p>
+        <p className="text-[11px] text-black">จำเป็น, 1 ไฟล์</p>
       </div>
       <button
         type="button"
@@ -73,7 +73,7 @@ export function SlipUpload({
               {value.fileName}
             </p>
             <p className="text-[10px] text-success-ink">
-              {value.sizeLabel} • แนบไฟล์แล้ว
+              {value.sizeLabel}, แนบไฟล์แล้ว
             </p>
           </div>
           <button

@@ -45,12 +45,9 @@ export async function AdminShell({
       <aside className="sticky top-0 flex h-dvh w-[224px] shrink-0 flex-col justify-between overflow-y-auto bg-admin-side px-4 pt-7 pb-6 max-lg:hidden">
         <div className="flex flex-col gap-[30px]">
           <p className="px-2 text-[17px] font-bold leading-[1.55] text-brand">ศิษย์เก่า</p>
-          <div className="flex flex-col gap-[9px] rounded-lg bg-brand-deep p-3">
-            <p className="text-[10px] leading-[1.55] text-white">พื้นที่ทำงานของคุณ</p>
-            <div className="flex items-center gap-[7px]">
-              <Icon name="a-shield-check-white" size={16} />
-              <p className="text-[13px] font-medium leading-[1.55] text-white">{r.label}</p>
-            </div>
+          <div className="flex flex-col gap-0.5 border-l-[3px] border-brand pl-3">
+            <p className="text-[11px] leading-[1.55] text-admin-side-muted">ตำแหน่ง</p>
+            <p className="text-[14px] font-semibold leading-[1.55] text-admin-side-ink">{r.label}</p>
           </div>
           <nav className="flex flex-col gap-[7px]">
             <p className="text-[10px] leading-[1.55] text-admin-side-muted">เมนูปฏิบัติงาน</p>
@@ -81,13 +78,13 @@ export async function AdminShell({
             </span>
             <div className="flex flex-col leading-[1.55]">
               <p className="text-[12px] text-admin-side-ink">{account.name}</p>
-              <p className="text-[10px] text-admin-side-muted">{mine.label} · {staff.username}</p>
+              <p className="text-[10px] text-admin-side-muted">{mine.label}, {staff.username}</p>
             </div>
           </div>
           <form action={logoutStaff}>
             <button
               type="submit"
-              className="w-full rounded-lg border border-admin-side-line bg-brand p-3 text-left text-[12px] leading-[1.55] text-white transition hover:brightness-95"
+              className="w-full rounded-lg border border-admin-side-line p-2.5 text-center text-[12px] font-semibold leading-[1.55] text-admin-side-ink transition hover:bg-brand-tint"
             >
               ออกจากระบบ
             </button>

@@ -26,7 +26,7 @@ export default async function MyTicketPage() {
           <p className="text-[13px] text-black">บัตรเข้างานและข้อมูลผู้ร่วมงาน</p>
         </div>
         <div>
-          <Pill>{profile.shortMasked} · บัตรของฉัน</Pill>
+          <Pill>{profile.shortMasked}, บัตรของฉัน</Pill>
         </div>
 
         {tickets.length === 0 && (
@@ -53,7 +53,7 @@ export default async function MyTicketPage() {
               <Pill tone="brandSoft">{ticket.qrLabel}</Pill>
             </div>
             <Detail label="เลขที่บัตร" value={t.number} />
-            <Detail label="คำสั่งซื้อ" value={`${t.orderId} • ${t.orderQty} ใบ`} />
+            <Detail label="คำสั่งซื้อ" value={`${t.orderId}, ${t.orderQty} ใบ`} />
             <Detail label="ผู้ซื้อ" value={t.buyer} />
             <a
               href={`/api/qr?type=entry&id=${encodeURIComponent(t.number)}`}

@@ -21,7 +21,7 @@ export default async function StaffLoginPage({ searchParams }: { searchParams: P
   ]
     .map(([username, password]) => {
       const s = db.staff.find((x) => x.username === username && x.active);
-      return s ? { username, password, label: s.role === "store" ? `${cfg.roles.store.label} · ${s.station}` : cfg.roles[s.role].label } : null;
+      return s ? { username, password, label: s.role === "store" ? `${cfg.roles.store.label}, ${s.station}` : cfg.roles[s.role].label } : null;
     })
     .filter((x): x is { username: string; password: string; label: string } => !!x);
   return (

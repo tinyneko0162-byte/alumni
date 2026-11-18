@@ -55,8 +55,9 @@ export function ShopView({ eventName, products }: { eventName: string; products:
 
   return (
     <div className="flex flex-col gap-[18px] px-6 pt-[18px] pb-6">
-      <div className="rounded-[20px] bg-brand-deep p-[18px]">
-        <p className="font-latin text-[25px] font-bold text-white">{eventName}</p>
+      <div className="flex flex-col gap-1">
+        <h1 className="text-[25px] font-bold leading-[1.3] text-ink">{eventName}</h1>
+        <p className="text-[12px] text-black/70">เลือกบัตร เสื้อ และบัตรของเพื่อนได้ในหน้านี้</p>
       </div>
 
       {/* ===== บัตรของฉัน ===== */}
@@ -69,7 +70,7 @@ export function ShopView({ eventName, products }: { eventName: string; products:
         onToggle={() => update((c) => ({ self: !c.self }))}
         label="ซื้อบัตรเข้างานของฉัน"
       >
-        <p className="text-[12px] text-black">{cart.self ? "บัตรของคุณ • รวม 200 Token เข้ากระเป๋า" : "ไม่ซื้อบัตรของตัวเอง (เช่น ซื้อให้เพื่อนหรือซื้อเสื้ออย่างเดียว)"}</p>
+        <p className="text-[12px] text-black">{cart.self ? "บัตรของคุณ, รวม 200 Token เข้ากระเป๋า" : "ไม่ซื้อบัตรของตัวเอง (เช่น ซื้อให้เพื่อนหรือซื้อเสื้ออย่างเดียว)"}</p>
       </ProductCard>
 
       {/* ===== เสื้อรุ่น ===== */}

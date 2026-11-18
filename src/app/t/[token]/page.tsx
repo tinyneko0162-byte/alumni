@@ -35,7 +35,7 @@ export default async function PersonalTicketPage({ params }: { params: Promise<{
             <div className="flex flex-col gap-1 leading-[1.55]">
               <h1 className="text-[26px] font-semibold text-ink-slate">บัตรของฉัน</h1>
               <p className="text-[13px] text-black">
-                {name} · {id}
+                {name}, {id}
               </p>
             </div>
             <section className="flex flex-col items-center gap-3 rounded-2xl border border-line-slate p-5">
@@ -53,7 +53,7 @@ export default async function PersonalTicketPage({ params }: { params: Promise<{
               ) : (
                 <p className="text-[12px] text-black">กระเป๋า Token จะพร้อมเมื่อบัตรได้รับการอนุมัติ</p>
               )}
-              <p className="text-[12px] text-black">แสดงให้ร้านค้าสแกนเพื่อจ่ายด้วย Token · 1 Token = 1 บาท</p>
+              <p className="text-[12px] text-black">แสดงให้ร้านค้าสแกนเพื่อจ่ายด้วย Token, 1 Token = 1 บาท</p>
             </section>
             <p className="text-[12px] leading-[1.55] text-black">กรุณาไม่ส่งต่อลิงก์นี้ให้ผู้อื่น</p>
             {!hasAccount && holder && (

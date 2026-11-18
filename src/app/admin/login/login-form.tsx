@@ -97,12 +97,11 @@ export function LoginForm({ demoAccounts, notice }: { demoAccounts: DemoAccount[
         className="flex h-[52px] w-full items-center justify-center gap-2.5 rounded-lg bg-brand text-[15px] font-semibold text-white transition hover:brightness-95 disabled:opacity-60"
       >
         {busy ? "กำลังเข้าสู่ระบบ…" : "เข้าสู่ระบบ"}
-        <Icon name="a-arrow-right-white" size={18} />
       </button>
 
       <div className="flex flex-col gap-3 pt-4">
         <div className="h-px bg-line-slate" />
-        <p className="text-[12px] leading-[1.7] text-admin-slate">บัญชีทดลอง (กดเพื่อกรอกให้) • บัญชีจริงสร้างได้ที่ Super Admin › จัดการบทบาท</p>
+        <p className="text-[12px] leading-[1.7] text-admin-slate">บัญชีทดลอง (กดเพื่อกรอกให้), บัญชีจริงสร้างได้ที่ Super Admin › จัดการบทบาท</p>
         <div className="grid grid-cols-2 gap-2 max-sm:grid-cols-1">
           {demoAccounts.map((a) => (
             <button

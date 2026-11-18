@@ -70,7 +70,7 @@ export function HistoryView({ data }: { data: Data }) {
       />
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <Stat label="ยอดยืนยันตามตัวกรอง" value={`฿${fmt(okTotal)}`} note={`${ok.length} รายการสำเร็จ · เพิ่ม ${fmt(okTotal)} Token`} dark />
+        <Stat label="ยอดยืนยันตามตัวกรอง" value={`฿${fmt(okTotal)}`} note={`${ok.length} รายการสำเร็จ, เพิ่ม ${fmt(okTotal)} Token`} dark />
         <Stat
           label="แยกช่องทางตามตัวกรอง"
           value={`฿${fmt(sum(byChannel("โอนธนาคาร")))} / ฿${fmt(sum(byChannel("เงินสด")))}`}
@@ -79,7 +79,7 @@ export function HistoryView({ data }: { data: Data }) {
         <Stat
           label="ยังไม่เพิ่มเข้า Wallet"
           value={`${notCredited.length} รายการ`}
-          note={`รอตรวจสอบ ${notCredited.filter((r) => r.status === "รอตรวจสอบ").length} · ไม่สำเร็จ ${notCredited.filter((r) => r.status === "ไม่สำเร็จ").length}`}
+          note={`รอตรวจสอบ ${notCredited.filter((r) => r.status === "รอตรวจสอบ").length}, ไม่สำเร็จ ${notCredited.filter((r) => r.status === "ไม่สำเร็จ").length}`}
         />
       </div>
 
@@ -111,7 +111,7 @@ export function HistoryView({ data }: { data: Data }) {
           </BrandButton>
         </form>
         <div className="flex flex-wrap justify-between gap-2 text-[11px] leading-[1.55]">
-          <p className="text-admin-muted">ผลลัพธ์ {shown.length} รายการ · เรียงเวลาล่าสุดก่อน · ยอดสรุปนับเฉพาะรายการสำเร็จ</p>
+          <p className="text-admin-muted">ผลลัพธ์ {shown.length} รายการ, เรียงเวลาล่าสุดก่อน, ยอดสรุปนับเฉพาะรายการสำเร็จ</p>
           <button
             type="button"
             className="text-black hover:underline"
@@ -146,7 +146,7 @@ export function HistoryView({ data }: { data: Data }) {
                   <tr
                     key={r.id}
                     onClick={() => setSelectedId(r.id)}
-                    className={cx("cursor-pointer text-admin-ink", on ? "bg-brand-soft" : "bg-white hover:bg-admin-head")}
+                    className={cx("cursor-pointer text-admin-ink", on ? "bg-brand-tint" : "bg-white hover:bg-admin-head")}
                   >
                     <td className="h-[66px] border-b border-admin-line px-3">
                       <p>{r.time}</p>
@@ -181,7 +181,7 @@ export function HistoryView({ data }: { data: Data }) {
         </div>
         <div className="flex flex-wrap items-center justify-between gap-3 text-[11px] leading-[1.55] text-admin-muted">
           <p>
-            แสดง 1–{shown.length} จาก {shown.length} รายการ · ยอดยืนยันหน้านี้ ฿{fmt(okTotal)} / {fmt(okTotal)} Token
+            แสดง 1–{shown.length} จาก {shown.length} รายการ, ยอดยืนยันหน้านี้ ฿{fmt(okTotal)} / {fmt(okTotal)} Token
           </p>
           <div className="flex items-center gap-2">
             <span>10 รายการ / หน้า</span>
@@ -198,14 +198,14 @@ export function HistoryView({ data }: { data: Data }) {
             <div className="flex flex-col gap-0.5 leading-[1.55]">
               <p className="text-[16px] font-semibold text-admin-ink">รายละเอียด {sel.id}</p>
               <p className="text-[11px] text-admin-muted">
-                {data.date} · {sel.time} น. · {sel.channel}
+                {data.date}, {sel.time} น., {sel.channel}
               </p>
             </div>
             <Chip tone={sel.status === "สำเร็จ" ? "ok" : sel.status === "รอตรวจสอบ" ? "warn" : "danger"}>{sel.status}</Chip>
           </div>
-          <Detail label="เจ้าของ Wallet" value={`${sel.owner} · ${sel.wallet}`} />
+          <Detail label="เจ้าของ Wallet" value={`${sel.owner}, ${sel.wallet}`} />
           <LedgerStrip
-            className="bg-brand-soft"
+            className="bg-brand-tint"
             items={[
               { label: "ยอดก่อนเติม", value: fmt(before) },
               { label: "เครดิตเพิ่ม", value: `+${fmt(sel.tokens)}` },
@@ -218,7 +218,7 @@ export function HistoryView({ data }: { data: Data }) {
               <Detail label="บัญชีผู้โอน" value={sel.fromAccount ?? (sel.channel === "เงินสด" ? "เงินสด" : "—")} />
             </div>
             <div className="flex flex-1 flex-col gap-2">
-              <Detail label="ผู้ยืนยัน" value={sel.staffCode ? `${sel.staff} · ${sel.staffCode}` : sel.staff} />
+              <Detail label="ผู้ยืนยัน" value={sel.staffCode ? `${sel.staff}, ${sel.staffCode}` : sel.staff} />
               <Detail label="จุดปฏิบัติงาน" value={sel.station ?? "—"} />
             </div>
           </div>
@@ -228,9 +228,9 @@ export function HistoryView({ data }: { data: Data }) {
               <div className="flex items-center gap-2.5">
                 <Icon name="a-file-check-2" size={18} />
                 <div className="flex flex-1 flex-col gap-0.5 leading-[1.55]">
-                  <p className="text-[12px] font-medium text-admin-ink">{sel.evidence.id} · หลักฐานการโอน</p>
+                  <p className="text-[12px] font-medium text-admin-ink">{sel.evidence.id}, หลักฐานการโอน</p>
                   <p className="text-[11px] text-admin-muted">
-                    ธนาคารอ้างอิง {sel.evidence.bankRef} · ฿{money(sel.received ?? 0)}
+                    ธนาคารอ้างอิง {sel.evidence.bankRef}, ฿{money(sel.received ?? 0)}
                   </p>
                 </div>
                 <OutlineButton onClick={() => setEvidenceOpen(true)}>ดูหลักฐาน</OutlineButton>
@@ -243,11 +243,11 @@ export function HistoryView({ data }: { data: Data }) {
                 fromName={sel.owner}
                 fromAccount={sel.fromAccount ?? "—"}
                 toName="บริษัท รุ่นเรา จำกัด"
-                toAccount="ธนาคารตัวอย่าง • xxx-x-xx900-2"
+                toAccount="ธนาคารตัวอย่าง, xxx-x-xx900-2"
                 paidAt={sel.time}
                 reference={sel.evidence.bankRef}
                 fileName={`${sel.evidence.id}.jpg`}
-                footer="ไฟล์ตัวอย่าง • ไม่ใช่หลักฐานการชำระเงินจริง"
+                footer="ไฟล์ตัวอย่าง, ไม่ใช่หลักฐานการชำระเงินจริง"
               />
             </>
           )}
@@ -267,15 +267,15 @@ export function HistoryView({ data }: { data: Data }) {
           {!sel.audit && <p className="text-[12px] text-admin-muted">ยังไม่มีบันทึกขั้นตอนสำหรับรายการนี้ในข้อมูลจำลอง</p>}
           <div className="h-px bg-admin-line" />
           <p className="text-[11px] leading-[1.55] text-admin-muted">
-            ประวัติอ่านอย่างเดียว · บันทึกเวลาและผู้ดำเนินการทุกขั้นตอน ไม่สามารถแก้ไขยอดหรือยืนยันซ้ำจากหน้านี้
+            ประวัติอ่านอย่างเดียว, บันทึกเวลาและผู้ดำเนินการทุกขั้นตอน ไม่สามารถแก้ไขยอดหรือยืนยันซ้ำจากหน้านี้
           </p>
         </Panel>
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-admin-line bg-white p-4 leading-[1.55]">
         <div className="flex flex-col gap-0.5">
-          <p className="text-[12px] font-semibold text-admin-ink">ยอดเติมยืนยันสะสมทั้งงาน · ณ {data.eventTotal.asOf}</p>
-          <p className="text-[11px] text-admin-muted">ไม่ใช่ยอดตามตัวกรองหรือยอดในหน้านี้ · ไม่รวมค่าบัตร ฿{data.eventTotal.ticketPrice}/คน</p>
+          <p className="text-[12px] font-semibold text-admin-ink">ยอดเติมยืนยันสะสมทั้งงาน, ณ {data.eventTotal.asOf}</p>
+          <p className="text-[11px] text-admin-muted">ไม่ใช่ยอดตามตัวกรองหรือยอดในหน้านี้, ไม่รวมค่าบัตร ฿{data.eventTotal.ticketPrice}/คน</p>
         </div>
         <div className="flex flex-col items-end gap-0.5">
           <p className="text-[17px] font-semibold text-admin-ink">

@@ -45,7 +45,7 @@ export function UserLoginForm({ next }: { next: string }) {
         <Link href="/" className="font-semibold text-brand-deep hover:underline">
           ลงทะเบียน
         </Link>
-        {" • "}เพื่อนที่ได้บัตรจากคุณ ลงทะเบียนด้วยอีเมลที่ได้รับลิงก์ บัตรและ Token จะขึ้นให้เอง
+        {", "}เพื่อนที่ได้บัตรจากคุณ ลงทะเบียนด้วยอีเมลที่ได้รับลิงก์ บัตรและ Token จะขึ้นให้เอง
       </p>
       <p className="rounded-lg bg-brand-tint p-3 text-[12px] leading-[1.55] text-ink-slate">บัญชีทดลอง: kittiphong@example.com รหัสผ่าน 12345678</p>
     </form>

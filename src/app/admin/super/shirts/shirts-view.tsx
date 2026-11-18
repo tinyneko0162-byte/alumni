@@ -13,7 +13,7 @@ type Row = Data["orders"][number];
 type Filter = "all" | "pickup" | "delivery" | "waiting";
 
 const fullAddress = (r: Row) =>
-  r.address ? `${r.address.name} ${r.address.phone} · ${r.address.line} ต.${r.address.subdistrict} อ.${r.address.district} จ.${r.address.province} ${r.address.zip}` : "";
+  r.address ? `${r.address.name} ${r.address.phone}, ${r.address.line} ต.${r.address.subdistrict} อ.${r.address.district} จ.${r.address.province} ${r.address.zip}` : "";
 
 export function ShirtsView({ data }: { data: Data }) {
   const router = useRouter();
@@ -25,7 +25,7 @@ export function ShirtsView({ data }: { data: Data }) {
   // only paid orders count towards what has to be produced and handed over
   const paid = data.orders.filter((o) => o.paid === "approved");
   const count = (rows: Row[]) => rows.reduce((n, o) => n + o.sizes.length, 0);
-  const bySize = data.sizes.map((z) => `${z} ${paid.reduce((n, o) => n + o.sizes.filter((x) => x === z).length, 0)}`).join(" · ");
+  const bySize = data.sizes.map((z) => `${z} ${paid.reduce((n, o) => n + o.sizes.filter((x) => x === z).length, 0)}`).join(", ");
   const pickup = paid.filter((o) => o.delivery === "pickup");
   const ship = paid.filter((o) => o.delivery === "delivery");
 
@@ -51,7 +51,7 @@ export function ShirtsView({ data }: { data: Data }) {
     <>
       <PageHeading
         title="ออเดอร์เสื้อรุ่น"
-        description="สรุปจำนวนเสื้อตามไซซ์ รายชื่อคนรับที่หน้างาน และที่อยู่สำหรับจัดส่ง • นับเฉพาะออเดอร์ที่ชำระเงินแล้ว"
+        description="สรุปจำนวนเสื้อตามไซซ์ รายชื่อคนรับที่หน้างาน และที่อยู่สำหรับจัดส่ง, นับเฉพาะออเดอร์ที่ชำระเงินแล้ว"
         actions={
           <ExportButton
             variant="outline"
@@ -66,8 +66,8 @@ export function ShirtsView({ data }: { data: Data }) {
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <Metric label="เสื้อที่ชำระแล้ว" value={`${count(paid)} ตัว`} note={bySize} />
-        <Metric label="รับที่หน้างาน" value={`${count(pickup)} ตัว`} note={`รับแล้ว ${count(pickup.filter((o) => o.shirtStatus === "picked"))} · ยังไม่รับ ${count(pickup.filter((o) => o.shirtStatus !== "picked"))}`} />
-        <Metric label="ส่งที่บ้าน (ส่งฟรี)" value={`${count(ship)} ตัว`} note={`ส่งแล้ว ${count(ship.filter((o) => o.shirtStatus === "shipped"))} · รอส่ง ${count(ship.filter((o) => o.shirtStatus !== "shipped"))}`} />
+        <Metric label="รับที่หน้างาน" value={`${count(pickup)} ตัว`} note={`รับแล้ว ${count(pickup.filter((o) => o.shirtStatus === "picked"))}, ยังไม่รับ ${count(pickup.filter((o) => o.shirtStatus !== "picked"))}`} />
+        <Metric label="ส่งที่บ้าน (ส่งฟรี)" value={`${count(ship)} ตัว`} note={`ส่งแล้ว ${count(ship.filter((o) => o.shirtStatus === "shipped"))}, รอส่ง ${count(ship.filter((o) => o.shirtStatus !== "shipped"))}`} />
       </div>
 
       {error && (
@@ -151,7 +151,7 @@ export function ShirtsView({ data }: { data: Data }) {
         )}
       </Panel>
 
-      <Guidance>ผู้ซื้อที่ไม่มีบัตรเข้างานของตัวเอง ระบบบังคับให้ส่งเสื้อที่บ้าน • ทุกครั้งที่บันทึกสถานะเสื้อ ระบบจะลงหน้า “บันทึกระบบ” อัตโนมัติ</Guidance>
+      <Guidance>ผู้ซื้อที่ไม่มีบัตรเข้างานของตัวเอง ระบบบังคับให้ส่งเสื้อที่บ้าน, ทุกครั้งที่บันทึกสถานะเสื้อ ระบบจะลงหน้า “บันทึกระบบ” อัตโนมัติ</Guidance>
     </>
   );
 }

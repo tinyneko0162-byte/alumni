@@ -5,25 +5,25 @@
     {
       "id": "ST-01",
       "name": "ร้านยากิโซบะ",
-      "operator": { "initials": "รจ", "name": "รจ•• • เจ้าหน้าที่" },
-      "product": { "sku": "YAKI-01", "name": "ยากิโซบะ", "tagline": "สินค้ายอดนิยม · พร้อมเสิร์ฟ", "price": 80, "unit": "จาน", "image": "/images/products/yakisoba.jpg" }
+      "operator": { "initials": "รจ", "name": "รจ••, เจ้าหน้าที่" },
+      "product": { "sku": "YAKI-01", "name": "ยากิโซบะ", "tagline": "สินค้ายอดนิยม, พร้อมเสิร์ฟ", "price": 80, "unit": "จาน", "image": "/images/products/yakisoba.jpg" }
     },
     {
       "id": "ST-02",
       "name": "ร้านขายเบียร์สด",
-      "operator": { "initials": "สม", "name": "สม•• • เจ้าหน้าที่" },
-      "product": { "sku": "BEER-01", "name": "เบียร์สด", "tagline": "เย็นเฉียบ · พร้อมเสิร์ฟ", "price": 100, "unit": "แก้ว", "image": "/images/products/beer.png" }
+      "operator": { "initials": "สม", "name": "สม••, เจ้าหน้าที่" },
+      "product": { "sku": "BEER-01", "name": "เบียร์สด", "tagline": "เย็นเฉียบ, พร้อมเสิร์ฟ", "price": 100, "unit": "แก้ว", "image": "/images/products/beer.png" }
     },
     {
       "id": "ST-04",
       "name": "ร้านไก่ป๊อปทอด",
-      "operator": { "initials": "นง", "name": "นง•• • เจ้าหน้าที่" },
-      "product": { "sku": "POP-01", "name": "ไก่ป๊อป", "tagline": "ทอดใหม่ · พร้อมเสิร์ฟ", "price": 60, "unit": "ถ้วย", "image": "/images/products/chicken-pop.png" }
+      "operator": { "initials": "นง", "name": "นง••, เจ้าหน้าที่" },
+      "product": { "sku": "POP-01", "name": "ไก่ป๊อป", "tagline": "ทอดใหม่, พร้อมเสิร์ฟ", "price": 60, "unit": "ถ้วย", "image": "/images/products/chicken-pop.png" }
     },
     {
       "id": "ST-03",
       "name": "ร้านของที่ระลึก",
-      "operator": { "initials": "มณ", "name": "มณ•• • เจ้าหน้าที่" },
+      "operator": { "initials": "มณ", "name": "มณ••, เจ้าหน้าที่" },
       "product": { "sku": "SOUV-01", "name": "พวงกุญแจที่ระลึก", "tagline": "ของที่ระลึกงานเลี้ยงรุ่น", "price": 100, "unit": "ชิ้น", "image": "/images/products/keychain.png" }
     }
   ],

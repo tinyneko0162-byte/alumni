@@ -218,9 +218,8 @@ export function SearchBox({
 /** Info bar. "brand" = pink bar from Figma, "warn" = amber. */
 export function Guidance({ children, tone = "brand" }: { children: React.ReactNode; tone?: "brand" | "warn" }) {
   return (
-    <div className={cx("flex items-start gap-2.5 rounded-lg p-3", tone === "brand" ? "bg-brand-soft" : "bg-warning-tint")}>
-      <Icon name={tone === "brand" ? "a-info-dark" : "a-info-warn"} size={18} />
-      <p className={cx("flex-1 text-[12px] leading-[1.55]", tone === "brand" ? "text-black" : "text-admin-warn")}>{children}</p>
+    <div className={cx("flex items-start gap-2.5 rounded-r-lg border-l-[3px] py-2.5 pr-3 pl-3", tone === "brand" ? "border-brand bg-admin-head" : "border-admin-warn bg-warning-tint")}>
+      <p className={cx("flex-1 text-[12px] leading-[1.6]", tone === "brand" ? "text-admin-ink" : "text-admin-warn")}>{children}</p>
     </div>
   );
 }

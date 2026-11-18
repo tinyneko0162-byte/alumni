@@ -71,7 +71,7 @@ export function StatusView({ uploadedAt }: { uploadedAt: string }) {
             <div className="flex min-w-0 flex-1 flex-col gap-[3px]">
               <p className="truncate font-latin text-[11px] text-ink">{cart.slip.fileName}</p>
               <p className="text-[10px] text-black">
-                {state.sentAt ?? uploadedAt} • {cart.slip.sizeLabel}
+                {state.sentAt ?? uploadedAt}, {cart.slip.sizeLabel}
               </p>
             </div>
             <Icon name="paperclip" size={17} />

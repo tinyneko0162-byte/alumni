@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Icon } from "@/components/ui/Icon";
 import { cx } from "@/lib/format";
 
 const base =
@@ -26,7 +25,6 @@ export function PrimaryButton({
   const content = (
     <>
       {children}
-      <Icon name="arrow-right-white" size={18} />
     </>
   );
   if (href && !disabled) {

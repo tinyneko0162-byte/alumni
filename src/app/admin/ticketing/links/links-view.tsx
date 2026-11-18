@@ -46,7 +46,7 @@ export function LinksView({ data, event }: { data: Data; event: AdminConfig["eve
       setHistory((h) => [{ ticketId: c.ticketId, email: to, time, status: "ส่งแล้ว" }, ...h.filter((x) => x.ticketId !== c.ticketId)]);
       setSent(true);
       setDemoLink(json.simulated && json.link ? json.link : null);
-      setLastSent(`${c.ticketId} → ${to}`);
+      setLastSent(`${c.ticketId} ถึง ${to}`);
       router.refresh(); // loads the next ticket holder still waiting for a link
     } catch {
       setError("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ ลองใหม่อีกครั้ง");
@@ -62,7 +62,7 @@ export function LinksView({ data, event }: { data: Data; event: AdminConfig["eve
       <div className="flex items-start gap-2.5 rounded-lg bg-admin-ok-tint p-3">
         <Icon name="a-circle-check" size={18} />
         <p className="flex-1 text-[12px] leading-[1.55] text-admin-ok">
-          {c.ticketId} อนุมัติค่าบัตรแล้ว • ฿{c.amount.toFixed(2)} • {sent ? "ส่งลิงก์ให้ลูกค้าแล้ว" : "พร้อมส่งลิงก์ให้ลูกค้า"}
+          {c.ticketId} อนุมัติค่าบัตรแล้ว, ฿{c.amount.toFixed(2)}, {sent ? "ส่งลิงก์ให้ลูกค้าแล้ว" : "พร้อมส่งลิงก์ให้ลูกค้า"}
         </p>
       </div>
 
@@ -77,19 +77,19 @@ export function LinksView({ data, event }: { data: Data; event: AdminConfig["eve
               </a>
             </>
           )}
-          {" · "}เหลือรอส่ง {data.waiting} ใบ
+          {", "}เหลือรอส่ง {data.waiting} ใบ
         </div>
       )}
 
       <div className="flex flex-col gap-5 xl:flex-row xl:items-start">
         <div className="flex flex-col gap-5 xl:w-[400px]">
           <Panel title="ข้อมูลการส่ง" aside={sent ? <Chip tone="ok">ส่งแล้ว</Chip> : <Chip tone="warn">ยังไม่ส่ง</Chip>}>
-            <Field label="ผู้ส่ง · อีเมลบริษัท" value={data.senderEmail} readOnly hint="เจ้าหน้าที่ไม่สามารถเปลี่ยนเป็นอีเมลส่วนตัวได้" />
+            <Field label="ผู้ส่ง, อีเมลบริษัท" value={data.senderEmail} readOnly hint="เจ้าหน้าที่ไม่สามารถเปลี่ยนเป็นอีเมลส่วนตัวได้" />
             <Field label="ถึง" type="email" value={to} onChange={(e) => setTo(e.target.value)} className="[&_input]:font-medium" />
             <Field label="หัวเรื่อง" value={subject} onChange={(e) => setSubject(e.target.value)} />
             <Detail label="เลขที่บัตร" value={c.ticketId} />
             <Detail label="ผู้รับ" value={c.recipientName} />
-            <Detail label="ค่าบัตร" value={`฿${c.amount.toFixed(2)} · อนุมัติแล้ว`} />
+            <Detail label="ค่าบัตร" value={`฿${c.amount.toFixed(2)}, อนุมัติแล้ว`} />
             <div className="h-px bg-admin-line" />
             <BrandButton icon="a-send-white" onClick={send} disabled={sending || !to.trim()} className="w-full bg-[#ea3f92]">
               {sending ? "กำลังส่ง…" : sent ? "ส่งซ้ำจากอีเมลบริษัท" : "ส่งลิงก์จากอีเมลบริษัท"}
@@ -105,7 +105,7 @@ export function LinksView({ data, event }: { data: Data; event: AdminConfig["eve
           <Panel title="ข้อมูลลิงก์ลูกค้า">
             <Detail label="อ้างอิง" value={c.linkRef} />
             <p className="text-[12px] leading-[1.55] text-black">{c.linkMasked}</p>
-            <Guidance>ลิงก์เฉพาะบุคคล • แสดงแบบปกปิดในพื้นที่เจ้าหน้าที่</Guidance>
+            <Guidance>ลิงก์เฉพาะบุคคล, แสดงแบบปกปิดในพื้นที่เจ้าหน้าที่</Guidance>
           </Panel>
         </div>
 
@@ -127,7 +127,7 @@ export function LinksView({ data, event }: { data: Data; event: AdminConfig["eve
               <span className="self-start rounded-lg bg-[#ea3f92] px-5 py-[11px] text-[13px] font-semibold text-white">เปิดลิงก์ส่วนตัวของคุณ →</span>
               <div className="text-[12px] text-admin-muted">
                 <p>
-                  {event.dateLong} · {event.time.split("–")[0]} น.
+                  {event.dateLong}, {event.time.split("–")[0]} น.
                 </p>
                 <p>{event.venue}</p>
                 <br />
@@ -148,7 +148,7 @@ export function LinksView({ data, event }: { data: Data; event: AdminConfig["eve
                 { key: "s", header: "สถานะ", width: 129, render: (r) => <Chip tone="ok">{r.status}</Chip> },
               ]}
             />
-            <p className="text-[11px] leading-[1.55] text-admin-indigo">{history.at(-1)?.ticketId} · ตรวจอีเมลผู้รับก่อนส่งซ้ำ →</p>
+            <p className="text-[11px] leading-[1.55] text-admin-indigo">{history.at(-1)?.ticketId}, ตรวจอีเมลผู้รับก่อนส่งซ้ำ →</p>
           </Panel>
         </div>
       </div>

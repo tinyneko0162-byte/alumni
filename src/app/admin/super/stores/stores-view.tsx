@@ -103,8 +103,8 @@ export function StoresView({ data }: { data: Data }) {
       />
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <Metric label="ร้านค้าทั้งหมด" value={String(stores.length)} note={`เปิดขาย ${openCount} · ปิดขาย ${stores.length - openCount}`} />
-        <Metric label="สินค้าในระบบ" value={String(data.productCount)} note={`${data.productCount} รายการ · ${data.productNames}`} />
+        <Metric label="ร้านค้าทั้งหมด" value={String(stores.length)} note={`เปิดขาย ${openCount}, ปิดขาย ${stores.length - openCount}`} />
+        <Metric label="สินค้าในระบบ" value={String(data.productCount)} note={`${data.productCount} รายการ, ${data.productNames}`} />
         <Metric label="ผู้ดูแลร้าน" value={String(new Set(stores.map((s) => s.owner)).size)} note="ผู้ดูแล 1 คนต่อร้าน" />
       </div>
 
@@ -114,7 +114,7 @@ export function StoresView({ data }: { data: Data }) {
         </p>
       )}
 
-      <Panel title={`ร้านค้าในงาน · สินค้าทั้งหมด ${data.categoryCount} หมวดหมู่`} className="min-h-[611px]">
+      <Panel title={`ร้านค้าในงาน, สินค้าทั้งหมด ${data.categoryCount} หมวดหมู่`} className="min-h-[611px]">
         <SearchBox value={query} onChange={setQuery} placeholder="ค้นหาร้าน ผู้ดูแล หรือรหัสร้าน" />
         <div className="overflow-x-auto">
           <table className="w-full min-w-[640px] border-separate border-spacing-0 text-left text-[15px] leading-[1.55]">
@@ -136,7 +136,7 @@ export function StoresView({ data }: { data: Data }) {
                       <p className="font-medium text-admin-ink">{s.name}</p>
                       <p className="text-[12px] text-admin-muted">
                         {s.id}
-                        {s.detail ? ` · ${s.detail}` : ""}
+                        {s.detail ? `, ${s.detail}` : ""}
                       </p>
                     </td>
                     <td className="border-b border-admin-line px-3 text-[13px] text-admin-ink">{s.owner}</td>

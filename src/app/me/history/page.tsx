@@ -21,7 +21,7 @@ export default async function HistoryPage() {
         <div className="flex flex-col gap-[5px] leading-[1.55]">
           <h1 className="text-[27px] font-semibold text-ink-slate">ประวัติรายการ</h1>
           <p className="text-[13px] text-black">
-            กระเป๋า {wallet.shortId} • {profile.fullName}
+            กระเป๋า {wallet.shortId}, {profile.fullName}
           </p>
         </div>
 
@@ -40,11 +40,11 @@ export default async function HistoryPage() {
 
         <Panel title="รายการเติม Token">
           <p className="text-[12px] leading-[1.55] text-black">
-            {history.dayLabel} • แสดง {history.topUps.length} รายการ
+            {history.dayLabel}, แสดง {history.topUps.length} รายการ
           </p>
           {history.topUps.length === 0 && <p className="text-[12px] text-black">ยังไม่มีรายการ</p>}
           {history.topUps.map((t) => (
-            <Txn key={t.id} icon="arrow-down-left" label={t.label} meta={`${t.time} • ${t.id} • หลังรายการ ${t.balanceAfter}`} amount={`+${t.amount}`} tone="text-success" />
+            <Txn key={t.id} icon="arrow-down-left" label={t.label} meta={`${t.time}, ${t.id}, หลังรายการ ${t.balanceAfter}`} amount={`+${t.amount}`} tone="text-success" />
           ))}
         </Panel>
 
@@ -56,7 +56,7 @@ export default async function HistoryPage() {
           </div>
           {history.purchases.length === 0 && <p className="text-[12px] text-black">ยังไม่มีรายการ</p>}
           {history.purchases.map((t) => (
-            <Txn key={t.id} icon="arrow-up-right" label={t.label} meta={`${t.time} • ${t.id} • หลังรายการ ${t.balanceAfter}`} amount={`−${t.amount}`} tone="text-danger" />
+            <Txn key={t.id} icon="arrow-up-right" label={t.label} meta={`${t.time}, ${t.id}, หลังรายการ ${t.balanceAfter}`} amount={`−${t.amount}`} tone="text-danger" />
           ))}
         </Panel>
 

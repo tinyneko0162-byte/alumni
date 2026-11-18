@@ -92,7 +92,7 @@ export function PosView({ boothName, store, stores }: { boothName: string; store
             </div>
           </div>
         ) : (
-          <p className="border-b border-admin-line px-5 py-10 text-center text-[13px] text-admin-muted">ยังไม่มีสินค้าในตะกร้า · กด “เพิ่มลงตะกร้า”</p>
+          <p className="border-b border-admin-line px-5 py-10 text-center text-[13px] text-admin-muted">ยังไม่มีสินค้าในตะกร้า, กด “เพิ่มลงตะกร้า”</p>
         )}
 
         <div className="flex flex-col gap-3.5 px-5 pt-4 pb-5">
@@ -110,7 +110,7 @@ export function PosView({ boothName, store, stores }: { boothName: string; store
               qty === 0 || !onSale ? "pointer-events-none opacity-50" : ""
             }`}
           >
-            ไปหน้าชำระเงิน <span className="text-[16px]">→</span>
+            ไปหน้าชำระเงิน
           </Link>
         </div>
       </section>

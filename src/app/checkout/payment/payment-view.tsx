@@ -88,7 +88,7 @@ export function PaymentView({ event }: { event: EventInfo }) {
             </button>
           </div>
           <p className="text-[13px] font-medium text-ink">
-            {cart.address.name} · {cart.address.phone}
+            {cart.address.name}, {cart.address.phone}
           </p>
           <p className="text-[12px] leading-[1.55] text-ink/70">
             {cart.address.line} ต.{cart.address.subdistrict} อ.

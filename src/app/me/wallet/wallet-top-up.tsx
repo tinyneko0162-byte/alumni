@@ -56,7 +56,7 @@ export function WalletTopUp({ accept, maxSizeMb }: { accept: string; maxSizeMb: 
           {list.map((t) => (
             <li key={t.id} className="flex justify-between">
               <span>
-                {t.id} · ฿{t.amount.toLocaleString("en-US")}
+                {t.id}, ฿{t.amount.toLocaleString("en-US")}
               </span>
               <span className="font-semibold">{STATE[t.state] ?? t.state}</span>
             </li>

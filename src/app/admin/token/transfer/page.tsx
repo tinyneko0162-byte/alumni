@@ -7,7 +7,7 @@ import { TransferView } from "./transfer-view";
 export default async function TokenTransferPage() {
   const data = await getTokenTransfers();
   return (
-    <AdminShell role="token" active="/admin/token/transfer" title="เติม Token • โอนเงิน">
+    <AdminShell role="token" active="/admin/token/transfer" title="เติม Token จากเงินโอน">
       <LiveRefresh />
       <TransferView key={data.requests.map((r) => r.id + r.state).join()} data={data} />
     </AdminShell>
