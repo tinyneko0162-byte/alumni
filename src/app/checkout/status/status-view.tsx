@@ -103,8 +103,8 @@ export function StatusView({ uploadedAt }: { uploadedAt: string }) {
         ))}
       </section>
 
-      {approved && state.link ? (
-        <Link href={state.link} className="text-center text-[12px] font-semibold text-brand-deep underline-offset-2 hover:underline">
+      {approved && tickets.length ? (
+        <Link href="/me/ticket" className="text-center text-[12px] font-semibold text-brand-deep underline-offset-2 hover:underline">
           เปิดบัตรของฉัน
         </Link>
       ) : (

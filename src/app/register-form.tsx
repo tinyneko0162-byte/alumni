@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { registerUser } from "@/lib/actions";
@@ -19,6 +20,7 @@ export function RegisterForm({ policy }: { policy: EventInfo["policy"] }) {
   const [accepted, setAccepted] = useState(false);
   const [policyOpen, setPolicyOpen] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
   const set = (k: keyof typeof f) => (v: string) => setF((s) => ({ ...s, [k]: v }));
 
   const errors = {
@@ -34,13 +36,9 @@ export function RegisterForm({ policy }: { policy: EventInfo["policy"] }) {
         e.preventDefault();
         setSubmitted(true);
         if (!phoneOk(f.phone) || !strong(f.password) || f.confirm !== f.password || !accepted) return;
-        // Mock accounts: remember who is buying in this browser so the order carries the right name/email.
-        try {
-          localStorage.setItem("alumni-profile", JSON.stringify({ name: f.name.trim(), email: f.email.trim() }));
-        } catch {
-          /* private mode: order falls back to the sample profile */
-        }
-        await registerUser({ fullName: f.name.trim() || "ผู้ร่วมงาน", email: f.email.trim() });
+        setServerError(null);
+        const res = await registerUser({ fullName: f.name.trim(), email: f.email.trim(), phone: f.phone, password: f.password });
+        if (!res.ok) return setServerError(res.error);
         router.push("/shop");
       }}
     >
@@ -99,7 +97,18 @@ export function RegisterForm({ policy }: { policy: EventInfo["policy"] }) {
         </div>
       </Dialog>
 
+      {serverError && (
+        <p role="alert" className="rounded-lg bg-[#fdecee] p-3 text-[12px] leading-[1.55] text-danger">
+          {serverError}
+        </p>
+      )}
       <PrimaryButton type="submit">ลงทะเบียนและเลือกซื้อสินค้า</PrimaryButton>
+      <p className="text-center text-[12px] text-black">
+        มีบัญชีแล้ว?{" "}
+        <Link href="/login" className="font-semibold text-brand-deep hover:underline">
+          เข้าสู่ระบบ
+        </Link>
+      </p>
     </form>
   );
 }

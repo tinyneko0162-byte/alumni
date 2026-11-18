@@ -15,6 +15,7 @@ import tokenCash from "@/data/admin/token-cash.json";
 import tokenHistory from "@/data/admin/token-history.json";
 import tokenTransfers from "@/data/admin/token-transfers.json";
 import demo from "@/data/demo.json";
+import { hashPassword } from "@/lib/password";
 
 /**
  * Tiny file-backed database so the user pages and every staff page share the same data.
@@ -28,7 +29,11 @@ export type CatalogProduct = (typeof products.products)[number];
 export type LogEvent = (typeof logs.events)[number];
 
 export type StoreRow = { id: string; name: string; owner: string; detail: string; status: "open" | "closed" };
-export type Wallet = { id: string; owner: string; balance: number; status: string };
+export type Wallet = { id: string; owner: string; balance: number; status: string; email?: string };
+/** Attendee account. A wallet is created with the account; tickets are matched by email. */
+export type User = { id: string; name: string; email: string; phone: string; pass: string; walletId: string; createdAt: string };
+/** Staff account: one role each; a Store Operator is tied to one store. */
+export type Staff = { id: string; username: string; name: string; role: RoleKey; pass: string; active: boolean; storeId?: string; station: string };
 export type Sale = (typeof storeSales.sales)[number] & { storeId?: string; productName?: string; unitPrice?: number; amount?: number };
 export type TopupRecord = {
   id: string; time: string; wallet: string; owner: string; channel: string; received: number | null; requested?: number | null; tokens: number;
@@ -58,6 +63,13 @@ export type Order = (typeof ticketSlips.requests)[number] & {
   shirtUpdatedAt?: string;
 };
 
+/** Wallet that belongs to an email address (account wallet first, then one made for a friend). */
+export function walletOfEmail(db: Db, email: string): Wallet | undefined {
+  const e = email.trim().toLowerCase();
+  const user = db.users.find((u) => u.email.toLowerCase() === e);
+  return db.wallets.find((w) => (user && w.id === user.walletId) || w.email?.toLowerCase() === e);
+}
+
 /** Name/email for a ticket id, looking through every approved order. */
 export function findHolder(db: Db, ticketId: string): (TicketHolder & { order: Order }) | null {
   for (const o of db.orders) {
@@ -71,6 +83,8 @@ export type Attendee = (typeof financeAttendance.attendees)[number];
 export type LinkRecord = (typeof ticketLinks.history)[number];
 
 export type Db = {
+  users: User[];
+  staff: Staff[];
   orders: Order[];
   checkins: Attendee[];
   linkHistory: LinkRecord[];
@@ -83,6 +97,26 @@ export type Db = {
   topups: TopupRecord[];
   transfers: TransferReq[];
 };
+
+// demo account passwords are hashed once per server start (hashing is deliberately slow)
+let seedAccounts: { users: User[]; staff: Staff[] } | null = null;
+function demoAccounts() {
+  if (seedAccounts) return seedAccounts;
+  const pw = (p: string) => hashPassword(p, "demo-seed-salt");
+  const users: User[] = [
+    { id: "U-0001", name: demo.wallet.owner, email: "kittiphong@example.com", phone: "0812345678", pass: pw("12345678"), walletId: demo.wallet.id, createdAt: "24 ต.ค. 2569" },
+  ];
+  const staff: Staff[] = [
+    { id: "SA-01", username: "admin", name: "สุ•• ผู้ดูแลระบบ", role: "super", pass: pw("admin123"), active: true, station: "ฝ่ายจัดงาน" },
+    { id: "TO-01", username: "ticket", name: "พั•• เจ้าหน้าที่ตั๋ว", role: "ticketing", pass: pw("1234"), active: true, station: "จุดเช็กอินประตูหลัก" },
+    { id: "TS-01", username: "token", name: "อร•• จุดเติมเงิน", role: "token", pass: pw("1234"), active: true, station: "จุดเติมเงิน A" },
+    ...[...storePos.stores].sort((a, b) => a.id.localeCompare(b.id)).map((st, i) => ({
+      id: `SO-0${i + 1}`, username: `store${i + 1}`, name: st.operator.name.split(" ")[0], role: "store" as RoleKey, pass: pw("1234"), active: true, storeId: st.id, station: st.name,
+    })),
+  ];
+  seedAccounts = { users, staff };
+  return seedAccounts;
+}
 
 const seed = (): Db => {
   // products sold at the POS booths but missing from the admin catalog (e.g. ST-04) are added so Super Admin can edit them
@@ -109,7 +143,10 @@ const seed = (): Db => {
   }
   storeRows.sort((a, b) => a.id.localeCompare(b.id));
   for (const c of catalog) c.store = storeRows.find((x) => x.id === c.storeCode)?.name ?? c.store;
+  const accounts = demoAccounts();
   return {
+    users: structuredClone(accounts.users),
+    staff: structuredClone(accounts.staff),
     stores: storeRows,
     orders: ticketSlips.requests.map((r) => ({ ...r, status: "pending" as const, ticketIds: [] })),
     checkins: [],
@@ -117,7 +154,7 @@ const seed = (): Db => {
     roleEnabled: Object.fromEntries(Object.keys(roles.roles).map((k) => [k, true])) as Db["roleEnabled"],
     catalog,
     logs: structuredClone(logs.events),
-    wallets: [{ ...demo.wallet, status: "ใช้งานได้" }, ...structuredClone(tokenCash.wallets)],
+    wallets: [{ ...demo.wallet, status: "ใช้งานได้", email: "kittiphong@example.com" }, ...structuredClone(tokenCash.wallets)],
     sales: structuredClone(storeSales.sales),
     topups: structuredClone(tokenHistory.records) as TopupRecord[],
     transfers: tokenTransfers.requests.map((r) => ({ ...r, state: "pending" as const })),

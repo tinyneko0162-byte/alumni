@@ -22,18 +22,8 @@ export function PaymentView({ event }: { event: EventInfo }) {
     if (!cart.slip || busy) return;
     setBusy(true);
     setError(null);
-    let profile = {
-      name: "กิตติพงศ์ วัฒนกุล",
-      email: "kittiphong@example.com",
-    };
-    try {
-      const raw = localStorage.getItem("alumni-profile");
-      if (raw) profile = { ...profile, ...JSON.parse(raw) };
-    } catch {
-      /* use sample profile */
-    }
+    // the buyer is the signed-in account (checked again on the server)
     const res = await submitOrder({
-      ...profile,
       purchaseType: cart.purchaseType,
       friends: includesTicket(cart) ? cart.friends.slice(0, cart.friendTicketQty) : [],
       shirts: includesShirt(cart) ? cart.shirts : [],

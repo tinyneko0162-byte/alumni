@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { logoutStaff } from "@/lib/actions";
-import { getStaffRole } from "@/lib/session";
+import { getStaff } from "@/lib/session";
 import { Icon } from "@/components/ui/Icon";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { getAdminConfig, getOverview, type RoleKey } from "@/lib/admin-data";
@@ -29,13 +29,16 @@ export async function AdminShell({
   children: React.ReactNode;
 }) {
   const [cfg, overview] = await Promise.all([getAdminConfig(), getOverview()]);
-  const signedIn = await getStaffRole();
-  if (!signedIn) redirect("/admin/login");
+  const staff = await getStaff();
+  const signedIn = staff?.role;
+  if (!staff || !signedIn) redirect("/admin/login");
   if (!cfg.enabled[signedIn]) redirect("/admin/login?disabled=1");
   // a role may only open its own pages (Super Admin can open all of them)
   if (signedIn !== role && signedIn !== "super") redirect(cfg.roles[signedIn].home);
   const r = cfg.roles[role];
-  const account = "account" in r ? (r.account as typeof cfg.account) : cfg.account;
+  // the signed-in person (Super Admin viewing another role's page still sees their own name)
+  const account = { initials: staff.name.slice(0, 2), name: staff.name };
+  const mine = cfg.roles[signedIn];
 
   return (
     <div className="flex min-h-dvh bg-admin-page">
@@ -78,7 +81,7 @@ export async function AdminShell({
             </span>
             <div className="flex flex-col leading-[1.55]">
               <p className="text-[12px] text-admin-side-ink">{account.name}</p>
-              <p className="text-[10px] text-admin-side-muted">สิทธิ์เฉพาะ {r.label}</p>
+              <p className="text-[10px] text-admin-side-muted">{mine.label} · {staff.username}</p>
             </div>
           </div>
           <form action={logoutStaff}>

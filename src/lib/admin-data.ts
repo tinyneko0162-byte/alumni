@@ -196,7 +196,9 @@ function financeFigures(db: Db) {
   const newShirts = approvedOrders.reduce((n, o) => n + (o.shirts?.length ?? 0), 0);
   const fresh = db.topups.filter((t) => t.status === "สำเร็จ" && !seededTopups.has(`${t.id}|${t.status}`));
   const newCash = fresh.filter((t) => t.channel === "เงินสด").reduce((n, t) => n + (t.received ?? 0), 0);
-  const newBank = fresh.filter((t) => t.channel !== "เงินสด").reduce((n, t) => n + (t.received ?? 0), 0);
+  const newBank = fresh.filter((t) => t.channel === "โอนธนาคาร").reduce((n, t) => n + (t.received ?? 0), 0);
+  // 200 Token that come with each ticket: Token in wallets, but the money is already in the ticket price
+  const newBonus = fresh.filter((t) => t.channel === "มากับบัตร").reduce((n, t) => n + t.tokens, 0);
   const newSales = db.sales.filter((x) => !seededSales.has(x.id) && x.amount !== undefined);
   const newSpent = newSales.reduce((n, x) => n + (x.amount ?? 0), 0);
 
@@ -222,7 +224,7 @@ function financeFigures(db: Db) {
     revenue,
     total: revenue.reduce((n, r) => n + r.amount, 0),
     tickets: { ...financeRevenue.tickets, count: financeRevenue.tickets.count + newTickets, shirts: newShirts },
-    tokens: { toppedUp: financeRevenue.tokens.toppedUp + newCash + newBank, spent: financeRevenue.tokens.spent + newSpent },
+    tokens: { toppedUp: financeRevenue.tokens.toppedUp + newCash + newBank + newBonus, spent: financeRevenue.tokens.spent + newSpent },
     spendingByCategory: spending,
   };
 }
