@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 import roles from "@/data/admin/roles.json";
 import { addLog, nextId, nowStamp, nowTime, readDb, shortWallet, updateDb, type CatalogProduct, type RoleKey } from "@/lib/db";
 import demo from "@/data/demo.json";
+import financeAttendance from "@/data/admin/finance-attendance.json";
+import { signTicket } from "@/lib/ticket-token";
 import storePos from "@/data/admin/store-pos.json";
 import { clearStaffSession, getStaffRole, setStaffSession } from "@/lib/session";
 
@@ -181,4 +183,75 @@ export async function requestTopup(input: { amount: number; slipFile: string }):
 /** Status of this attendee's top-up requests (newest first). */
 export async function myTopups(): Promise<{ id: string; amount: number; state: string }[]> {
   return readDb().transfers.filter((t) => t.wallet === shortWallet(demo.wallet.id) && t.owner === demo.wallet.owner).slice(0, 5).map((t) => ({ id: t.id, amount: t.amount, state: t.state }));
+}
+
+// ---------- registration & ticket orders (attendee → ticketing staff) ----------
+
+export async function registerUser(input: { fullName: string; email: string }): Promise<{ ok: boolean }> {
+  updateDb((db) => {
+    addLog(db, { event: "ผู้ร่วมงานลงทะเบียนใหม่", detail: input.email.slice(0, 40), role: "ผู้ร่วมงาน", actor: input.fullName.slice(0, 40), ref: "REG" });
+  });
+  return { ok: true };
+}
+
+/** Attendee sends the transfer slip for a ticket order; it appears in Ticketing › ตรวจสอบสลิปค่าบัตร. */
+export async function submitOrder(input: { name: string; email: string; ticketType: string; qty: number; amount: number; slipFile: string }): Promise<Result<{ id: string }>> {
+  const qty = Math.floor(input.qty);
+  const amount = Math.round(input.amount);
+  if (!input.name.trim() || !input.email.includes("@") || !(qty > 0) || !(amount > 0) || !input.slipFile.trim()) return { ok: false, error: "ข้อมูลคำสั่งซื้อไม่ครบ" };
+  return updateDb((db) => {
+    const id = nextId("TKT", db.orders.map((o) => o.id));
+    const d = new Date();
+    db.orders.unshift({
+      id, submittedAt: d.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" }), name: input.name.trim().slice(0, 60), email: input.email.trim().slice(0, 80),
+      ticketType: input.ticketType, qty, amount, slipFile: input.slipFile.slice(0, 80), fromAccount: "xxx-x-xx482-1", paidAt: `${nowStamp()} น.`, ref: `SPU-T-${Math.floor(100 + Math.random() * 900)}`,
+      duplicateRef: false, status: "pending", ticketIds: [], fromAttendee: true,
+    });
+    addLog(db, { event: `ผู้ร่วมงานส่งสลิปค่าบัตร ฿${amount}`, role: "ผู้ร่วมงาน", actor: input.name.slice(0, 40), ref: id, result: "รอตรวจ" });
+    return { ok: true as const, id };
+  });
+}
+
+/** Attendee polls this to see what ticketing staff decided. */
+export async function orderStatus(id: string): Promise<{ status: "pending" | "approved" | "rejected" | "unknown"; link?: string; ticketIds?: string[] }> {
+  const o = readDb().orders.find((x) => x.id === id);
+  if (!o) return { status: "unknown" };
+  return o.status === "approved" ? { status: "approved", link: `/t/${signTicket(o.ticketIds[0] ?? o.id)}`, ticketIds: o.ticketIds } : { status: o.status };
+}
+
+export async function resolveSlip(id: string, decision: "approve" | "reject"): Promise<Result<{ ticketIds: string[] }>> {
+  if (!(await requireRole("ticketing"))) return { ok: false, error: "ไม่มีสิทธิ์ตรวจสลิป" };
+  return updateDb((db) => {
+    const o = db.orders.find((x) => x.id === id);
+    if (!o || o.status !== "pending") return { ok: false as const, error: "รายการนี้ถูกดำเนินการไปแล้ว" };
+    if (decision === "approve") {
+      o.status = "approved";
+      o.ticketIds = Array.from({ length: o.qty }, (_, i) => (i === 0 ? o.id : `${o.id}-${i + 1}`));
+      addLog(db, { event: `อนุมัติสลิปค่าบัตร ฿${o.amount}`, role: "Ticketing Officer", actor: "พั••", ref: o.id });
+    } else {
+      o.status = "rejected";
+      addLog(db, { event: `ปฏิเสธสลิปค่าบัตร ฿${o.amount}`, role: "Ticketing Officer", actor: "พั••", ref: o.id });
+    }
+    return { ok: true as const, ticketIds: o.ticketIds };
+  });
+}
+
+// ---------- gate check-in ----------
+
+export async function checkIn(ticketId: string): Promise<Result<{ status: "ok" | "dup"; name: string; time: string }>> {
+  if (!(await requireRole("ticketing"))) return { ok: false, error: "ไม่มีสิทธิ์สแกนบัตร" };
+  const id = ticketId.trim().toUpperCase();
+  return updateDb((db) => {
+    const seeded = financeAttendance.attendees.find((a) => a.ticket === id);
+    const prior = db.checkins.find((a) => a.ticket === id);
+    if (seeded || prior) return { ok: true as const, status: "dup" as const, name: (prior ?? seeded)!.name, time: (prior ?? seeded)!.time ?? "" };
+    const order = db.orders.find((o) => o.status === "approved" && o.ticketIds.includes(id));
+    const name = order?.name ?? demo.tickets.find((t) => t.id === id)?.name;
+    if (!name) return { ok: false as const, error: `ไม่พบบัตร ${id} ในระบบ หรือยังไม่ได้รับการอนุมัติ` };
+    const time = nowTime();
+    const recordId = nextId("ATT", [...db.checkins.map((a) => a.recordId), ...financeAttendance.attendees.map((a) => a.recordId)].filter((x): x is string => !!x));
+    db.checkins.unshift({ name, initials: name.slice(0, 2), ticket: id, class: "ศิษย์เก่า", time, checkpoint: "ประตูหลัก", staff: "พั•• · จุดเช็กอิน", recordId });
+    addLog(db, { event: "บันทึกเข้างาน · ประตูหลัก", role: "จุดเช็กอิน", actor: "พั••", ref: recordId });
+    return { ok: true as const, status: "ok" as const, name, time };
+  });
 }

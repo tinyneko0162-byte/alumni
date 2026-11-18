@@ -1,4 +1,5 @@
 import { AdminShell } from "@/components/admin/AdminShell";
+import { LiveRefresh } from "@/components/admin/LiveRefresh";
 import { getTokenTransfers } from "@/lib/admin-data";
 import { TransferView } from "./transfer-view";
 
@@ -7,7 +8,8 @@ export default async function TokenTransferPage() {
   const data = await getTokenTransfers();
   return (
     <AdminShell role="token" active="/admin/token/transfer" title="เติม Token • โอนเงิน">
-      <TransferView data={data} />
+      <LiveRefresh />
+      <TransferView key={data.requests.map((r) => r.id + r.state).join()} data={data} />
     </AdminShell>
   );
 }

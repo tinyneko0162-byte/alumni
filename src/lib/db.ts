@@ -5,6 +5,9 @@ import path from "node:path";
 import roles from "@/data/admin/roles.json";
 import products from "@/data/admin/products.json";
 import logs from "@/data/admin/logs.json";
+import ticketSlips from "@/data/admin/ticket-slips.json";
+import ticketLinks from "@/data/admin/ticket-links.json";
+import financeAttendance from "@/data/admin/finance-attendance.json";
 import storePos from "@/data/admin/store-pos.json";
 import storeSales from "@/data/admin/store-sales.json";
 import tokenCash from "@/data/admin/token-cash.json";
@@ -32,7 +35,19 @@ export type TopupRecord = {
 };
 export type TransferReq = (typeof tokenTransfers.requests)[number] & { state: "pending" | "done" | "resubmit" };
 
+export type Order = (typeof ticketSlips.requests)[number] & {
+  status: "pending" | "approved" | "rejected";
+  ticketIds: string[];
+  fromAttendee?: boolean;
+  linkSent?: boolean;
+};
+export type Attendee = (typeof financeAttendance.attendees)[number];
+export type LinkRecord = (typeof ticketLinks.history)[number];
+
 export type Db = {
+  orders: Order[];
+  checkins: Attendee[];
+  linkHistory: LinkRecord[];
   roleEnabled: Record<RoleKey, boolean>;
   catalog: CatalogProduct[];
   logs: LogEvent[];
@@ -61,6 +76,9 @@ const seed = (): Db => {
     });
   }
   return {
+    orders: ticketSlips.requests.map((r) => ({ ...r, status: "pending" as const, ticketIds: [] })),
+    checkins: [],
+    linkHistory: structuredClone(ticketLinks.history),
     roleEnabled: Object.fromEntries(Object.keys(roles.roles).map((k) => [k, true])) as Db["roleEnabled"],
     catalog,
     logs: structuredClone(logs.events),

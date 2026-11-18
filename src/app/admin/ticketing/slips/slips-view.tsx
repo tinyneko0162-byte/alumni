@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { useState } from "react";
 import { SlipDialog, SlipReceipt } from "@/components/admin/SlipReceipt";
-import { BrandButton, Chip, PageHeading, Panel, SearchBox } from "@/components/admin/ui";
+import { BrandButton, Chip, OutlineButton, PageHeading, Panel, SearchBox } from "@/components/admin/ui";
 import { Icon } from "@/components/ui/Icon";
+import { resolveSlip } from "@/lib/actions";
 import type { getTicketSlips } from "@/lib/admin-data";
 import { cx } from "@/lib/format";
 
@@ -15,7 +16,8 @@ const money = (n: number) => n.toLocaleString("en-US", { minimumFractionDigits: 
 
 export function SlipsView({ data }: { data: Data }) {
   const [pending, setPending] = useState<Req[]>(data.requests);
-  const [approved, setApproved] = useState<Req[]>([]);
+  const [approved, setApproved] = useState<Req[]>(data.approved);
+  const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<"pending" | "approved">("pending");
   const [q, setQ] = useState("");
   const [selectedId, setSelectedId] = useState(data.requests[0]?.id);
@@ -36,15 +38,28 @@ export function SlipsView({ data }: { data: Data }) {
     reference: current.ref,
     fileName: current.slipFile,
   };
-  const pendingTotal = data.pendingCount - approved.length;
+  const pendingTotal = pending.length;
 
-  const approve = () => {
+  const approve = async () => {
     if (!current || !isPending) return;
+    setError(null);
+    const res = await resolveSlip(current.id, "approve");
+    if (!res.ok) return setError(res.error);
     const rest = pending.filter((r) => r.id !== current.id);
     setPending(rest);
     setApproved((a) => [current, ...a]);
     setSelectedId(rest[0]?.id ?? current.id);
     setChecks(data.checklist.map(() => true));
+  };
+
+  const reject = async () => {
+    if (!current || !isPending) return;
+    setError(null);
+    const res = await resolveSlip(current.id, "reject");
+    if (!res.ok) return setError(res.error);
+    const rest = pending.filter((r) => r.id !== current.id);
+    setPending(rest);
+    setSelectedId(rest[0]?.id);
   };
 
   return (
@@ -55,7 +70,7 @@ export function SlipsView({ data }: { data: Data }) {
         {(
           [
             ["pending", `รอตรวจสอบ ${pendingTotal}`],
-            ["approved", `อนุมัติแล้ว ${data.approvedCount + approved.length}`],
+            ["approved", `อนุมัติแล้ว ${data.approvedBase + approved.length}`],
           ] as const
         ).map(([key, label]) => (
           <button
@@ -157,6 +172,10 @@ export function SlipsView({ data }: { data: Data }) {
               <BrandButton icon="a-check-white" onClick={approve} disabled={!isPending || checks.some((c) => !c)} className="w-full">
                 {isPending ? "อนุมัติค่าบัตร" : "อนุมัติแล้ว"}
               </BrandButton>
+              {error && <p role="alert" className="text-[12px] text-danger">{error}</p>}
+              <OutlineButton className="w-full" disabled={!isPending} onClick={reject}>
+                ปฏิเสธสลิป
+              </OutlineButton>
               <p className="text-[11px] leading-[1.55] text-admin-muted">
                 หลังอนุมัติ ไปที่{" "}
                 <Link href="/admin/ticketing/links" className="text-admin-indigo hover:underline">

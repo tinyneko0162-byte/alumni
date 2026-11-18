@@ -26,7 +26,12 @@ export async function getAdminConfig(): Promise<AdminConfig & { enabled: Record<
 }
 
 export async function getOverview() {
-  return overview;
+  const db = readDb();
+  const live: Record<string, number> = {
+    "/admin/ticketing/slips": db.orders.filter((o) => o.status === "pending").length,
+    "/admin/token/transfer": db.transfers.filter((t) => t.state === "pending").length,
+  };
+  return { ...overview, queues: overview.queues.map((q) => ({ ...q, count: live[q.href] ?? q.count })) };
 }
 
 export async function getStores() {
@@ -44,11 +49,20 @@ export async function getLogs() {
 }
 
 export async function getTicketSlips() {
-  return ticketSlips;
+  const orders = readDb().orders;
+  const pending = orders.filter((o) => o.status === "pending");
+  const approved = orders.filter((o) => o.status === "approved");
+  return { ...ticketSlips, requests: pending, approved, pendingCount: pending.length, approvedCount: ticketSlips.approvedCount, approvedBase: ticketSlips.approvedCount };
 }
 
 export async function getTicketLinks() {
-  return ticketLinks;
+  const db = readDb();
+  // newest approved order whose link has not been emailed yet; otherwise the sample row
+  const o = db.orders.find((x) => x.status === "approved" && !x.linkSent);
+  const current = o
+    ? { ticketId: o.ticketIds[0] ?? o.id, recipientName: o.name, recipientShort: o.name.split(" ")[0], email: o.email, amount: o.amount, linkRef: `LINK-${o.id.slice(-4)}`, linkMasked: `event.example/t/••••-${o.id.slice(-4)}` }
+    : ticketLinks.current;
+  return { ...ticketLinks, current, history: db.linkHistory };
 }
 
 export async function getTokenCash() {
@@ -88,5 +102,7 @@ export async function getFinanceRevenue() {
 }
 
 export async function getFinanceAttendance() {
-  return financeAttendance;
+  const db = readDb();
+  const approved = financeAttendance.approved + db.orders.filter((o) => o.status === "approved").reduce((n, o) => n + o.ticketIds.length, 0);
+  return { ...financeAttendance, approved, checkedIn: financeAttendance.checkedIn + db.checkins.length, attendees: [...db.checkins, ...financeAttendance.attendees] };
 }

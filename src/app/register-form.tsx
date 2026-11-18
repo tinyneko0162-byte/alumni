@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { registerUser } from "@/lib/actions";
 import { FormField } from "@/components/user/FormField";
 import { PrimaryButton } from "@/components/user/PrimaryButton";
 import { Dialog } from "@/components/ui/Dialog";
@@ -29,11 +30,17 @@ export function RegisterForm({ policy }: { policy: EventInfo["policy"] }) {
   return (
     <form
       className="flex flex-col gap-[22px]"
-      onSubmit={(e) => {
+      onSubmit={async (e) => {
         e.preventDefault();
         setSubmitted(true);
         if (!phoneOk(f.phone) || !strong(f.password) || f.confirm !== f.password || !accepted) return;
-        // Mock: no backend yet — go straight to the shop.
+        // Mock accounts: remember who is buying in this browser so the order carries the right name/email.
+        try {
+          localStorage.setItem("alumni-profile", JSON.stringify({ name: f.name.trim(), email: f.email.trim() }));
+        } catch {
+          /* private mode: order falls back to the sample profile */
+        }
+        await registerUser({ fullName: f.name.trim() || "ผู้ร่วมงาน", email: f.email.trim() });
         router.push("/shop");
       }}
     >
