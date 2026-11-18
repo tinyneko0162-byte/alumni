@@ -9,6 +9,8 @@
 import event from "@/data/event.json";
 import products from "@/data/products.json";
 import order from "@/data/order.json";
+import demo from "@/data/demo.json";
+import { readDb } from "@/lib/db";
 import attendee from "@/data/attendee.json";
 
 export type EventInfo = typeof event;
@@ -29,5 +31,7 @@ export async function getCurrentOrder(): Promise<Order> {
 }
 
 export async function getAttendee(): Promise<Attendee> {
-  return attendee;
+  // balance always reflects what staff top-ups / store purchases did to the shared wallet
+  const w = readDb().wallets.find((x) => x.id === demo.wallet.id);
+  return w ? { ...attendee, wallet: { ...attendee.wallet, id: w.id, balance: w.balance } } : attendee;
 }

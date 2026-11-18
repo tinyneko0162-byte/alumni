@@ -4,6 +4,7 @@ import { useState } from "react";
 import { SlipReceipt } from "@/components/admin/SlipReceipt";
 import { BrandButton, Chip, Field, Guidance, OutlineButton, PageHeading, Panel, SearchBox } from "@/components/admin/ui";
 import { Icon } from "@/components/ui/Icon";
+import { resolveTransfer } from "@/lib/actions";
 import type { getTokenTransfers } from "@/lib/admin-data";
 import { cx } from "@/lib/format";
 
@@ -14,7 +15,7 @@ type Status = "pending" | "done" | "resubmit";
 const fmt = (n: number) => n.toLocaleString("en-US");
 
 export function TransferView({ data }: { data: Data }) {
-  const [status, setStatus] = useState<Record<string, Status>>(() => Object.fromEntries(data.requests.map((r) => [r.id, "pending"])));
+  const [status, setStatus] = useState<Record<string, Status>>(() => Object.fromEntries(data.requests.map((r) => [r.id, r.state])));
   const [tab, setTab] = useState<Status>("pending");
   const [q, setQ] = useState("");
   const [selectedId, setSelectedId] = useState(data.requests[0].id);
@@ -23,7 +24,7 @@ export function TransferView({ data }: { data: Data }) {
 
   const list = data.requests.filter((r) => status[r.id] === tab && r.wallet.includes(q.trim()));
   const current: Req = data.requests.find((r) => r.id === selectedId) ?? data.requests[0];
-  const pendingCount = data.pendingTotal - Object.values(status).filter((s) => s !== "pending").length;
+  const pendingCount = data.requests.filter((r) => status[r.id] === "pending").length;
 
   const select = (r: Req) => {
     setSelectedId(r.id);
@@ -31,7 +32,12 @@ export function TransferView({ data }: { data: Data }) {
     setVerified(false);
   };
 
-  const resolve = (s: Status) => {
+  const [error, setError] = useState<string | null>(null);
+
+  const resolve = async (s: Exclude<Status, "pending">) => {
+    setError(null);
+    const res = await resolveTransfer(current.id, s);
+    if (!res.ok) return setError(res.error);
     setStatus((m) => ({ ...m, [current.id]: s }));
     const next = data.requests.find((r) => r.id !== current.id && status[r.id] === "pending");
     if (next) select(next);
@@ -163,6 +169,7 @@ export function TransferView({ data }: { data: Data }) {
           >
             อนุมัติและเติม
           </BrandButton>
+          {error && <p role="alert" className="text-[12px] text-danger">{error}</p>}
           <OutlineButton className="w-full" onClick={() => isPending && resolve("resubmit")}>
             ขอหลักฐานใหม่
           </OutlineButton>

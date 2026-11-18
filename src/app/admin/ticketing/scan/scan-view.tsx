@@ -2,31 +2,28 @@
 
 import { useState } from "react";
 import { BrandButton, Chip, Field, Guidance, PageHeading, Panel } from "@/components/admin/ui";
+import { checkIn } from "@/lib/actions";
 import { QrScanner } from "@/components/ui/QrScanner";
 import { parseQr, entryPayload } from "@/lib/qr-payload";
 import { cx } from "@/lib/format";
 
-type Ticket = { id: string; name: string };
 type Result = { tone: "ok" | "dup" | "bad"; title: string; detail: string };
 type Entry = { id: string; name: string; time: string };
 
-const now = () => new Date().toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
-
-export function ScanView({ tickets }: { tickets: Ticket[] }) {
+export function ScanView() {
   const [log, setLog] = useState<Entry[]>([]);
   const [result, setResult] = useState<Result | null>(null);
   const [manual, setManual] = useState("");
 
-  const handle = (text: string) => {
+  const handle = async (text: string) => {
     const qr = parseQr(text);
     if (!qr) return setResult({ tone: "bad", title: "ไม่ใช่ QR ของงานนี้", detail: "ลองสแกนใหม่ หรือกรอกเลขบัตรเอง" });
     if (qr.kind === "wallet") return setResult({ tone: "bad", title: "นี่คือ QR กระเป๋า Token", detail: "ใช้สแกนที่ร้านค้า ไม่ใช่บัตรเข้างาน" });
-    const t = tickets.find((x) => x.id === qr.id);
-    if (!t) return setResult({ tone: "bad", title: "ไม่พบบัตรนี้ในระบบ", detail: qr.id });
-    const before = log.find((e) => e.id === t.id);
-    if (before) return setResult({ tone: "dup", title: "บัตรนี้เช็กอินไปแล้ว", detail: `${t.name} · ${t.id} · เข้าเมื่อ ${before.time}` });
-    setLog((l) => [{ id: t.id, name: t.name, time: now() }, ...l]);
-    setResult({ tone: "ok", title: "เข้างานได้", detail: `${t.name} · ${t.id}` });
+    const res = await checkIn(qr.id);
+    if (!res.ok) return setResult({ tone: "bad", title: "เข้างานไม่ได้", detail: res.error });
+    if (res.status === "dup") return setResult({ tone: "dup", title: "บัตรนี้เช็กอินไปแล้ว", detail: `${res.name} · ${qr.id} · เข้าเมื่อ ${res.time}` });
+    setLog((l) => [{ id: qr.id, name: res.name, time: res.time }, ...l]);
+    setResult({ tone: "ok", title: "เข้างานได้", detail: `${res.name} · ${qr.id}` });
   };
 
   const submitManual = () => {

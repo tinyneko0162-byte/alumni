@@ -2,13 +2,16 @@ import demo from "@/data/demo.json";
 import { QrCode } from "@/components/ui/QrCode";
 import { BrandMark, MobileShell } from "@/components/user/MobileShell";
 import { entryPayload, walletPayload } from "@/lib/qr-payload";
+import { readDb } from "@/lib/db";
 import { verifyTicket } from "@/lib/ticket-token";
 
 /** Personal link from the email: shows the holder's entry QR and wallet QR. */
+export const dynamic = "force-dynamic";
+
 export default async function PersonalTicketPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
   const id = verifyTicket(decodeURIComponent(token));
-  const name = demo.tickets.find((t) => t.id === id)?.name ?? "ผู้ร่วมงาน";
+  const name = demo.tickets.find((t) => t.id === id)?.name ?? readDb().orders.find((o) => id && o.ticketIds.includes(id))?.name ?? "ผู้ร่วมงาน";
 
   return (
     <MobileShell width={430}>

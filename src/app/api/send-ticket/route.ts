@@ -1,6 +1,8 @@
 import nodemailer from "nodemailer";
 import QRCode from "qrcode";
+import { nowTime, updateDb } from "@/lib/db";
 import { entryPayload } from "@/lib/qr-payload";
+import { getStaffRole } from "@/lib/session";
 import { signTicket } from "@/lib/ticket-token";
 
 export const runtime = "nodejs";
@@ -9,6 +11,8 @@ const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&l
 
 /** POST { ticketId, to, subject, name } → sends the personal ticket link + QR by email. */
 export async function POST(req: Request) {
+  const role = await getStaffRole();
+  if (role !== "ticketing" && role !== "super") return Response.json({ ok: false, error: "เฉพาะเจ้าหน้าที่ตั๋วเท่านั้น กรุณาเข้าสู่ระบบ" }, { status: 401 });
   const body = (await req.json().catch(() => null)) as { ticketId?: string; to?: string; subject?: string; name?: string } | null;
   const ticketId = body?.ticketId?.trim();
   const to = body?.to?.trim();
@@ -47,6 +51,12 @@ export async function POST(req: Request) {
         <img src="cid:entry-qr" width="180" height="180" alt="QR เข้างาน">
         <p style="font-size:12px;color:#6b7090">กรุณาไม่ส่งต่อลิงก์นี้ให้ผู้อื่น</p></div>`,
       attachments: [{ filename: `${ticketId}.png`, content: qr, cid: "entry-qr" }],
+    });
+    updateDb((db) => {
+      db.linkHistory.unshift({ ticketId, email: to, time: nowTime().slice(0, 5), status: "ส่งแล้ว" });
+      db.orders.forEach((o) => {
+        if (o.id === ticketId || o.ticketIds.includes(ticketId)) o.linkSent = true;
+      });
     });
     return Response.json({ ok: true });
   } catch (e) {

@@ -1,6 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { submitOrder } from "@/lib/actions";
 import { BankAccount } from "@/components/user/BankAccount";
 import { OrderSummary } from "@/components/user/OrderSummary";
 import { PrimaryButton } from "@/components/user/PrimaryButton";
@@ -13,6 +15,31 @@ export function PaymentView({ event }: { event: EventInfo }) {
   const router = useRouter();
   const { cart, update } = useCart();
   const { items, total, note } = summarize(cart);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const send = async () => {
+    if (!cart.slip || busy) return;
+    setBusy(true);
+    setError(null);
+    let profile = { name: "กิตติพงศ์ วัฒนกุล", email: "kittiphong@example.com" };
+    try {
+      const raw = localStorage.getItem("alumni-profile");
+      if (raw) profile = { ...profile, ...JSON.parse(raw) };
+    } catch {
+      /* use sample profile */
+    }
+    const qty = items.filter((i) => i.label.includes("บัตร")).reduce((n, i) => n + i.qty, 0) || 1;
+    const res = await submitOrder({ ...profile, ticketType: items[0]?.label ?? "บัตร", qty, amount: total, slipFile: cart.slip.fileName });
+    setBusy(false);
+    if (!res.ok) return setError(res.error);
+    try {
+      sessionStorage.setItem("alumni-order-id", res.id);
+    } catch {
+      /* status page falls back to the latest order */
+    }
+    router.push("/checkout/status");
+  };
 
   return (
     <div className="flex flex-col gap-5 px-6 pt-5 pb-6">
@@ -44,9 +71,14 @@ export function PaymentView({ event }: { event: EventInfo }) {
       />
 
       <div className="flex flex-col gap-2.5 pt-2">
-        <PrimaryButton softBorder disabled={!cart.slip} onClick={() => router.push("/checkout/status")}>
-          ส่งหลักฐานการโอน
+        <PrimaryButton softBorder disabled={!cart.slip || busy} onClick={send}>
+          {busy ? "กำลังส่ง…" : "ส่งหลักฐานการโอน"}
         </PrimaryButton>
+        {error && (
+          <p role="alert" className="text-center text-[12px] text-danger">
+            {error}
+          </p>
+        )}
         <p className="text-center text-[11px] leading-[1.7] text-black">
           การแนบสลิปยังไม่ใช่การยืนยันชำระเงินคำสั่งซื้อจะรอทีมงานตรวจสอบหลักฐาน
         </p>

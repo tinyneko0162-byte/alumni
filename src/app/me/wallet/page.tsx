@@ -9,6 +9,8 @@ import { num } from "@/lib/format";
 import { WalletTopUp } from "./wallet-top-up";
 
 /** Figma: user / ผู้ร่วมงาน · กระเป๋า Token (4069:465) */
+export const dynamic = "force-dynamic";
+
 export default async function WalletPage() {
   const [{ wallet }, event] = await Promise.all([getAttendee(), getEvent()]);
   return (

@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { cx } from "@/lib/format";
 
 /**
- * Opens the camera and calls onScan(text) when a QR code is read.
+ * Opens the camera (preview is mirrored like a selfie; decoding uses the un-mirrored frame) and calls onScan(text) when a QR code is read.
  * A code is reported once; it can be reported again only after it has left the frame. Needs https or localhost.
  */
 export function QrScanner({ onScan, paused = false, className }: { onScan: (text: string) => void; paused?: boolean; className?: string }) {
@@ -93,11 +93,10 @@ export function QrScanner({ onScan, paused = false, className }: { onScan: (text
 
   return (
     <div className={cx("relative flex items-center justify-center overflow-hidden rounded-xl bg-[#10182a]", className)}>
-      <video ref={video} muted playsInline className={cx("absolute inset-0 size-full object-cover", !ready && "hidden")} />
+      <video ref={video} muted playsInline className={cx("absolute inset-0 size-full -scale-x-100 object-cover", !ready && "hidden")} />
       <canvas ref={canvas} className="hidden" />
       {ready && (
         <div className="pointer-events-none relative flex size-[60%] max-h-[220px] max-w-[220px] items-center justify-center rounded-[14px] border-2 border-[#e82c87]">
-          <span className="absolute inset-x-3 top-1/2 h-0.5 animate-pulse bg-[#e82c87]" />
         </div>
       )}
       {!ready && !error && <p className="px-6 text-center text-[12px] text-[#c5cde0]">{paused ? "หยุดสแกนชั่วคราว" : "กำลังเปิดกล้อง…"}</p>}

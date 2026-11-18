@@ -3,29 +3,37 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Icon } from "@/components/ui/Icon";
+import { loginStaff } from "@/lib/actions";
 
-type RoleOption = { key: string; label: string; home: string };
+type RoleOption = { key: string; label: string; home: string; enabled: boolean };
 
-export function LoginForm({ roles }: { roles: RoleOption[] }) {
+export function LoginForm({ roles, notice }: { roles: RoleOption[]; notice?: string }) {
   const router = useRouter();
   const [user, setUser] = useState("");
   const [pass, setPass] = useState("");
   const [show, setShow] = useState(false);
-  const [role, setRole] = useState(roles[0]?.key ?? "");
+  const [role, setRole] = useState(roles.find((r) => r.enabled)?.key ?? roles[0]?.key ?? "");
+  const [serverError, setServerError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
   const [forgot, setForgot] = useState(false);
 
   return (
     <form
-      onSubmit={(e) => {
+      onSubmit={async (e) => {
         e.preventDefault();
+        setServerError(null);
         if (!user || !pass) {
           setError(true);
           return;
         }
-        // Mock sign-in: no auth backend yet, just open the chosen role's workspace.
-        const target = roles.find((r) => r.key === role);
-        router.push(target?.home ?? "/admin/super/overview");
+        setError(false);
+        setBusy(true);
+        // Mock accounts: any username/password works; the role is checked (and may be switched off) by Super Admin.
+        const res = await loginStaff(role);
+        setBusy(false);
+        if (res.ok) router.push(res.home);
+        else setServerError(res.error);
       }}
       className="flex w-full max-w-[559px] flex-col gap-6 rounded-2xl border border-line-slate bg-white p-8 max-sm:p-5"
     >
@@ -66,14 +74,20 @@ export function LoginForm({ roles }: { roles: RoleOption[] }) {
             className="h-[52px] rounded-lg border border-line-slate bg-surface-slate px-4 text-[14px] text-ink-slate outline-none focus:border-brand-soft"
           >
             {roles.map((r) => (
-              <option key={r.key} value={r.key}>
+              <option key={r.key} value={r.key} disabled={!r.enabled}>
                 {r.label}
+                {r.enabled ? "" : " (ปิดใช้งาน)"}
               </option>
             ))}
           </select>
         </label>
       </div>
 
+      {(serverError ?? notice) && (
+        <p role="alert" className="rounded-lg bg-[#fdecee] p-3 text-[13px] leading-[1.55] text-[#c2414b]">
+          {serverError ?? notice}
+        </p>
+      )}
       <div className="flex items-center justify-between gap-3">
         <p role={error ? "alert" : undefined} className={`text-[12px] ${error ? "text-danger" : "text-admin-slate"}`}>
           กรุณากรอกข้อมูลให้ครบทุกช่อง
@@ -95,9 +109,10 @@ export function LoginForm({ roles }: { roles: RoleOption[] }) {
 
       <button
         type="submit"
-        className="flex h-[52px] w-full items-center justify-center gap-2.5 rounded-lg bg-brand text-[15px] font-semibold text-white transition hover:brightness-95"
+        disabled={busy}
+        className="flex h-[52px] w-full items-center justify-center gap-2.5 rounded-lg bg-brand text-[15px] font-semibold text-white transition hover:brightness-95 disabled:opacity-60"
       >
-        เข้าสู่ระบบ
+        {busy ? "กำลังเข้าสู่ระบบ…" : "เข้าสู่ระบบ"}
         <Icon name="a-arrow-right-white" size={18} />
       </button>
 

@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { orderStatus } from "@/lib/actions";
 import { Icon } from "@/components/ui/Icon";
 import { OrderSummary } from "@/components/user/OrderSummary";
 import { summarize, useCart } from "@/lib/cart";
@@ -8,6 +10,23 @@ import { summarize, useCart } from "@/lib/cart";
 export function StatusView({ uploadedAt }: { uploadedAt: string }) {
   const { cart } = useCart();
   const { items, total, note } = summarize(cart);
+  const [state, setState] = useState<{ status: string; link?: string }>({ status: "pending" });
+
+  useEffect(() => {
+    let id = "";
+    try {
+      id = sessionStorage.getItem("alumni-order-id") ?? "";
+    } catch {
+      /* no stored order */
+    }
+    if (!id) return;
+    const poll = () => void orderStatus(id).then(setState);
+    poll();
+    const t = setInterval(poll, 4000); // picks up the ticketing officer's decision without reloading
+    return () => clearInterval(t);
+  }, []);
+  const approved = state.status === "approved";
+  const rejected = state.status === "rejected";
 
   return (
     <div className="flex flex-col gap-[22px] px-6 pt-[22px] pb-6">
@@ -21,14 +40,14 @@ export function StatusView({ uploadedAt }: { uploadedAt: string }) {
           </span>
         </div>
         <div className="flex flex-col items-center gap-[7px] text-center">
-          <h2 className="text-[26px] font-bold text-ink">ส่งหลักฐานเรียบร้อยแล้ว</h2>
+          <h2 className="text-[26px] font-bold text-ink">{approved ? "อนุมัติแล้ว ยินดีต้อนรับ!" : rejected ? "สลิปไม่ผ่านการตรวจสอบ" : "ส่งหลักฐานเรียบร้อยแล้ว"}</h2>
           <p className="text-[12px] leading-[1.7] text-black">
-            เราได้รับสลิปของคุณแล้วทีมงานกำลังรอตรวจสอบข้อมูลการโอน
+            {approved ? "ทีมงานตรวจสลิปเรียบร้อยแล้ว เปิดบัตรเข้างานและ QR ของคุณได้เลย" : rejected ? "กรุณาติดต่อทีมงานหรือส่งหลักฐานใหม่อีกครั้ง" : "เราได้รับสลิปของคุณแล้วทีมงานกำลังรอตรวจสอบข้อมูลการโอน"}
           </p>
         </div>
         <span className="flex items-center gap-1.5 rounded-full bg-warning-tint px-[13px] py-[7px]">
           <Icon name="clock-3-amber" size={15} />
-          <span className="text-[12px] font-semibold text-warning-ink">รอตรวจสอบหลักฐาน</span>
+          <span className="text-[12px] font-semibold text-warning-ink">{approved ? "อนุมัติแล้ว" : rejected ? "ไม่ผ่านการตรวจสอบ" : "รอตรวจสอบหลักฐาน"}</span>
         </span>
       </div>
 
@@ -63,8 +82,8 @@ export function StatusView({ uploadedAt }: { uploadedAt: string }) {
         </div>
       </section>
 
-      <Link href="/me/ticket" className="text-center text-[12px] text-brand-deep underline-offset-2 hover:underline">
-        ไปที่บัตรของฉัน (ตัวอย่างหลังอนุมัติ)
+      <Link href={approved && state.link ? state.link : "/me/ticket"} className="text-center text-[12px] text-brand-deep underline-offset-2 hover:underline">
+        {approved ? "เปิดบัตรของฉัน →" : "ไปที่บัตรของฉัน (ตัวอย่างหลังอนุมัติ)"}
       </Link>
     </div>
   );
