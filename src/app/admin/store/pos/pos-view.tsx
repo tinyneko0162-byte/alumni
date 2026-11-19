@@ -27,10 +27,6 @@ export function PosView({ boothName, store, stores }: { boothName: string; store
         {stores.length > 1 && <StoreSwitcher current={store.id} stores={stores} />}
       </div>
 
-      <p className="text-[12px] text-admin-muted">
-        ยอดขายวันนี้ของร้านนี้ <b className="text-admin-ink">{store.today.revenue.toLocaleString("en-US")} Token</b> · {store.today.count} รายการ
-      </p>
-
       <section className="flex flex-wrap items-center gap-[18px] rounded-xl border border-admin-line bg-white p-[18px]">
         <div className="relative h-[133px] w-[153px] shrink-0 overflow-hidden rounded-[3px]">
           <Image src={p.image} alt={p.name} fill sizes="153px" className="object-cover" />
