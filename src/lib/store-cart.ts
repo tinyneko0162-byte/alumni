@@ -8,19 +8,19 @@ export type PosCart = { storeId: string; qty: number };
 const KEY = "alumni-pos-cart";
 
 export function usePosCart(storeId: string) {
-  const [cart, setCart] = useState<PosCart>({ storeId, qty: 1 });
+  const [cart, setCart] = useState<PosCart>({ storeId, qty: 0 });
 
   useEffect(() => {
     try {
       const raw = sessionStorage.getItem(KEY);
       if (raw) {
         const saved = JSON.parse(raw) as PosCart;
-        setCart(saved.storeId === storeId ? saved : { storeId, qty: 1 });
+        setCart(saved.storeId === storeId ? saved : { storeId, qty: 0 });
       } else {
-        setCart({ storeId, qty: 1 });
+        setCart({ storeId, qty: 0 });
       }
     } catch {
-      setCart({ storeId, qty: 1 });
+      setCart({ storeId, qty: 0 });
     }
   }, [storeId]);
 
