@@ -225,6 +225,7 @@ function writeFile(db: Db) {
   fs.renameSync(tmp, file);
 }
 
+let testPass: string | undefined;
 export function readDb(): Db {
   const file = resolveFile();
   let db: Db;
@@ -237,6 +238,10 @@ export function readDb(): Db {
   // กระเป๋าทดลองสำหรับสาธิตการสแกนจ่ายหน้าร้าน (QR: public/demo-qr/wallet-WLT-TEST-0001.png) — เติมให้อัตโนมัติถ้ายังไม่มี
   if (!db.wallets.some((w) => w.id === "WLT-TEST-0001")) {
     db.wallets.push({ id: "WLT-TEST-0001", owner: "ไทนี่ (ทดลอง)", balance: 2500, status: "ใช้งานได้" });
+  }
+  // บัญชีผู้ใช้ทดลอง ไทนี่ (ทดลอง): ล็อกอินฝั่งลูกค้าเพื่อดูกระเป๋า/ประวัติที่เชื่อมกับ QR ทดลอง (อีเมล tiny@example.com รหัส 12345678)
+  if (!db.users.some((u) => u.walletId === "WLT-TEST-0001")) {
+    db.users.push({ id: "U-TEST", name: "ไทนี่ (ทดลอง)", email: "tiny@example.com", phone: "0800000000", pass: (testPass ??= hashPassword("12345678", "demo-seed-salt")), walletId: "WLT-TEST-0001", createdAt: "24 ต.ค. 2569" });
   }
   // ข้อมูลเก่าที่เคยตั้งชื่อสินค้าว่า "เบียร์" → ใช้ชื่อ "เบียร์สด" ให้ตรงกับร้าน
   for (const c of db.catalog) if (c.sku === "BEER-01" && c.name === "เบียร์") c.name = "เบียร์สด";

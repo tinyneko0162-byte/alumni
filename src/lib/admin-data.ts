@@ -181,7 +181,7 @@ export async function getStoreSales(storeId?: string) {
   const store = pos.stores.find((s) => s.id === storeId) ?? pos.stores.find((s) => s.id === pos.defaultStore)!;
   // ยอดขายเดิม (seed) ไม่มี storeId → นับเป็นของร้านแรก ST-01
   const sales = readDb()
-    .sales.filter((s) => (s.storeId ?? "ST-01") === store.id && (s.status === "ชำระแล้ว" || s.status === "ยกเลิก")) // ระบบมีแค่ 2 สถานะนี้จริง
+    .sales.filter((s) => s.amount !== undefined && s.storeId === store.id && (s.status === "ชำระแล้ว" || s.status === "ยกเลิก")) // เฉพาะรายการที่ขายผ่านระบบจริง ทุกร้านเริ่มที่ 0
     .map((s) => ({
       ...s,
       productName: s.productName ?? (store.id === "ST-01" ? storeSales.product.name : store.product.name),
@@ -191,7 +191,7 @@ export async function getStoreSales(storeId?: string) {
     ...storeSales,
     description: `${store.name}, สรุปยอดการรับชำระด้วย Token และการยกเลิกรายการสินค้า`,
     sales,
-    storeTotal: (store.id === "ST-01" ? storeSales.storeTotal : 0) + sales.filter((x) => x.amount !== undefined && x.status === "ชำระแล้ว").reduce((n, x) => n + (x.amount ?? 0), 0),
+    storeTotal: sales.filter((x) => x.status === "ชำระแล้ว").reduce((n, x) => n + (x.amount ?? 0), 0),
     priceNote: `ราคาสินค้าอ่านอย่างเดียวจาก Super Admin, ${store.product.sku} ${store.product.name} ${store.product.price}, แก้ไขราคาไม่ได้จากหน้านี้`,
     boothName: store.name,
     store: { id: store.id, name: store.name },
