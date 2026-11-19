@@ -244,6 +244,10 @@ export function readDb(): Db {
   if (!db.users.some((u) => u.walletId === "WLT-TEST-0001")) {
     db.users.push({ id: "U-TEST", name: "ไทนี่ (ทดลอง)", email: "tiny@example.com", phone: "0800000000", pass: (testPass ??= hashPassword("12345678", "demo-seed-salt")), walletId: "WLT-TEST-0001", createdAt: "24 ต.ค. 2569" });
   }
+  // ร้านไก่ป๊อปทอด (ST-04) ถูกยกเลิกแล้ว: ตัดออกจากข้อมูลเก่าที่เคยบันทึกไว้ในเครื่อง
+  db.stores = db.stores.filter((x) => x.id !== "ST-04");
+  db.catalog = db.catalog.filter((c) => c.sku !== "POP-01");
+  db.staff = db.staff.filter((x) => x.storeId !== "ST-04");
   // ข้อมูลเก่าที่เคยตั้งชื่อสินค้าว่า "เบียร์" → ใช้ชื่อ "เบียร์สด" ให้ตรงกับร้าน
   for (const c of db.catalog) if (c.sku === "BEER-01" && c.name === "เบียร์") c.name = "เบียร์สด";
   // an event past its end time closes itself the first time anyone opens a page afterwards
