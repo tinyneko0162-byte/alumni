@@ -11,7 +11,7 @@ export const mailReady = () => !!(process.env.SMTP_HOST && process.env.SMTP_USER
 
 /** Personal ticket link (signed, cannot be guessed) + entry QR, sent to one ticket holder. */
 export async function sendTicketEmail(input: { ticketId: string; to: string; name: string; base: string; subject?: string }): Promise<{ ok: boolean; link: string; error?: string }> {
-  const link = `${input.base.replace(/\/$/, "")}/t/${signTicket(input.ticketId)}`;
+ const link = `${input.base.replace(/\/$/, "")}/login`;
   if (!mailReady()) return { ok: false, link, error: "ยังไม่ได้ตั้งค่าอีเมลของระบบ" };
   const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, MAIL_FROM } = process.env;
   try {

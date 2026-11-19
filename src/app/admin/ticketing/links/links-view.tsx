@@ -124,7 +124,14 @@ export function LinksView({ data, event }: { data: Data; event: AdminConfig["eve
                 <p>เราได้รับชำระค่าบัตรของคุณเรียบร้อยแล้ว</p>
                 <p>ใช้ลิงก์ด้านล่างเพื่อดูบัตรเข้างานและ Wallet ของคุณ</p>
               </div>
-              <span className="self-start rounded-lg bg-[#ea3f92] px-5 py-[11px] text-[13px] font-semibold text-white">เปิดลิงก์ส่วนตัวของคุณ →</span>
+              <a
+  href="/login"
+  target="_blank"
+  rel="noreferrer"
+  className="self-start rounded-lg bg-[#ea3f92] px-5 py-[11px] text-[13px] font-semibold text-white hover:opacity-90"
+>
+  เปิดลิงก์ส่วนตัวของคุณ →
+</a>
               <div className="text-[12px] text-admin-muted">
                 <p>
                   {event.dateLong}, {event.time.split("–")[0]} น.

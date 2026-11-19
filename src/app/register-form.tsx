@@ -107,12 +107,7 @@ export function RegisterForm({ policy }: { policy: EventInfo["policy"] }) {
         </p>
       )}
       <PrimaryButton type="submit">ลงทะเบียนและเลือกซื้อสินค้า</PrimaryButton>
-      <p className="text-center text-[12px] text-black">
-        มีบัญชีแล้ว?{" "}
-        <Link href="/login" className="font-semibold text-brand-deep hover:underline">
-          เข้าสู่ระบบ
-        </Link>
-      </p>
+
     </form>
   );
 }
