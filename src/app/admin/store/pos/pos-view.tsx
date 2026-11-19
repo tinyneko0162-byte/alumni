@@ -24,7 +24,7 @@ export function PosView({ boothName, store, stores }: { boothName: string; store
     <>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-[24px] font-bold leading-[1.55] text-admin-ink">{boothName}</h1>
-        <StoreSwitcher current={store.id} stores={stores} />
+        {stores.length > 1 && <StoreSwitcher current={store.id} stores={stores} />}
       </div>
 
       <p className="text-[12px] text-admin-muted">
