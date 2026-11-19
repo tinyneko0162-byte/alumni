@@ -234,6 +234,10 @@ export function readDb(): Db {
   } catch {
     db = seed();
   }
+  // กระเป๋าทดลองสำหรับสาธิตการสแกนจ่ายหน้าร้าน (QR: public/demo-qr/wallet-WLT-TEST-0001.png) — เติมให้อัตโนมัติถ้ายังไม่มี
+  if (!db.wallets.some((w) => w.id === "WLT-TEST-0001")) {
+    db.wallets.push({ id: "WLT-TEST-0001", owner: "ไทนี่ (ทดลอง)", balance: 2500, status: "ใช้งานได้" });
+  }
   // an event past its end time closes itself the first time anyone opens a page afterwards
   const due = db.events.find((e) => e.status === "open" && e.endsAt && Date.parse(e.endsAt) <= Date.now());
   if (due) {
