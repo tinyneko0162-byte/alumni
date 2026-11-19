@@ -181,7 +181,7 @@ export async function getStoreSales(storeId?: string) {
   const store = pos.stores.find((s) => s.id === storeId) ?? pos.stores.find((s) => s.id === pos.defaultStore)!;
   // ยอดขายเดิม (seed) ไม่มี storeId → นับเป็นของร้านแรก ST-01
   const sales = readDb()
-    .sales.filter((s) => (s.storeId ?? "ST-01") === store.id)
+    .sales.filter((s) => (s.storeId ?? "ST-01") === store.id && (s.status === "ชำระแล้ว" || s.status === "ยกเลิก")) // ระบบมีแค่ 2 สถานะนี้จริง
     .map((s) => ({
       ...s,
       productName: s.productName ?? (store.id === "ST-01" ? storeSales.product.name : store.product.name),

@@ -80,7 +80,7 @@ export function SalesView({ data }: { data: Data }) {
             className="w-[175px]"
             value={status}
             onChange={setStatus}
-            options={[["all", "ทุกสถานะ"], ["ชำระแล้ว", "ชำระแล้ว"], ["รอชำระ", "รอชำระ"], ["ไม่สำเร็จ", "ไม่สำเร็จ"], ["ยกเลิก", "ยกเลิก"]]}
+            options={[["all", "ทุกสถานะ"], ["ชำระแล้ว", "ชำระแล้ว"], ["ยกเลิก", "ยกเลิก"]]}
           />
           <BrandButton type="submit">ใช้ตัวกรอง</BrandButton>
         </form>
@@ -133,7 +133,7 @@ export function SalesView({ data }: { data: Data }) {
                     <td className="border-b border-admin-line px-3">{s.wallet}</td>
                     <td className="border-b border-admin-line px-3">{s.seller}</td>
                     <td className="border-b border-admin-line px-3">
-                      <Chip tone={ok ? "ok" : s.status === "รอชำระ" || s.status === "ยกเลิก" ? "warn" : "danger"}>{s.status}</Chip>
+                      <Chip tone={ok ? "ok" : "warn"}>{s.status}</Chip>
                     </td>
                   </tr>
                 );
