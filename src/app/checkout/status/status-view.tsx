@@ -104,14 +104,6 @@ export function StatusView({ uploadedAt }: { uploadedAt: string }) {
           </div>
         ))}
       </section>
-
-      {approved && tickets.length > friendTickets.length ? (
-        <Link href="/me/ticket" className="text-center text-[12px] font-semibold text-brand-deep underline-offset-2 hover:underline">
-          เปิดบัตรของฉัน
-        </Link>
-      ) : (
-        !approved && <p className="text-center text-[11px] text-black/60">ปุ่มเปิดบัตรจะขึ้นที่นี่เมื่อทีมงานอนุมัติ</p>
-      )}
     </div>
   );
 }
