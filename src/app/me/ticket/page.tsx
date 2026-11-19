@@ -42,19 +42,29 @@ export default async function MyTicketPage() {
           <section key={t.number} className="flex flex-col gap-4 rounded-2xl border border-line-slate bg-white p-[22px]">
             <div className="flex flex-col gap-2">
               <div className="flex flex-wrap gap-2">
-                <Pill tone="success">{t.status}</Pill>
+                <Pill tone={t.expired ? "danger" : "success"}>{t.status}</Pill>
                 {t.gift && <Pill tone="brandSoft">{t.buyer} ซื้อให้คุณ</Pill>}
               </div>
               <p className="text-[22px] font-semibold leading-[1.55] text-ink-slate">{t.holder}</p>
             </div>
             <div className="flex flex-col items-center gap-3.5">
               <p className="w-full text-[18px] font-semibold leading-[1.55] text-ink-slate">QR สำหรับเข้างาน</p>
-              <QrCode value={entryPayload(t.number)} alt={`QR สำหรับเข้างาน ${t.number}`} />
-              <Pill tone="brandSoft">{ticket.qrLabel}</Pill>
+              {t.expired ? (
+                <p className="w-full rounded-xl bg-surface-muted p-5 text-center text-[13px] leading-[1.6] text-black">
+                  บัตรนี้หมดอายุแล้ว เพราะ{t.eventName}ปิดไปแล้ว ใช้เข้างานไม่ได้
+                </p>
+              ) : (
+                <>
+                  <QrCode value={entryPayload(t.number)} alt={`QR สำหรับเข้างาน ${t.number}`} />
+                  <Pill tone="brandSoft">{ticket.qrLabel}</Pill>
+                </>
+              )}
             </div>
+            <Detail label="งาน" value={t.eventName} />
             <Detail label="เลขที่บัตร" value={t.number} />
             <Detail label="คำสั่งซื้อ" value={`${t.orderId}, ${t.orderQty} ใบ`} />
             <Detail label="ผู้ซื้อ" value={t.buyer} />
+            {!t.expired && (
             <a
               href={`/api/qr?type=entry&id=${encodeURIComponent(t.number)}`}
               download={`ticket-${t.number}.png`}
@@ -63,6 +73,7 @@ export default async function MyTicketPage() {
               <Icon name="share-2" size={20} />
               <span className="text-[14px] font-semibold text-ink-slate">บันทึก QR บัตรนี้</span>
             </a>
+            )}
           </section>
         ))}
 

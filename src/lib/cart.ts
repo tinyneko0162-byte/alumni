@@ -31,7 +31,7 @@ export type Cart = {
   address: Address | null;
   /** one entry per ticket bought for a friend */
   friends: Friend[];
-  slip: { fileName: string; sizeLabel: string } | null;
+  slip: { fileName: string; sizeLabel: string; dataUrl?: string } | null;
 };
 
 const KEY = "alumni-cart-v2";
@@ -79,7 +79,7 @@ export function summarize(c: Cart): { items: SummaryItem[]; total: number; note?
   c.shirts.forEach((s) => bySize.set(s.size, (bySize.get(s.size) ?? 0) + 1));
   for (const size of products.shirt.sizes) {
     const qty = bySize.get(size);
-    if (qty) items.push({ label: `${products.shirt.name} • ${size}`, qty, amount: qty * products.shirt.price });
+    if (qty) items.push({ label: `${products.shirt.name}, ${size}`, qty, amount: qty * products.shirt.price });
   }
   const total = items.reduce((s, i) => s + i.amount, 0);
   const note = c.shirts.length ? products.shirt.deliveryOptions.find((d) => d.id === deliveryOf(c))?.label : undefined;

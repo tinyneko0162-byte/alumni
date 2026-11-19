@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { SlipDialog, SlipReceipt } from "@/components/admin/SlipReceipt";
+import { SlipImage } from "@/components/admin/SlipImage";
 import { BrandButton, Chip, OutlineButton, PageHeading, Panel, SearchBox } from "@/components/admin/ui";
 import { Icon } from "@/components/ui/Icon";
 import { resolveSlip } from "@/lib/actions";
@@ -133,7 +134,7 @@ export function SlipsView({ data }: { data: Data }) {
               }
               className="flex-1"
             >
-              <SlipReceipt {...slip} />
+              {current.slipUrl ? <SlipImage url={current.slipUrl} fileName={current.slipFile} /> : <SlipReceipt {...slip} />}
               <p className="text-[11px] leading-[1.55] text-admin-muted">แนบเมื่อ {current.submittedAt} น.</p>
               <SlipDialog open={expand} onClose={() => setExpand(false)} {...slip} />
             </Panel>

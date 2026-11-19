@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { SlipReceipt } from "@/components/admin/SlipReceipt";
+import { SlipImage } from "@/components/admin/SlipImage";
 import { BrandButton, Chip, Field, Guidance, OutlineButton, PageHeading, Panel, SearchBox } from "@/components/admin/ui";
 import { Icon } from "@/components/ui/Icon";
 import { resolveTransfer } from "@/lib/actions";
@@ -109,18 +110,22 @@ export function TransferView({ data }: { data: Data }) {
         </Panel>
 
         <Panel title="สลิปเติม Token" className="flex-1">
+          {current.slipUrl ? (
+            <SlipImage url={current.slipUrl} fileName={current.slipFile} />
+          ) : (
           <SlipReceipt
-            amount={current.amount}
-            purpose="เติม Token"
-            fromName={current.owner}
-            fromAccount={current.fromAccount}
-            toName={data.companyName}
-            toAccount={data.companyAccount}
-            paidAt={current.paidAt}
-            reference={current.reference}
-            fileName={current.slipFile}
-            footer="ไฟล์ตัวอย่าง, ไม่ใช่หลักฐานการชำระเงินจริง"
-          />
+              amount={current.amount}
+              purpose="เติม Token"
+              fromName={current.owner}
+              fromAccount={current.fromAccount}
+              toName={data.companyName}
+              toAccount={data.companyAccount}
+              paidAt={current.paidAt}
+              reference={current.reference}
+              fileName={current.slipFile}
+              footer="ไฟล์ตัวอย่าง, ไม่ใช่หลักฐานการชำระเงินจริง"
+            />
+          )}
           <div className="flex items-start gap-2.5 rounded-lg bg-admin-ok-tint p-3">
             <Icon name="a-circle-check" size={18} />
             <p className="flex-1 text-[12px] leading-[1.55] text-admin-ok">ไม่พบเลขอ้างอิงซ้ำในประวัติการเติม Token</p>

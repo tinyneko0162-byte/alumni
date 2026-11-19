@@ -3,11 +3,44 @@
 import { useRef } from "react";
 import { Icon } from "@/components/ui/Icon";
 
-export type SlipFile = { fileName: string; sizeLabel: string } | null;
+/** dataUrl: the slip itself, shrunk in the browser so it uploads fast (sent with the order for staff to check) */
+export type SlipFile = { fileName: string; sizeLabel: string; dataUrl?: string } | null;
+
+/** Photos are scaled to at most 1400px and saved as JPEG; PDFs are sent as they are (must stay under 3 MB). */
+async function toDataUrl(f: File): Promise<string | undefined> {
+  const read = () =>
+    new Promise<string>((ok, bad) => {
+      const r = new FileReader();
+      r.onload = () => ok(String(r.result));
+      r.onerror = bad;
+      r.readAsDataURL(f);
+    });
+  if (f.type === "application/pdf") return f.size <= 3 * 1024 * 1024 ? read() : undefined;
+  if (!f.type.startsWith("image/")) return undefined;
+  const url = URL.createObjectURL(f);
+  try {
+    const img = await new Promise<HTMLImageElement>((ok, bad) => {
+      const i = new Image();
+      i.onload = () => ok(i);
+      i.onerror = bad;
+      i.src = url;
+    });
+    const k = Math.min(1, 1400 / Math.max(img.width, img.height));
+    const c = document.createElement("canvas");
+    c.width = Math.round(img.width * k);
+    c.height = Math.round(img.height * k);
+    c.getContext("2d")?.drawImage(img, 0, 0, c.width, c.height);
+    return c.toDataURL("image/jpeg", 0.82);
+  } catch {
+    return undefined;
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
 
 const sizeLabel = (bytes: number) => `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 
-/** Dashed upload area + attached-file row. File is kept client-side only (mock). */
+/** Dashed upload area + attached-file row. The picture goes to the server with the order. */
 export function SlipUpload({
   value,
   onChange,
@@ -29,7 +62,7 @@ export function SlipUpload({
       alert(`ไฟล์ต้องไม่เกิน ${maxSizeMb} MB`);
       return;
     }
-    onChange({ fileName: f.name, sizeLabel: sizeLabel(f.size) });
+    void toDataUrl(f).then((dataUrl) => onChange({ fileName: f.name, sizeLabel: sizeLabel(f.size), dataUrl }));
   };
 
   return (

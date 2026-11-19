@@ -1,73 +1,31 @@
-import nodemailer from "nodemailer";
-import QRCode from "qrcode";
 import { nowTime, updateDb } from "@/lib/db";
-import { entryPayload } from "@/lib/qr-payload";
+import { mailReady, sendTicketEmail } from "@/lib/mailer";
 import { getStaffRole } from "@/lib/session";
-import { signTicket } from "@/lib/ticket-token";
 
 export const runtime = "nodejs";
 
-const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
-
-/** POST { ticketId, to, subject, name } → sends the personal ticket link + QR by email. */
+/**
+ * POST { ticketId, to, subject, name } → emails the personal ticket link + QR.
+ * Without SMTP settings (.env.local) it records a simulated send and returns the link so the demo still works.
+ */
 export async function POST(req: Request) {
   const role = await getStaffRole();
-  if (role !== "ticketing" && role !== "super") return Response.json({ ok: false, error: "เฉพาะเจ้าหน้าที่ตั๋วเท่านั้น กรุณาเข้าสู่ระบบ" }, { status: 401 });
+  if (role !== "ticketing" && role !== "super") return Response.json({ ok: false, error: "เฉพาะเจ้าหน้าที่ตั๋วเท่านั้น กรุณาเข้าสู่ระบบ" }, { status: 403 });
   const body = (await req.json().catch(() => null)) as { ticketId?: string; to?: string; subject?: string; name?: string } | null;
   const ticketId = body?.ticketId?.trim();
   const to = body?.to?.trim();
   if (!ticketId || !to || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) {
     return Response.json({ ok: false, error: "อีเมลผู้รับไม่ถูกต้อง" }, { status: 400 });
   }
-
-  const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, MAIL_FROM } = process.env;
-  const base = (process.env.APP_URL ?? new URL(req.url).origin).replace(/\/$/, "");
-  const link = `${base}/t/${signTicket(ticketId)}`;
-  if (!SMTP_HOST || !SMTP_USER || !SMTP_PASS) {
-    // demo mode: no mail server configured → record the send and hand the link back so staff can open it
-    updateDb((db) => {
-      db.linkHistory.unshift({ ticketId, email: to, time: nowTime().slice(0, 5), status: "จำลอง (ยังไม่ตั้งค่าอีเมล)" });
-      db.orders.forEach((o) => {
-        if (o.id === ticketId || o.ticketIds.includes(ticketId)) o.linkSent = true;
-      });
+  const base = process.env.APP_URL || new URL(req.url).origin;
+  const simulated = !mailReady();
+  const res = simulated ? { ok: true, link: (await sendTicketEmail({ ticketId, to, name: body?.name ?? "", base })).link } : await sendTicketEmail({ ticketId, to, name: body?.name ?? "ผู้ร่วมงาน", base, subject: body?.subject });
+  if (!res.ok) return Response.json({ ok: false, error: "error" in res ? res.error : "ส่งอีเมลไม่สำเร็จ" }, { status: 502 });
+  updateDb((db) => {
+    db.linkHistory.unshift({ ticketId, email: to, time: nowTime().slice(0, 5), status: simulated ? "จำลอง (ยังไม่ตั้งค่าอีเมล)" : "ส่งแล้ว" });
+    db.orders.forEach((o) => {
+      if (o.id === ticketId || o.ticketIds.includes(ticketId)) o.linkSent = true;
     });
-    return Response.json({ ok: true, simulated: true, link });
-  }
-
-  const qr = await QRCode.toBuffer(entryPayload(ticketId), { margin: 2, width: 360, errorCorrectionLevel: "M" });
-  const name = esc(body?.name ?? "ผู้ร่วมงาน");
-
-  try {
-    const transport = nodemailer.createTransport({
-      host: SMTP_HOST,
-      port: Number(SMTP_PORT ?? 465),
-      secure: Number(SMTP_PORT ?? 465) === 465,
-      auth: { user: SMTP_USER, pass: SMTP_PASS },
-    });
-    await transport.sendMail({
-      from: MAIL_FROM ?? SMTP_USER,
-      to,
-      subject: body?.subject?.trim() || "ลิงก์เข้างาน งานเลี้ยงรุ่นศิษย์เก่า",
-      text: `สวัสดีคุณ ${body?.name ?? ""}\nเปิดบัตรเข้างานและ QR ของคุณที่ลิงก์นี้: ${link}\nกรุณาไม่ส่งต่อลิงก์ให้ผู้อื่น`,
-      html: `<div style="font-family:system-ui,sans-serif;max-width:480px;margin:auto;color:#1b2140">
-        <h2 style="color:#e82c87;margin:0 0 12px">งานเลี้ยงรุ่นศิษย์เก่า</h2>
-        <p>สวัสดีคุณ ${name}</p>
-        <p>เราได้รับชำระค่าบัตรเรียบร้อยแล้ว กดปุ่มด้านล่างเพื่อเปิดบัตรเข้างานและ Wallet ของคุณ</p>
-        <p><a href="${link}" style="display:inline-block;background:#e82c87;color:#fff;text-decoration:none;padding:12px 20px;border-radius:8px;font-weight:600">เปิดลิงก์ส่วนตัวของคุณ</a></p>
-        <p style="margin:16px 0 4px">หรือแสดง QR นี้ที่หน้างาน (บัตร ${esc(ticketId)})</p>
-        <img src="cid:entry-qr" width="180" height="180" alt="QR เข้างาน">
-        <p style="font-size:12px;color:#6b7090">กรุณาไม่ส่งต่อลิงก์นี้ให้ผู้อื่น</p></div>`,
-      attachments: [{ filename: `${ticketId}.png`, content: qr, cid: "entry-qr" }],
-    });
-    updateDb((db) => {
-      db.linkHistory.unshift({ ticketId, email: to, time: nowTime().slice(0, 5), status: "ส่งแล้ว" });
-      db.orders.forEach((o) => {
-        if (o.id === ticketId || o.ticketIds.includes(ticketId)) o.linkSent = true;
-      });
-    });
-    return Response.json({ ok: true });
-  } catch (e) {
-    console.error("send-ticket failed", e);
-    return Response.json({ ok: false, error: "ส่งอีเมลไม่สำเร็จ ตรวจอีเมล/รหัสผ่านแอปใน .env.local แล้วลองใหม่" }, { status: 502 });
-  }
+  });
+  return Response.json({ ok: true, simulated, link: res.link });
 }

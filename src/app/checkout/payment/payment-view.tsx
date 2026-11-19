@@ -30,6 +30,7 @@ export function PaymentView({ event }: { event: EventInfo }) {
       delivery: deliveryOf(cart),
       address: cart.address,
       slipFile: cart.slip.fileName,
+      slipData: cart.slip.dataUrl,
     });
     setBusy(false);
     if (!res.ok) return setError(res.error);

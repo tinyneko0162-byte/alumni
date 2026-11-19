@@ -1,9 +1,12 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
+import { saveSlip } from "@/lib/slips";
+import { mailReady, sendTicketEmail } from "@/lib/mailer";
 import roles from "@/data/admin/roles.json";
 import shopProducts from "@/data/products.json";
-import { addLog, findHolder, nextId, nowStamp, nowTime, readDb, shortWallet, updateDb, type CatalogProduct, type RoleKey, type ShipAddress, type Db, type StoreRow, type Wallet } from "@/lib/db";
+import { addLog, findHolder, nextId, nowStamp, nowTime, readDb, shortWallet, updateDb, type CatalogProduct, type RoleKey, type ShipAddress, type Db, type StoreRow, type Wallet, closeEvent, eventOf, openEvent, FIRST_EVENT } from "@/lib/db";
 import demo from "@/data/demo.json";
 import financeAttendance from "@/data/admin/finance-attendance.json";
 import { signTicket } from "@/lib/ticket-token";
@@ -64,7 +67,7 @@ export async function saveProduct(sku: string, patch: { price: number; stock: nu
     if (!p) return { ok: false as const, error: "ไม่พบสินค้า" };
     const priceChanged = p.price !== patch.price;
     Object.assign(p, { price: Math.round(patch.price), stock: Math.round(patch.stock), status: patch.status, updatedAt: nowStamp() });
-    addLog(db, { event: priceChanged ? `ปรับราคา ${p.name}` : `แก้ไขสินค้า ${p.name}`, detail: `${p.price} Token / ${p.unit} · Stock ${p.stock} · ${p.status}`, role: "Super Admin", actor: "สุ••", ref: p.sku });
+    addLog(db, { event: priceChanged ? `ปรับราคา ${p.name}` : `แก้ไขสินค้า ${p.name}`, detail: `${p.price} Token / ${p.unit}, Stock ${p.stock}, ${p.status}`, role: "Super Admin", actor: "สุ••", ref: p.sku });
     return { ok: true as const, product: { ...p } };
   });
 }
@@ -172,6 +175,8 @@ export async function payPos(input: { storeId: string; walletId: string; qty: nu
   const qty = Math.floor(input.qty);
   if (!st || !(qty > 0)) return { ok: false, error: "ข้อมูลการขายไม่ถูกต้อง" };
   return updateDb((db) => {
+    const ev = openEvent(db);
+    if (!ev) return { ok: false as const, error: "ตอนนี้ไม่มีงานที่เปิดอยู่ (งานปิดแล้ว) ทำรายการนี้ไม่ได้" };
     const p = db.catalog.find((c) => c.sku === st.product.sku);
     const w = db.wallets.find((x) => x.id === input.walletId);
     if (db.stores.find((x) => x.id === st.id)?.status === "closed") return { ok: false as const, error: "ร้านนี้ถูก Super Admin ปิดการขายอยู่" };
@@ -189,9 +194,9 @@ export async function payPos(input: { storeId: string; walletId: string; qty: nu
       id, time, qty, wallet: shortWallet(w.id), customer: w.owner, seller: st.operator.name.split(" ")[0], status: "ชำระแล้ว", balanceBefore: before,
       sellerCode: st.id, pos: `POS-${st.id.slice(-2)}`, debitId: id.replace("SALE", "DEBIT"),
       audit: `${time} ตรวจพบ Wallet และยอดเพียงพอ → ตัดยอด ${total} Token (${p.name} × ${qty}) สำเร็จ`,
-      storeId: st.id, productName: p.name, unitPrice: p.price, amount: total,
+      storeId: st.id, productName: p.name, unitPrice: p.price, amount: total, eventId: ev.id,
     });
-    addLog(db, { event: `ขายสินค้า · ${total} Token`, detail: `${p.name} × ${qty} · ${shortWallet(w.id)}`, role: "Store Operator", actor: `${st.operator.name.split(" ")[0]} · ${st.id}`, ref: id });
+    addLog(db, { event: `ขายสินค้า, ${total} Token`, detail: `${p.name} × ${qty}, ${shortWallet(w.id)}`, role: "Store Operator", actor: `${st.operator.name.split(" ")[0]}, ${st.id}`, ref: id });
     return { ok: true as const, saleId: id, balance: w.balance, total, stock: p.stock };
   });
 }
@@ -203,13 +208,15 @@ export async function cashTopup(input: { walletId: string; amount: number }): Pr
   const amount = Math.floor(input.amount);
   if (!(amount > 0)) return { ok: false, error: "จำนวนเงินไม่ถูกต้อง" };
   return updateDb((db) => {
+    const ev = openEvent(db);
+    if (!ev) return { ok: false as const, error: "ตอนนี้ไม่มีงานที่เปิดอยู่ (งานปิดแล้ว) ทำรายการนี้ไม่ได้" };
     const w = db.wallets.find((x) => x.id === input.walletId);
     if (!w) return { ok: false as const, error: "ไม่พบ Wallet" };
     const before = w.balance;
     w.balance += amount;
     const id = nextId("TOP", db.topups.map((t) => t.id));
-    db.topups.unshift({ id, time: nowTime(), wallet: shortWallet(w.id), owner: w.owner, channel: "เงินสด", received: amount, requested: amount, tokens: amount, staff: "อร••", status: "สำเร็จ", balanceBefore: before });
-    addLog(db, { event: `เติมเงินสด ฿${amount} · +${amount} Token`, role: "Token Staff", actor: "อร••", ref: id });
+    db.topups.unshift({ id, time: nowTime(), wallet: shortWallet(w.id), owner: w.owner, channel: "เงินสด", received: amount, requested: amount, tokens: amount, staff: "อร••", status: "สำเร็จ", balanceBefore: before, eventId: ev.id });
+    addLog(db, { event: `เติมเงินสด ฿${amount}, +${amount} Token`, role: "Token Staff", actor: "อร••", ref: id });
     return { ok: true as const, id, balance: w.balance };
   });
 }
@@ -219,13 +226,15 @@ export async function resolveTransfer(id: string, decision: "done" | "resubmit")
   return updateDb((db) => {
     const t = db.transfers.find((x) => x.id === id);
     if (!t || t.state !== "pending") return { ok: false as const, error: "รายการนี้ถูกดำเนินการไปแล้ว" };
+    const ev = openEvent(db);
+    if (decision === "done" && (!ev || eventOf(t) !== ev.id)) return { ok: false as const, error: "งานของคำขอนี้ปิดแล้ว เติม Token ไม่ได้" };
     t.state = decision;
     if (decision === "done") {
       const w = db.wallets.find((x) => shortWallet(x.id) === t.wallet || x.id === t.wallet);
       const before = w?.balance ?? t.balance;
       if (w) w.balance += t.amount;
-      db.topups.unshift({ id: t.id, time: nowTime(), wallet: t.wallet, owner: t.owner, channel: "โอนธนาคาร", received: t.amount, requested: t.amount, tokens: t.amount, staff: "อร••", status: "สำเร็จ", balanceBefore: before });
-      addLog(db, { event: `เติมเงินโอน ฿${t.amount} · +${t.amount} Token`, role: "Token Staff", actor: "อร••", ref: t.id });
+      db.topups.unshift({ id: t.id, time: nowTime(), wallet: t.wallet, owner: t.owner, channel: "โอนธนาคาร", received: t.amount, requested: t.amount, tokens: t.amount, staff: "อร••", status: "สำเร็จ", balanceBefore: before, eventId: ev?.id });
+      addLog(db, { event: `เติมเงินโอน ฿${t.amount}, +${t.amount} Token`, role: "Token Staff", actor: "อร••", ref: t.id });
       return { ok: true as const, balance: w?.balance };
     }
     addLog(db, { event: `ขอหลักฐานการโอนใหม่ ฿${t.amount}`, role: "Token Staff", actor: "อร••", ref: t.id });
@@ -236,20 +245,22 @@ export async function resolveTransfer(id: string, decision: "done" | "resubmit")
 // ---------- attendee → staff ----------
 
 /** Attendee asks for a top-up by bank transfer; it shows up in Token Staff › ตรวจเงินโอน. */
-export async function requestTopup(input: { amount: number; slipFile: string }): Promise<Result<{ id: string }>> {
+export async function requestTopup(input: { amount: number; slipFile: string; slipData?: string }): Promise<Result<{ id: string }>> {
   const amount = Math.floor(input.amount);
   if (!(amount >= 20 && amount <= 50000)) return { ok: false, error: "ระบุจำนวนเงิน 20 – 50,000 บาท" };
   if (!input.slipFile.trim()) return { ok: false, error: "กรุณาแนบสลิป" };
   const user = await getUser();
   if (!user) return { ok: false, error: "กรุณาเข้าสู่ระบบ" };
   return updateDb((db) => {
+    const ev = openEvent(db);
+    if (!ev) return { ok: false as const, error: "งานปิดแล้ว ยังเติม Token ไม่ได้จนกว่างานถัดไปจะเปิด" };
     const w = db.wallets.find((x) => x.id === user.walletId);
     if (!w) return { ok: false as const, error: "ไม่พบ Wallet ของคุณ" };
     const id = nextId("TOP", [...db.transfers.map((t) => t.id), ...db.topups.map((t) => t.id)]);
     db.transfers.unshift({
       id, time: nowTime().slice(0, 5), wallet: shortWallet(w.id), owner: w.owner, amount, balance: w.balance,
-      slipFile: input.slipFile.slice(0, 80), fromAccount: "ธนาคารตัวอย่าง • xxx-x-xx482-1", paidAt: nowStamp().replace(" · ", " · ") + " น.",
-      reference: `TRX-••••-${Math.floor(1000 + Math.random() * 9000)}`, state: "pending",
+      slipFile: input.slipFile.slice(0, 80), fromAccount: "ธนาคารตัวอย่าง, xxx-x-xx482-1", paidAt: nowStamp().replace(", ", ", ") + " น.",
+      reference: `TRX-••••-${Math.floor(1000 + Math.random() * 9000)}`, state: "pending", eventId: ev.id, slipUrl: saveSlip(id, input.slipData) ?? undefined,
     });
     addLog(db, { event: `ผู้ร่วมงานส่งหลักฐานเติม Token ฿${amount}`, detail: shortWallet(w.id), role: "ผู้ร่วมงาน", actor: w.owner, ref: id, result: "รอตรวจ" });
     return { ok: true as const, id };
@@ -323,6 +334,8 @@ export type OrderInput = {
   delivery: "pickup" | "delivery";
   address: ShipAddress | null;
   slipFile: string;
+  /** the slip picture as a data URL (compressed in the browser) */
+  slipData?: string;
 };
 
 const SIZES = new Set(shopProducts.shirt.sizes);
@@ -355,6 +368,8 @@ export async function submitOrder(input: OrderInput): Promise<Result<{ id: strin
   const label = [ticketQty ? `บัตร ${ticketQty} ใบ` : "", shirts.length ? `เสื้อ ${shirts.length} ตัว` : ""].filter(Boolean).join(" + ");
 
   return updateDb((db) => {
+    const ev = openEvent(db);
+    if (!ev) return { ok: false as const, error: "ยังไม่เปิดขายงานถัดไป" };
     const id = nextId("TKT", db.orders.map((o) => o.id));
     const d = new Date();
     db.orders.unshift({
@@ -362,7 +377,7 @@ export async function submitOrder(input: OrderInput): Promise<Result<{ id: strin
       ticketType: label, qty: ticketQty, amount, slipFile: input.slipFile.slice(0, 80), fromAccount: "xxx-x-xx482-1", paidAt: `${nowStamp()} น.`, ref: `SPU-T-${Math.floor(100 + Math.random() * 900)}`,
       duplicateRef: false, status: "pending", ticketIds: [], fromAttendee: true,
       purchaseType, self, friends, shirts, delivery, address: delivery === "delivery" ? a : null,
-      shirtStatus: shirts.length ? "waiting" : undefined,
+      shirtStatus: shirts.length ? "waiting" : undefined, eventId: ev.id, slipUrl: saveSlip(id, input.slipData) ?? undefined,
     });
     addLog(db, { event: `ผู้ร่วมงานส่งสลิป ${label} ฿${amount}`, role: "ผู้ร่วมงาน", actor: name.slice(0, 40), ref: id, result: "รอตรวจ" });
     return { ok: true as const, id, amount };
@@ -388,12 +403,13 @@ export async function orderStatus(id: string): Promise<{
   return { status: "approved", link: o.ticketIds[0] ? `/t/${signTicket(o.ticketIds[0])}` : undefined, ticketIds: o.ticketIds, holders, shirt, sentAt: o.paidAt, self: o.self !== false };
 }
 
-export async function resolveSlip(id: string, decision: "approve" | "reject"): Promise<Result<{ ticketIds: string[] }>> {
+export async function resolveSlip(id: string, decision: "approve" | "reject"): Promise<Result<{ ticketIds: string[]; emailed: number }>> {
   if (!(await requireRole("ticketing"))) return { ok: false, error: "ไม่มีสิทธิ์ตรวจสลิป" };
-  return updateDb((db) => {
+  const res = updateDb((db) => {
     const o = db.orders.find((x) => x.id === id);
     if (!o || o.status !== "pending") return { ok: false as const, error: "รายการนี้ถูกดำเนินการไปแล้ว" };
     if (decision === "approve") {
+      if (openEvent(db)?.id !== eventOf(o)) return { ok: false as const, error: "งานของคำสั่งซื้อนี้ปิดแล้ว อนุมัติไม่ได้" };
       o.status = "approved";
       // shirt-only orders get no ticket
       o.ticketIds = Array.from({ length: o.qty }, (_, i) => (i === 0 ? o.id : `${o.id}-${i + 1}`));
@@ -408,15 +424,36 @@ export async function resolveSlip(id: string, decision: "approve" | "reject"): P
         const w = walletFor(db, h.email, h.name);
         const before = w.balance;
         w.balance += TOKENS_PER_TICKET;
-        db.topups.unshift({ id: nextId("BON", db.topups.filter((t) => t.id.startsWith("BON")).map((t) => t.id)), time: nowTime(), wallet: shortWallet(w.id), owner: w.owner, channel: "มากับบัตร", received: null, requested: null, tokens: TOKENS_PER_TICKET, staff: "ระบบ", status: "สำเร็จ", balanceBefore: before });
+        db.topups.unshift({ id: nextId("BON", db.topups.filter((t) => t.id.startsWith("BON")).map((t) => t.id)), time: nowTime(), wallet: shortWallet(w.id), owner: w.owner, channel: "มากับบัตร", received: null, requested: null, tokens: TOKENS_PER_TICKET, staff: "ระบบ", status: "สำเร็จ", balanceBefore: before, eventId: eventOf(o) });
       }
       addLog(db, { event: `อนุมัติสลิป ${o.ticketType} ฿${o.amount}`, detail: o.ticketIds.length ? `ออกบัตร ${o.ticketIds.join(", ")}` : "ไม่มีบัตรเข้างาน (ซื้อเสื้ออย่างเดียว)", role: "Ticketing Officer", actor: "พั••", ref: o.id });
     } else {
       o.status = "rejected";
       addLog(db, { event: `ปฏิเสธสลิปค่าบัตร ฿${o.amount}`, role: "Ticketing Officer", actor: "พั••", ref: o.id });
     }
-    return { ok: true as const, ticketIds: o.ticketIds };
+    return { ok: true as const, ticketIds: o.ticketIds, holders: o.holders ?? [] };
   });
+  if (!res.ok) return res;
+  // with SMTP set up, every ticket holder gets their link right away; otherwise staff send it from "ส่งลิงก์ทางอีเมล"
+  let emailed = 0;
+  if (decision === "approve" && mailReady() && res.holders.length) {
+    const h = await headers();
+    const base = process.env.APP_URL || `${h.get("x-forwarded-proto") ?? "http"}://${h.get("host")}`;
+    const sent: { ticketId: string; email: string }[] = [];
+    for (const x of res.holders) {
+      const r = await sendTicketEmail({ ticketId: x.ticketId, to: x.email, name: x.name, base });
+      if (r.ok) sent.push({ ticketId: x.ticketId, email: x.email });
+    }
+    emailed = sent.length;
+    if (sent.length) {
+      updateDb((db) => {
+        for (const x of sent) db.linkHistory.unshift({ ticketId: x.ticketId, email: x.email, time: nowTime().slice(0, 5), status: "ส่งอัตโนมัติ" });
+        const o = db.orders.find((y) => y.id === id);
+        if (o) o.linkSent = true;
+      });
+    }
+  }
+  return { ok: true, ticketIds: res.ticketIds, emailed };
 }
 
 // ---------- gate check-in ----------
@@ -430,14 +467,19 @@ export async function checkIn(ticketId: string): Promise<Result<{ status: "ok" |
     if (seeded || prior) return { ok: true as const, status: "dup" as const, name: (prior ?? seeded)!.name, time: (prior ?? seeded)!.time ?? "" };
     const holder = findHolder(db, id);
     const name = holder?.name ?? demo.tickets.find((t) => t.id === id)?.name;
+    // a ticket only works at its own event, and only while that event is open
+    const evId = holder ? eventOf(holder.order) : FIRST_EVENT;
+    const ev = db.events.find((e) => e.id === evId);
+    const open = openEvent(db);
+    if (name && (!ev || ev.status === "closed" || open?.id !== evId)) return { ok: false as const, error: `บัตร ${id} เป็นของงาน "${ev?.name ?? evId}" ที่ปิดไปแล้ว ใช้เข้างานไม่ได้` };
     // the buyer's own ticket: remind the gate staff about shirts waiting to be picked up
     const o = holder?.order;
     const shirt = o && o.self !== false && o.ticketIds[0] === id && o.delivery === "pickup" && o.shirts?.length && o.shirtStatus !== "picked" ? `มีเสื้อรุ่นรอรับ ${o.shirts.map((x) => x.size).join(", ")}` : undefined;
     if (!name) return { ok: false as const, error: `ไม่พบบัตร ${id} ในระบบ หรือยังไม่ได้รับการอนุมัติ` };
     const time = nowTime();
     const recordId = nextId("ATT", [...db.checkins.map((a) => a.recordId), ...financeAttendance.attendees.map((a) => a.recordId)].filter((x): x is string => !!x));
-    db.checkins.unshift({ name, initials: name.slice(0, 2), ticket: id, class: "ศิษย์เก่า", time, checkpoint: "ประตูหลัก", staff: "พั•• · จุดเช็กอิน", recordId });
-    addLog(db, { event: "บันทึกเข้างาน · ประตูหลัก", role: "จุดเช็กอิน", actor: "พั••", ref: recordId });
+    db.checkins.unshift({ eventId: evId, name, initials: name.slice(0, 2), ticket: id, class: "ศิษย์เก่า", time, checkpoint: "ประตูหลัก", staff: "พั••, จุดเช็กอิน", recordId });
+    addLog(db, { event: "บันทึกเข้างาน, ประตูหลัก", role: "จุดเช็กอิน", actor: "พั••", ref: recordId });
     return { ok: true as const, status: "ok" as const, name, time, shirt };
   });
 }
@@ -481,7 +523,7 @@ export async function createStaff(input: { name: string; username: string; role:
     const id = nextId(prefix, db.staff.filter((x) => x.id.startsWith(prefix)).map((x) => x.id), 2);
     const row = { id, username, name, role: input.role as RoleKey, pass: hashPassword(password), active: true, storeId: store?.id, station: store?.name ?? (input.station?.trim() || "-") };
     db.staff.push(row);
-    addLog(db, { event: `สร้างบัญชีพนักงาน ${name}`, detail: `${roles.roles[row.role].label} · ${username}`, role: "Super Admin", actor: "สุ••", ref: id });
+    addLog(db, { event: `สร้างบัญชีพนักงาน ${name}`, detail: `${roles.roles[row.role].label}, ${username}`, role: "Super Admin", actor: "สุ••", ref: id });
     const { pass: _pass, ...out } = row;
     void _pass;
     return { ok: true as const, staff: out, password };
@@ -511,5 +553,49 @@ export async function resetStaffPassword(id: string): Promise<Result<{ password:
     s.pass = hashPassword(password);
     addLog(db, { event: `ตั้งรหัสผ่านใหม่ให้ ${s.name}`, role: "Super Admin", actor: "สุ••", ref: id });
     return { ok: true as const, password };
+  });
+}
+
+// ---------- events (Super Admin) ----------
+
+/** Close the open event now: tickets stop working and the Token left in every wallet expire. Cannot be undone. */
+export async function closeEventNow(id: string): Promise<Result<{ tokens: number; wallets: number }>> {
+  const me = await getStaff();
+  if (me?.role !== "super") return { ok: false, error: "เฉพาะ Super Admin เท่านั้น" };
+  return updateDb((db) => {
+    const ev = db.events.find((e) => e.id === id);
+    if (!ev || ev.status === "closed") return { ok: false as const, error: "งานนี้ปิดไปแล้ว" };
+    const r = closeEvent(db, id, me.name);
+    return { ok: true as const, ...r };
+  });
+}
+
+/** Set (or clear with "") the time the open event closes by itself. Input is a Bangkok local time "YYYY-MM-DDTHH:mm". */
+export async function setEventEnd(id: string, local: string): Promise<Result> {
+  const me = await getStaff();
+  if (me?.role !== "super") return { ok: false, error: "เฉพาะ Super Admin เท่านั้น" };
+  const iso = local ? new Date(`${local}:00+07:00`).toISOString() : undefined;
+  if (local && (Number.isNaN(Date.parse(iso!)) || Date.parse(iso!) <= Date.now())) return { ok: false, error: "เวลาปิดงานต้องเป็นเวลาในอนาคต" };
+  return updateDb((db) => {
+    const ev = db.events.find((e) => e.id === id);
+    if (!ev || ev.status === "closed") return { ok: false as const, error: "งานนี้ปิดไปแล้ว" };
+    ev.endsAt = iso;
+    addLog(db, { event: iso ? `ตั้งเวลาปิดงานอัตโนมัติ ${ev.name}` : `ยกเลิกการปิดงานอัตโนมัติ ${ev.name}`, detail: local.replace("T", " "), role: "Super Admin", actor: me.name, ref: id });
+    return { ok: true as const };
+  });
+}
+
+/** Start the next event. Only one event can be open at a time. Accounts carry over; tickets and Token start fresh. */
+export async function createEvent(input: { name: string; dateLong: string; time: string; venue: string }): Promise<Result<{ id: string }>> {
+  const me = await getStaff();
+  if (me?.role !== "super") return { ok: false, error: "เฉพาะ Super Admin เท่านั้น" };
+  const v = { name: input.name.trim(), dateLong: input.dateLong.trim(), time: input.time.trim(), venue: input.venue.trim() };
+  if (!v.name || !v.dateLong || !v.venue) return { ok: false, error: "กรอกชื่องาน วันที่ และสถานที่" };
+  return updateDb((db) => {
+    if (openEvent(db)) return { ok: false as const, error: "ยังมีงานที่เปิดอยู่ ปิดงานเดิมก่อนสร้างงานใหม่" };
+    const id = nextId("EVT", db.events.map((e) => e.id));
+    db.events.push({ id, ...v, dateShort: v.dateLong, status: "open" });
+    addLog(db, { event: `สร้างงานใหม่ ${v.name}`, detail: `${v.dateLong} ${v.time} ${v.venue}`, role: "Super Admin", actor: me.name, ref: id });
+    return { ok: true as const, id };
   });
 }

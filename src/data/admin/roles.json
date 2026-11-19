@@ -20,6 +20,11 @@
       "home": "/admin/super/overview",
       "menu": [
         {
+          "href": "/admin/super/events",
+          "label": "จัดการงาน",
+          "icon": "calendar-menu"
+        },
+        {
           "href": "/admin/super/overview",
           "label": "ภาพรวมระบบ",
           "icon": "layout-dashboard"

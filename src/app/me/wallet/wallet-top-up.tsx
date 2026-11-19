@@ -23,7 +23,7 @@ export function WalletTopUp({ accept, maxSizeMb }: { accept: string; maxSizeMb: 
   const submit = async () => {
     setBusy(true);
     setMsg(null);
-    const res = await requestTopup({ amount: Number(amount), slipFile: slip?.fileName ?? "" });
+    const res = await requestTopup({ amount: Number(amount), slipFile: slip?.fileName ?? "", slipData: slip?.dataUrl });
     setBusy(false);
     if (!res.ok) return setMsg({ ok: false, text: res.error });
     setMsg({ ok: true, text: `ส่งคำขอ ${res.id} แล้ว เจ้าหน้าที่จะตรวจและเติม Token ให้` });

@@ -16,7 +16,8 @@ export default async function RevenuePage() {
   const topUp = total - ticket;
   const cash = d.revenue.filter((r) => r.channel === "เงินสด").reduce((s, r) => s + r.amount, 0);
   const bank = total - cash;
-  const remaining = d.tokens.toppedUp - d.tokens.spent;
+  const expired = d.tokens.expired ?? 0;
+  const remaining = d.tokens.toppedUp - d.tokens.spent - expired;
   const pct = (n: number, of: number) => `${((n / of) * 100).toFixed(1)}%`;
 
   return (
@@ -94,13 +95,14 @@ export default async function RevenuePage() {
           <p className="text-[12px] leading-[1.55] text-admin-muted">ยอดหน่วย Token ในระบบ (1 Token = 1 บาท) ไม่ใช่รายได้สกุลเงินบาทซ้ำอีกครั้ง</p>
           <Detail label="เติมเข้าระบบแล้ว" value={`${fmt(d.tokens.toppedUp)} Token`} />
           <Detail label="ใช้จ่ายในงานแล้ว" value={`${fmt(d.tokens.spent)} Token`} />
+          {expired > 0 && <Detail label="หมดอายุตอนปิดงาน" value={`${fmt(expired)} Token`} />}
           <div className="h-px bg-admin-line" />
           <div className="flex items-start justify-between rounded-lg bg-brand-tint p-3.5 leading-[1.55] text-black">
             <p className="text-[12px]">คงเหลือใน Wallet รวม</p>
             <p className="text-[18px] font-semibold">{fmt(remaining)}</p>
           </div>
           <p className="text-[11px] leading-[1.55] text-admin-muted">
-            {fmt(d.tokens.toppedUp)} − {fmt(d.tokens.spent)} = {fmt(remaining)} Token
+            {fmt(d.tokens.toppedUp)} − {fmt(d.tokens.spent)}{expired > 0 ? ` − ${fmt(expired)}` : ""} = {fmt(remaining)} Token
           </p>
           <Guidance>ยอดขาย Token ไม่ถูกนับเป็นรายรับเงินบาทซ้ำอีกครั้ง</Guidance>
         </Panel>
