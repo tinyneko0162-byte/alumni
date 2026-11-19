@@ -238,6 +238,8 @@ export function readDb(): Db {
   if (!db.wallets.some((w) => w.id === "WLT-TEST-0001")) {
     db.wallets.push({ id: "WLT-TEST-0001", owner: "ไทนี่ (ทดลอง)", balance: 2500, status: "ใช้งานได้" });
   }
+  // ข้อมูลเก่าที่เคยตั้งชื่อสินค้าว่า "เบียร์" → ใช้ชื่อ "เบียร์สด" ให้ตรงกับร้าน
+  for (const c of db.catalog) if (c.sku === "BEER-01" && c.name === "เบียร์") c.name = "เบียร์สด";
   // an event past its end time closes itself the first time anyone opens a page afterwards
   const due = db.events.find((e) => e.status === "open" && e.endsAt && Date.parse(e.endsAt) <= Date.now());
   if (due) {
