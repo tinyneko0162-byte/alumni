@@ -13,6 +13,7 @@ import storePos from "@/data/admin/store-pos.json";
 import storeSales from "@/data/admin/store-sales.json";
 import tokenCash from "@/data/admin/token-cash.json";
 import tokenHistory from "@/data/admin/token-history.json";
+import financeRevenue from "@/data/admin/finance-revenue.json";
 import tokenTransfers from "@/data/admin/token-transfers.json";
 import demo from "@/data/demo.json";
 import { hashPassword } from "@/lib/password";
@@ -141,7 +142,7 @@ function demoAccounts() {
     { id: "TO-01", username: "ticket", name: "พั•• เจ้าหน้าที่ตั๋ว", role: "ticketing", pass: pw("1234"), active: true, station: "จุดเช็กอินประตูหลัก" },
     { id: "TS-01", username: "token", name: "อร•• จุดเติมเงิน", role: "token", pass: pw("1234"), active: true, station: "จุดเติมเงิน A" },
     ...[...storePos.stores].sort((a, b) => a.id.localeCompare(b.id)).map((st, i) => ({
-      id: `SO-0${i + 1}`, username: `store${i + 1}`, name: st.operator.name.split(" ")[0], role: "store" as RoleKey, pass: pw("1234"), active: true, storeId: st.id, station: st.name,
+      id: `SO-0${i + 1}`, username: `store${i + 1}`, name: st.operator.name.split(",")[0].trim(), role: "store" as RoleKey, pass: pw("1234"), active: true, storeId: st.id, station: st.name,
     })),
   ];
   seedAccounts = { users, staff };
@@ -169,7 +170,7 @@ const seed = (): Db => {
   // stores Super Admin manages; booths that exist only in the POS data (e.g. ST-04) are added too
   const storeRows: StoreRow[] = storesJson.stores.map((x) => ({ ...x, status: x.status === "closed" ? "closed" : "open" }));
   for (const st of storePos.stores) {
-    if (!storeRows.some((x) => x.id === st.id)) storeRows.push({ id: st.id, name: st.name, owner: st.operator.name.split(" ")[0], detail: st.product.name, status: "open" });
+    if (!storeRows.some((x) => x.id === st.id)) storeRows.push({ id: st.id, name: st.name, owner: st.operator.name.split(",")[0].trim(), detail: st.product.name, status: "open" });
   }
   storeRows.sort((a, b) => a.id.localeCompare(b.id));
   for (const c of catalog) c.store = storeRows.find((x) => x.id === c.storeCode)?.name ?? c.store;
@@ -238,6 +239,8 @@ export function readDb(): Db {
   if (!db.wallets.some((w) => w.id === "WLT-TEST-0001")) {
     db.wallets.push({ id: "WLT-TEST-0001", owner: "ไทนี่ (ทดลอง)", balance: 2500, status: "ใช้งานได้" });
   }
+  // ข้อมูลเก่าที่เคยตั้งชื่อสินค้าว่า "เบียร์" → ใช้ชื่อ "เบียร์สด" ให้ตรงกับร้าน
+  for (const c of db.catalog) if (c.sku === "BEER-01" && c.name === "เบียร์") c.name = "เบียร์สด";
   // an event past its end time closes itself the first time anyone opens a page afterwards
   const due = db.events.find((e) => e.status === "open" && e.endsAt && Date.parse(e.endsAt) <= Date.now());
   if (due) {
@@ -257,9 +260,32 @@ export const openEvent = (db: Db): EventRow | undefined => db.events.find((e) =>
  * Close an event: its tickets stop working (scan checks the event) and every wallet's
  * remaining Token expire. Each expiry is written to the top-up history as a minus line.
  */
+const seededTopupKeys = new Set(tokenHistory.records.map((r) => `${r.id}|${r.status}`));
+const seededSaleIds = new Set(storeSales.sales.map((r) => r.id));
+
+/**
+ * Token ของงานหนึ่งงาน ใช้ตัวเลขชุดเดียวกันทุกหน้า (รายได้ภายในงาน, จัดการงาน, ตอนปิดงาน)
+ * เติมเข้า = เงินสด + เงินโอน + 200 ต่อบัตร, ใช้ไป = ขายที่ร้าน (ไม่นับที่ยกเลิก), คงเหลือ = เติม − ใช้ − หมดอายุ
+ * งานแรก (EVT-2569) เริ่มจากตัวเลขในรายงานตัวอย่าง
+ */
+export function tokenTotals(db: Db, evId: string) {
+  const first = evId === FIRST_EVENT;
+  const fresh = db.topups.filter((t) => t.status === "สำเร็จ" && !seededTopupKeys.has(`${t.id}|${t.status}`) && eventOf(t) === evId);
+  const by = (ch: string, f: (t: TopupRecord) => number) => fresh.filter((t) => t.channel === ch).reduce((n, t) => n + f(t), 0);
+  const cash = by("เงินสด", (t) => t.received ?? 0);
+  const bank = by("โอนธนาคาร", (t) => t.received ?? 0);
+  const bonus = by("มากับบัตร", (t) => t.tokens);
+  const expired = -by("หมดอายุ", (t) => t.tokens);
+  const sales = db.sales.filter((x) => !seededSaleIds.has(x.id) && x.amount !== undefined && x.status !== "ยกเลิก" && eventOf(x) === evId);
+  const toppedUp = (first ? financeRevenue.tokens.toppedUp : 0) + cash + bank + bonus;
+  const spent = (first ? financeRevenue.tokens.spent : 0) + sales.reduce((n, x) => n + (x.amount ?? 0), 0);
+  return { cash, bank, bonus, sales, toppedUp, spent, expired, left: Math.max(0, toppedUp - spent - expired) };
+}
+
 export function closeEvent(db: Db, id: string, by: string): { tokens: number; wallets: number } {
   const ev = db.events.find((e) => e.id === id);
   if (!ev || ev.status === "closed") return { tokens: 0, wallets: 0 };
+  const left = tokenTotals(db, id).left; // ยอดเดียวกับ "คงเหลือใน Wallet รวม" หน้ารายได้
   let tokens = 0;
   let wallets = 0;
   for (const w of db.wallets) {
@@ -272,6 +298,15 @@ export function closeEvent(db: Db, id: string, by: string): { tokens: number; wa
     tokens += w.balance;
     wallets += 1;
     w.balance = 0;
+  }
+  // กระเป๋าของผู้ร่วมงานคนอื่นที่อยู่ในรายงานตัวอย่าง (ไม่มีรายชื่อแยกในระบบ) หมดอายุพร้อมกันเป็นยอดรวม
+  if (left > tokens) {
+    const ids = db.topups.filter((t) => t.id.startsWith("EXP")).map((t) => t.id);
+    db.topups.unshift({
+      id: nextId("EXP", ids), time: nowTime(), wallet: "รวม", owner: "กระเป๋าอื่นในงาน", channel: "หมดอายุ", received: null, requested: null,
+      tokens: -(left - tokens), staff: by, status: "สำเร็จ", balanceBefore: left - tokens, eventId: id,
+    });
+    tokens = left;
   }
   Object.assign(ev, { status: "closed", closedAt: nowStamp(), closedBy: by, expiredTokens: tokens, expiredWallets: wallets });
   addLog(db, { event: `ปิดงาน ${ev.name}`, detail: `Token หมดอายุ ${tokens.toLocaleString("en-US")} จาก ${wallets} กระเป๋า, บัตรของงานนี้ใช้เข้างานไม่ได้แล้ว`, role: "Super Admin", actor: by, ref: id });

@@ -1,9 +1,9 @@
 {
   "description": "ตรวจหลักฐานชำระค่าบัตรก่อนอนุมัติสิทธิ์เข้างาน, ไม่ใช่รายการเติม Token",
   "pendingCount": 12,
-  "approvedCount": 160,
-  "companyAccountName": "บจก. ศิษย์เก่าสัมพันธ์",
-  "companyAccountMasked": "xxx-x-xx900-2",
+  "approvedCount": 200,
+  "companyAccountName": "บริษัท รุ่นเรา จำกัด",
+  "companyAccountMasked": "xxx-x-x6789-0",
   "checklist": ["ยอดเงินตรงกับค่าบัตร", "บัญชีผู้รับเป็นบัญชีบริษัท", "วันเวลาและเลขอ้างอิงครบถ้วน"],
   "requests": [
     { "id": "TKT-0412", "submittedAt": "18:37", "name": "กิ•• ศิษย์เก่า", "email": "ki••@gmail.com", "ticketType": "ศิษย์เก่า", "qty": 1, "amount": 790, "slipFile": "slip_••8241.jpg", "fromAccount": "xxx-x-xx482-1", "paidAt": "24 ต.ค. 2569, 18:32 น.", "ref": "SPU-T-xxx", "duplicateRef": false },

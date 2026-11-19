@@ -6,9 +6,9 @@
   "topUpNote": "บัตรเข้างาน 790 บาท / ท่าน, 1 Token = 1 บาท, ใช้สำหรับบันทึกรายการเติมเงินและยอดใช้จ่ายในระบบ",
   "totalProducts": 20,
   "pageSize": 6,
-  "storeTabs": ["ร้านขายเบียร์", "ร้านของที่ระลึก", "ร้านยากิโซบะ"],
+  "storeTabs": ["ร้านขายเบียร์สด", "ร้านของที่ระลึก", "ร้านยากิโซบะ"],
   "products": [
-    { "sku": "BEER-01", "name": "เบียร์", "store": "ร้านขายเบียร์", "storeCode": "ST-02", "category": "เครื่องดื่ม", "price": 100, "stock": 180, "unit": "แก้ว", "status": "ขายอยู่", "updatedAt": "24 ต.ค. 2569, 16:10" },
+    { "sku": "BEER-01", "name": "เบียร์สด", "store": "ร้านขายเบียร์สด", "storeCode": "ST-02", "category": "เครื่องดื่ม", "price": 100, "stock": 180, "unit": "แก้ว", "status": "ขายอยู่", "updatedAt": "24 ต.ค. 2569, 16:10" },
     { "sku": "YAKI-01", "name": "ยากิโซบะ", "store": "ร้านยากิโซบะ", "storeCode": "ST-01", "category": "อาหาร", "price": 80, "stock": 120, "unit": "จาน", "status": "ขายอยู่", "updatedAt": "24 ต.ค. 2569, 16:20" },
     { "sku": "SOUV-01", "name": "พวงกุญแจ", "store": "ร้านของที่ระลึก", "storeCode": "ST-03", "category": "สิ่งของ", "price": 100, "stock": 220, "unit": "อัน", "status": "ขายอยู่", "updatedAt": "24 ต.ค. 2569, 16:30" }
   ]

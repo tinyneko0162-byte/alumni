@@ -67,7 +67,7 @@ export function EventsView({ data }: { data: Data }) {
           </p>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <Metric label="บัตรที่อนุมัติแล้ว" value={fmt(p.tickets)} note="จะสแกนเข้างานไม่ได้หลังปิดงาน" />
-            <Metric label="Token คงเหลือในกระเป๋า" value={fmt(p.tokens)} note={`${p.wallets} กระเป๋า จะหมดอายุเมื่อปิดงาน`} noteTone={p.tokens ? "warning" : undefined} />
+            <Metric label="Token คงเหลือในกระเป๋า" value={fmt(p.tokens)} note="ยอดเดียวกับหน้ารายได้ภายในงาน จะหมดอายุเมื่อปิดงาน" noteTone={p.tokens ? "warning" : undefined} />
             <Metric label="ปิดอัตโนมัติ" value={open.endsAt ? "ตั้งไว้แล้ว" : "ไม่ได้ตั้ง"} note={open.endsAt ? thaiTime(open.endsAt) : "ต้องกดปิดเองที่ปุ่มด้านล่าง"} />
           </div>
 
@@ -154,7 +154,7 @@ export function EventsView({ data }: { data: Data }) {
             </p>
             <ul className="list-disc space-y-1 pl-5">
               <li>บัตร {fmt(p.tickets)} ใบของงานนี้สแกนเข้างานไม่ได้</li>
-              <li>Token ที่เหลือ {fmt(p.tokens)} Token ใน {p.wallets} กระเป๋า หมดอายุ (บันทึกไว้ในประวัติการเติม Token และรายงาน)</li>
+              <li>Token ที่เหลือทั้งหมด {fmt(p.tokens)} Token หมดอายุ ยอดในกระเป๋าทุกใบกลายเป็น 0 (บันทึกไว้ในประวัติการเติม Token และรายงาน)</li>
               <li>ร้านค้าตัด Token ไม่ได้ เติม Token และซื้อบัตรไม่ได้ จนกว่าจะสร้างงานใหม่</li>
               <li>บัญชีผู้ร่วมงานยังอยู่ เข้าสู่ระบบดูประวัติได้</li>
             </ul>
