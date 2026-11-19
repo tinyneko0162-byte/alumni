@@ -18,6 +18,7 @@ export default async function RevenuePage() {
   const bank = total - cash;
   const expired = d.tokens.expired ?? 0;
   const remaining = d.tokens.left; // เติม − ใช้ − หมดอายุ (ตัวเลขเดียวกับหน้าจัดการงาน)
+  const storeSpent = d.spendingByCategory.reduce((n, r) => n + r.tokens, 0);
   const pct = (n: number, of: number) => `${((n / of) * 100).toFixed(1)}%`;
 
   return (
@@ -108,18 +109,17 @@ export default async function RevenuePage() {
         </Panel>
       </div>
 
-      <Panel title="ยอดใช้ Token" aside={<span className="text-[11px] text-admin-muted">รวม {fmt(d.tokens.spent)} Token</span>}>
+      <Panel title="ยอดใช้ Token แยกตามร้านค้า" aside={<span className="text-[11px] text-admin-muted">รวม {fmt(storeSpent)} Token</span>}>
         <DataTable
           rows={d.spendingByCategory}
           rowKey={(r) => r.category}
           columns={[
-            { key: "c", header: "หมวดหมู่สินค้า", strong: true, render: (r) => r.category },
+            { key: "c", header: "ร้านค้า", strong: true, render: (r) => r.category },
             { key: "t", header: "ยอดขาย (Token)", width: 204, render: (r) => fmt(r.tokens) },
-            { key: "p", header: "สัดส่วน", width: 144, render: (r) => pct(r.tokens, d.tokens.spent) },
-            { key: "s", header: "สถานะ", width: 154, render: (r) => <Chip tone="ok">{r.status}</Chip> },
+            { key: "p", header: "สัดส่วน", width: 144, render: (r) => storeSpent ? pct(r.tokens, storeSpent) : "-" },
+            { key: "s", header: "สถานะ", width: 154, render: (r) => <Chip tone={r.status === "เปิดขาย" ? "ok" : "warn"}>{r.status}</Chip> },
           ]}
         />
-        <p className="text-right text-[11px] leading-[1.55] text-admin-muted">ดูรายการทั้งหมด</p>
       </Panel>
     </AdminShell>
   );

@@ -187,7 +187,7 @@ export async function getStoreSales(storeId?: string) {
   const store = pos.stores.find((s) => s.id === storeId) ?? pos.stores.find((s) => s.id === pos.defaultStore)!;
   // ยอดขายเดิม (seed) ไม่มี storeId → นับเป็นของร้านแรก ST-01
   const sales = readDb()
-    .sales.filter((s) => (s.storeId ?? "ST-01") === store.id && (s.status === "ชำระแล้ว" || s.status === "ยกเลิก")) // ระบบมีแค่ 2 สถานะนี้จริง
+    .sales.filter((s) => s.amount !== undefined && s.storeId === store.id && (s.status === "ชำระแล้ว" || s.status === "ยกเลิก")) // เฉพาะรายการที่ขายผ่านระบบจริง ทุกร้านเริ่มที่ 0
     .map((s) => ({
       ...s,
       productName: s.productName ?? (store.id === "ST-01" ? storeSales.product.name : store.product.name),
@@ -197,7 +197,7 @@ export async function getStoreSales(storeId?: string) {
     ...storeSales,
     description: `${store.name}, สรุปยอดการรับชำระด้วย Token และการยกเลิกรายการสินค้า`,
     sales,
-    storeTotal: (store.id === "ST-01" ? storeSales.storeTotal : 0) + sales.filter((x) => x.amount !== undefined && x.status === "ชำระแล้ว").reduce((n, x) => n + (x.amount ?? 0), 0),
+    storeTotal: sales.filter((x) => x.status === "ชำระแล้ว").reduce((n, x) => n + (x.amount ?? 0), 0),
     priceNote: `ราคาสินค้าอ่านอย่างเดียวจาก Super Admin, ${store.product.sku} ${store.product.name} ${store.product.price}, แก้ไขราคาไม่ได้จากหน้านี้`,
     boothName: store.name,
     store: { id: store.id, name: store.name },
@@ -228,15 +228,12 @@ function financeFigures(db: Db, event?: EventRow) {
     { ...bankRow, amount: (first ? bankRow.amount : 0) + newBank },
   ];
 
-  // spending per category: product category from the catalog, booth status from the store list
-  const spending = first ? financeRevenue.spendingByCategory.map((x) => ({ ...x })) : [];
-  for (const sale of newSales) {
-    const booth = storePos.stores.find((b) => b.id === sale.storeId);
-    const category = db.catalog.find((c) => c.sku === booth?.product.sku)?.category ?? "อื่นๆ";
-    const row = spending.find((x) => x.category === category);
-    if (row) row.tokens += sale.amount ?? 0;
-    else spending.push({ category, tokens: sale.amount ?? 0, status: "เปิดขาย" });
-  }
+  // ยอดใช้ Token แยกตามร้านค้าจริงในระบบ (นับเฉพาะรายการที่ขายแล้ว ไม่รวมที่ยกเลิก)
+  const spending = db.stores.map((st) => ({
+    category: st.name,
+    tokens: newSales.filter((x) => x.storeId === st.id).reduce((n, x) => n + (x.amount ?? 0), 0),
+    status: st.status === "closed" ? "ปิดร้าน" : "เปิดขาย",
+  }));
   spending.sort((a, b) => b.tokens - a.tokens);
 
   return {
