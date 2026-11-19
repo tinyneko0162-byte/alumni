@@ -17,6 +17,7 @@ const fmt = (n: number) => n.toLocaleString("en-US");
 /** ไม่มีปุ่มเลือกร้านในหน้านี้ — ร้านมาจากหน้าขายสินค้า (cookie alumni-store) */
 export function SalesView({ data }: { data: Data }) {
   const sales = data.sales as Sale[];
+  const [showReceipt, setShowReceipt] = useState(false);
   const [q, setQ] = useState("");
   const [status, setStatus] = useState("all");
   const [applied, setApplied] = useState({ q: "", status: "all" });
@@ -204,7 +205,7 @@ export function SalesView({ data }: { data: Data }) {
                 {busy ? "กำลังยกเลิก…" : "ยกเลิกรายการ / คืน Token"}
               </button>
             )}
-            <BrandButton icon="a-download-white" className="border border-admin-indigo" onClick={() => window.print()}>
+            <BrandButton icon="a-download-white" className="border border-admin-indigo" onClick={() => setShowReceipt(true)}>
               ส่งออกใบเสร็จ PDF
             </BrandButton>
           </div>
@@ -251,6 +252,46 @@ export function SalesView({ data }: { data: Data }) {
           <p className="text-[11px] text-admin-muted">งานเลี้ยงรุ่นศิษย์เก่า, บัตรเข้างาน ฿790/คน</p>
         </div>
       </div>
+      {showReceipt && sel && (
+        <div className="receipt-overlay fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 p-4" onClick={() => setShowReceipt(false)}>
+          <div className="my-6 w-full max-w-[340px]" onClick={(e) => e.stopPropagation()}>
+            <div id="receipt-print" className="bg-white p-6 text-[13px] leading-[1.6] text-black shadow-xl">
+              <div className="text-center">
+                <p className="text-[16px] font-bold">งานเลี้ยงรุ่นศิษย์เก่า</p>
+                <p>{data.store.name}</p>
+                <p className="text-[11px] text-neutral-500">ใบเสร็จรับเงิน</p>
+              </div>
+              <hr className="my-3 border-dashed border-neutral-400" />
+              <div className="flex justify-between"><span>เลขที่</span><span className="font-semibold">{sel.id}</span></div>
+              <div className="flex justify-between"><span>วันที่</span><span>{data.date} {sel.time} น.</span></div>
+              <div className="flex justify-between"><span>ลูกค้า</span><span>{sel.customer}</span></div>
+              <div className="flex justify-between"><span>Wallet</span><span>{sel.wallet}</span></div>
+              <div className="flex justify-between"><span>พนักงานขาย</span><span>{sel.seller.replace(/,+$/, "")}</span></div>
+              <hr className="my-3 border-dashed border-neutral-400" />
+              <div className="flex justify-between font-semibold"><span>รายการ</span><span>Token</span></div>
+              <div className="flex justify-between">
+                <span>{sel.productName} ×{sel.qty}</span>
+                <span>{selTotal}</span>
+              </div>
+              <p className="text-[11px] text-neutral-500">{sel.unitPrice ?? "-"} Token / ชิ้น</p>
+              <hr className="my-3 border-dashed border-neutral-400" />
+              <div className="flex items-baseline justify-between text-[16px] font-bold"><span>รวมชำระ</span><span>{selTotal} Token</span></div>
+              <p className="text-[11px] text-neutral-500">1 Token = ฿1 · สถานะ: {sel.status}</p>
+              <hr className="my-3 border-dashed border-neutral-400" />
+              <p className="text-center text-[12px]">ขอบคุณที่อุดหนุนค่ะ</p>
+            </div>
+            <div className="receipt-actions mt-3 flex gap-2">
+              <button type="button" onClick={() => window.print()} className="flex-1 rounded-lg bg-brand py-2.5 text-[13px] font-semibold text-white hover:brightness-95">
+                พิมพ์ / บันทึก PDF
+              </button>
+              <button type="button" onClick={() => setShowReceipt(false)} className="flex-1 rounded-lg bg-white py-2.5 text-[13px] font-semibold text-black hover:bg-neutral-100">
+                ปิด
+              </button>
+            </div>
+          </div>
+          <style>{`@media print{body *{visibility:hidden}#receipt-print,#receipt-print *{visibility:visible}#receipt-print{position:fixed;left:0;top:0;width:80mm;box-shadow:none}}`}</style>
+        </div>
+      )}
     </>
   );
 }
