@@ -110,11 +110,11 @@ export function PosView({ boothName, store, stores }: { boothName: string; store
           <Link
             href={qty > 0 && onSale ? `/admin/store/checkout?store=${store.id}` : "#"}
             aria-disabled={qty === 0 || !onSale}
-            className={`flex h-[84px] items-center justify-center gap-2.5 rounded-[10px] bg-brand px-6 text-[24px] font-bold leading-[1.55] text-white transition hover:brightness-95 ${
+            className={`flex h-12 items-center justify-center gap-2 self-end rounded-lg bg-brand px-8 text-[15px] font-semibold text-white transition hover:brightness-95 ${
               qty === 0 || !onSale ? "pointer-events-none opacity-50" : ""
             }`}
           >
-            ไปหน้าชำระเงิน <span className="text-[16px]">→</span>
+            ชำระเงิน <span className="text-[14px]">→</span>
           </Link>
         </div>
       </section>
