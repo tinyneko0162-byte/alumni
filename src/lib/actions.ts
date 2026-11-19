@@ -208,6 +208,8 @@ export async function cancelSale(saleId: string): Promise<Result<{ id: string }>
     const s = db.sales.find((x) => x.id === saleId);
     if (!s || s.amount === undefined || !s.storeId) return { ok: false as const, error: "ยกเลิกได้เฉพาะรายการที่ขายผ่านระบบนี้" };
     if (s.status !== "ชำระแล้ว") return { ok: false as const, error: "รายการนี้ไม่ได้อยู่ในสถานะชำระแล้ว" };
+    // งานปิดแล้ว Token หมดอายุ → คืน Token ไม่ได้ (กันยอดกลับเข้ากระเป๋าที่ถูกตัดหมดอายุไปแล้ว)
+    if (openEvent(db)?.id !== eventOf(s)) return { ok: false as const, error: "งานของรายการนี้ปิดแล้ว ยกเลิกหรือคืน Token ไม่ได้" };
     const st = storePos.stores.find((x) => x.id === s.storeId);
     const w = db.wallets.find((x) => shortWallet(x.id) === s.wallet);
     const p = db.catalog.find((c) => c.sku === st?.product.sku);
