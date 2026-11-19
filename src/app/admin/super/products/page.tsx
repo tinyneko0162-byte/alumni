@@ -6,7 +6,7 @@ import { ProductsView } from "./products-view";
 export default async function ProductsPage() {
   const data = await getProductCatalog();
   return (
-    <AdminShell role="super" active="/admin/super/products" title={data.title}>
+    <AdminShell role="super" active="/admin/super/products" title="สินค้าและราคา Token">
       <ProductsView data={data} />
     </AdminShell>
   );

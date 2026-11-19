@@ -8,12 +8,12 @@
   "tokenScope": "ใช้ได้ภายในงานนี้",
   "bankAccount": {
     "bankName": "ธนาคารกสิกรไทย",
-    "accountType": "บัญชีออมทรัพย์ • ข้อมูลตัวอย่าง",
+    "accountType": "บัญชีออมทรัพย์, ข้อมูลตัวอย่าง",
     "accountNumber": "123-4-56789-0",
     "accountName": "บริษัท รุ่นเรา จำกัด"
   },
   "slipRule": {
-    "accept": "JPG, PNG หรือ PDF • ไม่เกิน 10 MB",
+    "accept": "JPG, PNG หรือ PDF, ไม่เกิน 10 MB",
     "maxSizeMb": 10
   },
   "policy": {

@@ -7,7 +7,7 @@ import { BankAccount } from "@/components/user/BankAccount";
 import { OrderSummary } from "@/components/user/OrderSummary";
 import { PrimaryButton } from "@/components/user/PrimaryButton";
 import { SlipUpload } from "@/components/user/SlipUpload";
-import { summarize, useCart } from "@/lib/cart";
+import { deliveryOf, summarize, useCart } from "@/lib/cart";
 import type { EventInfo } from "@/lib/data";
 import { num } from "@/lib/format";
 
@@ -22,29 +22,20 @@ export function PaymentView({ event }: { event: EventInfo }) {
     if (!cart.slip || busy) return;
     setBusy(true);
     setError(null);
-    let profile = {
-      name: "กิตติพงศ์ วัฒนกุล",
-      email: "kittiphong@example.com",
-    };
-    try {
-      const raw = localStorage.getItem("alumni-profile");
-      if (raw) profile = { ...profile, ...JSON.parse(raw) };
-    } catch {
-      /* use sample profile */
-    }
-    const qty =
-      items
-        .filter((i) => i.label.includes("บัตร"))
-        .reduce((n, i) => n + i.qty, 0) || 1;
+    // the buyer is the signed-in account (checked again on the server)
     const res = await submitOrder({
-      ...profile,
-      ticketType: items[0]?.label ?? "บัตร",
-      qty,
-      amount: total,
+      self: cart.self,
+      friends: cart.friends,
+      shirts: cart.shirts,
+      delivery: deliveryOf(cart),
+      address: cart.address,
       slipFile: cart.slip.fileName,
+      slipData: cart.slip.dataUrl,
     });
     setBusy(false);
     if (!res.ok) return setError(res.error);
+    // the server's order number is what staff see, so the attendee sees the same one from now on
+    update({ orderId: res.id });
     try {
       sessionStorage.setItem("alumni-order-id", res.id);
     } catch {
@@ -98,7 +89,7 @@ export function PaymentView({ event }: { event: EventInfo }) {
             </button>
           </div>
           <p className="text-[13px] font-medium text-ink">
-            {cart.address.name} · {cart.address.phone}
+            {cart.address.name}, {cart.address.phone}
           </p>
           <p className="text-[12px] leading-[1.55] text-ink/70">
             {cart.address.line} ต.{cart.address.subdistrict} อ.

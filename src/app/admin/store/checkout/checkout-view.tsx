@@ -36,7 +36,7 @@ export function CheckoutView({ store, recent: initialRecent }: { store: Data["st
     setWallet(res.wallet);
     setPaid(null);
     setPayError(null);
-    setScanMsg({ ok: true, text: `สแกนสำเร็จ · ${res.wallet.owner}` });
+    setScanMsg({ ok: true, text: `สแกนสำเร็จ, ${res.wallet.owner}` });
   };
 
   const pay = async () => {
@@ -80,7 +80,7 @@ export function CheckoutView({ store, recent: initialRecent }: { store: Data["st
             title="รายการล่าสุด"
             aside={
               <Link href={`/admin/store/history?store=${store.id}`} className="text-[12px] text-admin-indigo hover:underline">
-                ประวัติทั้งหมด →
+                ประวัติทั้งหมด
               </Link>
             }
           >
@@ -150,7 +150,7 @@ export function CheckoutView({ store, recent: initialRecent }: { store: Data["st
               <div className="flex items-start gap-2.5 rounded-lg bg-admin-ok-tint p-3">
                 <Icon name="a-circle-check" size={18} />
                 <p className="flex-1 text-[12px] leading-[1.55] text-admin-ok">
-                  ชำระสำเร็จ · {paid} · ยอดคงเหลือ Wallet {balance.toLocaleString("en-US")} Token
+                  ชำระสำเร็จ, {paid}, ยอดคงเหลือ Wallet {balance.toLocaleString("en-US")} Token
                 </p>
               </div>
             ) : (

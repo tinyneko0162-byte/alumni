@@ -5,14 +5,14 @@ import { useState } from "react";
 import { Icon } from "@/components/ui/Icon";
 import { loginStaff } from "@/lib/actions";
 
-type RoleOption = { key: string; label: string; home: string; enabled: boolean };
+/** Demo accounts shown under the form so the presenter can sign in with one click. */
+export type DemoAccount = { username: string; password: string; label: string };
 
-export function LoginForm({ roles, notice }: { roles: RoleOption[]; notice?: string }) {
+export function LoginForm({ demoAccounts, notice }: { demoAccounts: DemoAccount[]; notice?: string }) {
   const router = useRouter();
   const [user, setUser] = useState("");
   const [pass, setPass] = useState("");
   const [show, setShow] = useState(false);
-  const [role, setRole] = useState(roles.find((r) => r.enabled)?.key ?? roles[0]?.key ?? "");
   const [serverError, setServerError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
@@ -29,8 +29,8 @@ export function LoginForm({ roles, notice }: { roles: RoleOption[]; notice?: str
         }
         setError(false);
         setBusy(true);
-        // Mock accounts: any username/password works; the role is checked (and may be switched off) by Super Admin.
-        const res = await loginStaff(role);
+        // username + password are checked on the server; the role comes from the account
+        const res = await loginStaff(user, pass);
         setBusy(false);
         if (res.ok) router.push(res.home);
         else setServerError(res.error);
@@ -65,22 +65,6 @@ export function LoginForm({ roles, notice }: { roles: RoleOption[]; notice?: str
             <Icon name="a-eye-off" size={20} className={show ? "opacity-40" : undefined} />
           </button>
         </Field>
-        {/* Mock only: pick which role workspace to open until real accounts exist */}
-        <label className="flex flex-col gap-2">
-          <span className="text-[14px] font-semibold text-ink-slate">บทบาท (ข้อมูลจำลอง)</span>
-          <select
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
-            className="h-[52px] rounded-lg border border-line-slate bg-surface-slate px-4 text-[14px] text-ink-slate outline-none focus:border-brand-soft"
-          >
-            {roles.map((r) => (
-              <option key={r.key} value={r.key} disabled={!r.enabled}>
-                {r.label}
-                {r.enabled ? "" : " (ปิดใช้งาน)"}
-              </option>
-            ))}
-          </select>
-        </label>
       </div>
 
       {(serverError ?? notice) && (
@@ -113,12 +97,30 @@ export function LoginForm({ roles, notice }: { roles: RoleOption[]; notice?: str
         className="flex h-[52px] w-full items-center justify-center gap-2.5 rounded-lg bg-brand text-[15px] font-semibold text-white transition hover:brightness-95 disabled:opacity-60"
       >
         {busy ? "กำลังเข้าสู่ระบบ…" : "เข้าสู่ระบบ"}
-        <Icon name="a-arrow-right-white" size={18} />
       </button>
 
-      <div className="flex flex-col gap-1.5 pt-6">
+      <div className="flex flex-col gap-3 pt-4">
         <div className="h-px bg-line-slate" />
-        <p className="text-center text-[12px] leading-[1.7] text-admin-slate">ยังไม่มีบัญชีหรือลืมรหัสผ่าน? ติดต่อเจ้าของอีเวนต์</p>
+        <p className="text-[12px] leading-[1.7] text-admin-slate">บัญชีทดลอง (กดเพื่อกรอกให้), บัญชีจริงสร้างได้ที่ Super Admin › จัดการบทบาท</p>
+        <div className="grid grid-cols-2 gap-2 max-sm:grid-cols-1">
+          {demoAccounts.map((a) => (
+            <button
+              key={a.username}
+              type="button"
+              onClick={() => {
+                setUser(a.username);
+                setPass(a.password);
+                setError(false);
+              }}
+              className="flex flex-col rounded-lg border border-line-slate px-3 py-2 text-left leading-[1.55] transition hover:bg-surface-slate"
+            >
+              <span className="text-[13px] font-semibold text-ink-slate">{a.label}</span>
+              <span className="font-latin text-[12px] text-admin-slate">
+                {a.username} / {a.password}
+              </span>
+            </button>
+          ))}
+        </div>
       </div>
     </form>
   );

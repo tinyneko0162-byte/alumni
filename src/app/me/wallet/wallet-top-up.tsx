@@ -5,11 +5,10 @@ import { SlipUpload, type SlipFile } from "@/components/user/SlipUpload";
 import { PrimaryButton } from "@/components/user/PrimaryButton";
 import { myTopups, requestTopup } from "@/lib/actions";
 
-const SAMPLE: SlipFile = { fileName: "slip_CF26-0148.jpg", sizeLabel: "1.2 MB" };
 const STATE: Record<string, string> = { pending: "รอเจ้าหน้าที่ตรวจ", done: "เติมสำเร็จ", resubmit: "ขอหลักฐานใหม่" };
 
 export function WalletTopUp({ accept, maxSizeMb }: { accept: string; maxSizeMb: number }) {
-  const [slip, setSlip] = useState<SlipFile | null>(SAMPLE);
+  const [slip, setSlip] = useState<SlipFile | null>(null);
   const [amount, setAmount] = useState("500");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
@@ -24,10 +23,11 @@ export function WalletTopUp({ accept, maxSizeMb }: { accept: string; maxSizeMb: 
   const submit = async () => {
     setBusy(true);
     setMsg(null);
-    const res = await requestTopup({ amount: Number(amount), slipFile: slip?.fileName ?? "" });
+    const res = await requestTopup({ amount: Number(amount), slipFile: slip?.fileName ?? "", slipData: slip?.dataUrl });
     setBusy(false);
     if (!res.ok) return setMsg({ ok: false, text: res.error });
     setMsg({ ok: true, text: `ส่งคำขอ ${res.id} แล้ว เจ้าหน้าที่จะตรวจและเติม Token ให้` });
+    setSlip(null); // next top-up needs its own slip
     setList(await myTopups());
   };
 
@@ -56,7 +56,7 @@ export function WalletTopUp({ accept, maxSizeMb }: { accept: string; maxSizeMb: 
           {list.map((t) => (
             <li key={t.id} className="flex justify-between">
               <span>
-                {t.id} · ฿{t.amount.toLocaleString("en-US")}
+                {t.id}, ฿{t.amount.toLocaleString("en-US")}
               </span>
               <span className="font-semibold">{STATE[t.state] ?? t.state}</span>
             </li>

@@ -1,18 +1,18 @@
 {
-  "description": "บันทึกการมาถึงของผู้ร่วมงาน พร้อมวันเวลาและจุดเช็กอิน • สิทธิ์ดูรายงานเท่านั้น",
+  "description": "บันทึกการมาถึงของผู้ร่วมงาน พร้อมวันเวลาและจุดเช็กอิน, สิทธิ์ดูรายงานเท่านั้น",
   "date": "24 ต.ค. 2569",
   "approved": 200,
   "checkedIn": 160,
   "checkpoints": ["ประตูหลัก", "ประตูข้าง"],
   "attendees": [
-    { "name": "ธน•• ศิษย์เก่า", "initials": "ธน", "ticket": "TKT-0312", "class": "ศิษย์เก่ารุ่น 2549", "time": "18:36:20", "checkpoint": "ประตูหลัก", "staff": "ก•• · จุดเช็กอิน", "recordId": "ATT-0312" },
-    { "name": "ศิ•• ศิษย์เก่า", "initials": "ศิ", "ticket": "TKT-0298", "class": "ศิษย์เก่ารุ่น 2550", "time": "18:34:08", "checkpoint": "ประตูหลัก", "staff": "ก•• · จุดเช็กอิน", "recordId": "ATT-0298" },
-    { "name": "วิ•• ศิษย์เก่า", "initials": "วิ", "ticket": "TKT-0271", "class": "ศิษย์เก่ารุ่น 2548", "time": "18:32:42", "checkpoint": "ประตูข้าง", "staff": "ม•• · จุดเช็กอิน", "recordId": "ATT-0271" },
-    { "name": "นา•• ศิษย์เก่า", "initials": "นา", "ticket": "TKT-0266", "class": "ศิษย์เก่ารุ่น 2549", "time": "18:31:15", "checkpoint": "ประตูหลัก", "staff": "ก•• · จุดเช็กอิน", "recordId": "ATT-0266" },
-    { "name": "ปิ•• ศิษย์เก่า", "initials": "ปิ", "ticket": "TKT-0214", "class": "ศิษย์เก่ารุ่น 2551", "time": "18:28:56", "checkpoint": "ประตูข้าง", "staff": "ม•• · จุดเช็กอิน", "recordId": "ATT-0214" },
-    { "name": "กิ•• ศิษย์เก่า", "initials": "กิ", "ticket": "TKT-0182", "class": "ศิษย์เก่ารุ่น 2549", "time": "18:25:30", "checkpoint": "ประตูหลัก", "staff": "ก•• · จุดเช็กอิน", "recordId": "ATT-0182" },
-    { "name": "พั•• ศิษย์เก่า", "initials": "พั", "ticket": "TKT-0175", "class": "ศิษย์เก่ารุ่น 2550", "time": "18:23:12", "checkpoint": "ประตูหลัก", "staff": "ก•• · จุดเช็กอิน", "recordId": "ATT-0175" },
-    { "name": "สุ•• ศิษย์เก่า", "initials": "สุ", "ticket": "TKT-0168", "class": "ศิษย์เก่ารุ่น 2548", "time": "18:20:07", "checkpoint": "ประตูข้าง", "staff": "ม•• · จุดเช็กอิน", "recordId": "ATT-0168" },
+    { "name": "ธน•• ศิษย์เก่า", "initials": "ธน", "ticket": "TKT-0312", "class": "ศิษย์เก่ารุ่น 2549", "time": "18:36:20", "checkpoint": "ประตูหลัก", "staff": "ก••, จุดเช็กอิน", "recordId": "ATT-0312" },
+    { "name": "ศิ•• ศิษย์เก่า", "initials": "ศิ", "ticket": "TKT-0298", "class": "ศิษย์เก่ารุ่น 2550", "time": "18:34:08", "checkpoint": "ประตูหลัก", "staff": "ก••, จุดเช็กอิน", "recordId": "ATT-0298" },
+    { "name": "วิ•• ศิษย์เก่า", "initials": "วิ", "ticket": "TKT-0271", "class": "ศิษย์เก่ารุ่น 2548", "time": "18:32:42", "checkpoint": "ประตูข้าง", "staff": "ม••, จุดเช็กอิน", "recordId": "ATT-0271" },
+    { "name": "นา•• ศิษย์เก่า", "initials": "นา", "ticket": "TKT-0266", "class": "ศิษย์เก่ารุ่น 2549", "time": "18:31:15", "checkpoint": "ประตูหลัก", "staff": "ก••, จุดเช็กอิน", "recordId": "ATT-0266" },
+    { "name": "ปิ•• ศิษย์เก่า", "initials": "ปิ", "ticket": "TKT-0214", "class": "ศิษย์เก่ารุ่น 2551", "time": "18:28:56", "checkpoint": "ประตูข้าง", "staff": "ม••, จุดเช็กอิน", "recordId": "ATT-0214" },
+    { "name": "กิ•• ศิษย์เก่า", "initials": "กิ", "ticket": "TKT-0182", "class": "ศิษย์เก่ารุ่น 2549", "time": "18:25:30", "checkpoint": "ประตูหลัก", "staff": "ก••, จุดเช็กอิน", "recordId": "ATT-0182" },
+    { "name": "พั•• ศิษย์เก่า", "initials": "พั", "ticket": "TKT-0175", "class": "ศิษย์เก่ารุ่น 2550", "time": "18:23:12", "checkpoint": "ประตูหลัก", "staff": "ก••, จุดเช็กอิน", "recordId": "ATT-0175" },
+    { "name": "สุ•• ศิษย์เก่า", "initials": "สุ", "ticket": "TKT-0168", "class": "ศิษย์เก่ารุ่น 2548", "time": "18:20:07", "checkpoint": "ประตูข้าง", "staff": "ม••, จุดเช็กอิน", "recordId": "ATT-0168" },
     { "name": "มณ•• ศิษย์เก่า", "initials": "มณ", "ticket": "TKT-0402", "class": "ศิษย์เก่ารุ่น 2552", "time": null, "checkpoint": null, "staff": null, "recordId": null },
     { "name": "อร•• ศิษย์เก่า", "initials": "อร", "ticket": "TKT-0405", "class": "ศิษย์เก่ารุ่น 2549", "time": null, "checkpoint": null, "staff": null, "recordId": null }
   ]

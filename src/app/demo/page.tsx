@@ -17,13 +17,13 @@ export default function DemoQrPage() {
         <section className="flex flex-col items-center gap-3 rounded-2xl border border-line-slate p-6">
           <h2 className="text-[18px] font-semibold text-ink-slate">QR เข้างาน</h2>
           <QrCode value={entryPayload(t.id)} size={260} alt="QR เข้างานสำหรับสาธิต" />
-          <p className="text-[13px] text-black">{t.name} · {t.id}</p>
+          <p className="text-[13px] text-black">{t.name}, {t.id}</p>
           <p className="text-[12px] text-black">สแกนที่ แอดมิน › สแกนบัตรเข้างาน</p>
         </section>
         <section className="flex flex-col items-center gap-3 rounded-2xl border border-line-slate p-6">
           <h2 className="text-[18px] font-semibold text-ink-slate">QR กระเป๋า Token</h2>
           <QrCode value={walletPayload(demo.wallet.id)} size={260} alt="QR กระเป๋า Token สำหรับสาธิต" />
-          <p className="text-[13px] text-black">{demo.wallet.owner} · {demo.wallet.id}</p>
+          <p className="text-[13px] text-black">{demo.wallet.owner}, {demo.wallet.id}</p>
           <p className="text-[12px] text-black">สแกนที่ ร้านค้า › ชำระเงินค่าสินค้า</p>
         </section>
       </div>

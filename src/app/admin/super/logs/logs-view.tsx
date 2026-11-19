@@ -12,6 +12,8 @@ export function LogsView({ data }: { data: Data }) {
   const [q, setQ] = useState("");
   const [role, setRole] = useState("all");
   const [result, setResult] = useState("all");
+  const [page, setPage] = useState(1);
+  const PER = 10;
 
   const roles = useMemo(() => Array.from(new Set(events.map((e) => e.role))), [events]);
   const results = useMemo(() => Array.from(new Set(events.map((e) => e.result))), [events]);
@@ -22,6 +24,10 @@ export function LogsView({ data }: { data: Data }) {
       (result === "all" || e.result === result) &&
       (e.actor + e.ref + e.role + e.event).toLowerCase().includes(q.trim().toLowerCase()),
   );
+
+  const pages = Math.max(1, Math.ceil(shown.length / PER));
+  const cur = Math.min(page, pages); // filters can shrink the list below the current page
+  const paged = shown.slice((cur - 1) * PER, cur * PER).map((e, i) => ({ ...e, key: `${(cur - 1) * PER + i}` }));
 
   const exportCsv = () => {
     const rows = [["เวลา", "เหตุการณ์", "บทบาท", "ผู้ดำเนินการ", "อ้างอิง", "ผลลัพธ์"], ...shown.map((e) => [e.time, e.event, e.role, e.actor, e.ref, e.result])];
@@ -72,8 +78,8 @@ export function LogsView({ data }: { data: Data }) {
           />
         </div>
         <DataTable
-          rows={shown}
-          rowKey={(e) => e.time + e.ref}
+          rows={paged}
+          rowKey={(e) => e.key}
           columns={[
             { key: "time", header: "เวลา", width: 106, strong: true, render: (e) => e.time },
             { key: "event", header: "เหตุการณ์", render: (e) => <TwoLine top={e.event} bottom={e.detail} /> },
@@ -82,7 +88,12 @@ export function LogsView({ data }: { data: Data }) {
             { key: "result", header: "ผลลัพธ์", width: 136, render: (e) => <Chip tone={e.result === "สำเร็จ" ? "ok" : "danger"}>{e.result}</Chip> },
           ]}
         />
-        <Pagination label={`แสดง 1–${shown.length} จาก ${data.total.toLocaleString("en-US")} เหตุการณ์`} />
+        <Pagination
+          label={shown.length ? `แสดง ${(cur - 1) * PER + 1}–${Math.min(cur * PER, shown.length)} จาก ${shown.length.toLocaleString("en-US")} เหตุการณ์` : "ไม่พบเหตุการณ์ที่ตรงกับตัวกรอง"}
+          page={cur}
+          pageCount={pages}
+          onPage={setPage}
+        />
       </Panel>
 
       <Guidance>{data.guidance}</Guidance>

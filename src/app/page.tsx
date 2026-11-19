@@ -10,9 +10,7 @@ export default async function RegisterPage() {
       <div className="px-6 pt-6 pb-6">
         <BrandMark />
       </div>
-      <header className="flex h-16 items-center bg-brand-deep px-6">
-        <h1 className="text-[18px] font-bold text-white">{event.registrationTitle}</h1>
-      </header>
+      <p className="px-6 text-[13px] font-semibold text-brand-deep">{event.registrationTitle}</p>
       <div className="flex flex-col gap-[22px] px-6 pt-3 pb-6">
         <div className="flex flex-col gap-[9px]">
           <p className="text-[27px] font-bold text-ink">{event.name}</p>

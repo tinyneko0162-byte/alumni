@@ -6,7 +6,7 @@ import { CashView } from "./cash-view";
 export default async function TokenCashPage() {
   const data = await getTokenCash();
   return (
-    <AdminShell role="token" active="/admin/token/cash" title="เติม Token • เงินสด">
+    <AdminShell role="token" active="/admin/token/cash" title="เติม Token ด้วยเงินสด">
       <CashView data={data} />
     </AdminShell>
   );

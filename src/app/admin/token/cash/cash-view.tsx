@@ -86,17 +86,17 @@ export function CashView({ data }: { data: Data }) {
           {wallet ? (
             <div className="flex items-start gap-2.5 rounded-lg bg-admin-ok-tint p-3">
               <Icon name="a-circle-check" size={18} />
-              <p className="flex-1 text-[12px] leading-[1.55] text-admin-ok">พบ Wallet แล้ว • ตรวจชื่อและรหัสกับลูกค้าก่อนรับเงิน</p>
+              <p className="flex-1 text-[12px] leading-[1.55] text-admin-ok">พบ Wallet แล้ว, ตรวจชื่อและรหัสกับลูกค้าก่อนรับเงิน</p>
             </div>
           ) : (
-            <div className={notFound ? "rounded-lg bg-[#fdecee] p-3 text-[12px] leading-[1.55] text-[#c2414b]" : "rounded-lg bg-admin-head p-3 text-[12px] leading-[1.55] text-admin-muted"}>{notFound ? "ไม่พบ Wallet นี้ • ลองสแกนใหม่หรือตรวจรหัสอีกครั้ง" : "ยังไม่ได้สแกน Wallet ลูกค้า"}</div>
+            <div className={notFound ? "rounded-lg bg-[#fdecee] p-3 text-[12px] leading-[1.55] text-[#c2414b]" : "rounded-lg bg-admin-head p-3 text-[12px] leading-[1.55] text-admin-muted"}>{notFound ? "ไม่พบ Wallet นี้, ลองสแกนใหม่หรือตรวจรหัสอีกครั้ง" : "ยังไม่ได้สแกน Wallet ลูกค้า"}</div>
           )}
         </div>
 
         <Panel title="เตรียมเติม Token" aside={saved ? <Chip tone="ok">บันทึกแล้ว</Chip> : <Chip tone="warn">ยังไม่บันทึก</Chip>} className="flex-1">
           {wallet && (
             <>
-              <div className="flex items-center gap-[13px] rounded-lg bg-brand-soft p-[15px]">
+              <div className="flex items-center gap-[13px] rounded-lg bg-brand-tint p-[15px]">
                 <span className="flex size-10 items-center justify-center rounded-[10px] bg-white">
                   <Icon name="a-wallet" size={20} />
                 </span>
@@ -126,7 +126,7 @@ export function CashView({ data }: { data: Data }) {
             <Field label="จำนวนที่เติม (Token) *" value={String(amount)} readOnly />
           </div>
           <p className="text-[11px] leading-[1.55] text-admin-muted">
-            {data.rateNote} • ฿{fmt(amount)} = {fmt(amount)} Token
+            {data.rateNote}, ฿{fmt(amount)} = {fmt(amount)} Token
           </p>
           <div className="flex items-center justify-between rounded-lg bg-admin-head p-4 leading-[1.55]">
             <div className="flex flex-col gap-1 text-admin-muted">
@@ -154,7 +154,7 @@ export function CashView({ data }: { data: Data }) {
         title="เติมเงินสดล่าสุดที่จุดนี้"
         aside={
           <Link href="/admin/token/history" className="text-[12px] text-admin-indigo hover:underline">
-            ประวัติทั้งหมด →
+            ประวัติทั้งหมด
           </Link>
         }
       >

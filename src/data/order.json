@@ -8,8 +8,8 @@
   "delivery": "pickup",
   "items": [
     { "label": "บัตรเข้างาน", "qty": 2, "amount": 1580 },
-    { "label": "เสื้อรุ่น • L", "qty": 1, "amount": 390 },
-    { "label": "เสื้อรุ่น • XL", "qty": 1, "amount": 390 }
+    { "label": "เสื้อรุ่น, L", "qty": 1, "amount": 390 },
+    { "label": "เสื้อรุ่น, XL", "qty": 1, "amount": 390 }
   ],
   "deliveryNote": "รับเสื้อที่หน้างาน",
   "total": 2360,

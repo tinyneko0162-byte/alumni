@@ -38,7 +38,7 @@ export function RolesView({ initial }: { initial: Role[] }) {
                   <p className="text-[15px] font-semibold text-admin-ink">{r.label}</p>
                   <Chip tone={r.enabled ? "ok" : "danger"}>{r.enabled ? "เปิดใช้งาน" : "ปิดใช้งาน"}</Chip>
                 </div>
-                <p className="text-[12px] text-admin-muted">เมนู: {r.pages.join(" · ")}</p>
+                <p className="text-[12px] text-admin-muted">เมนู: {r.pages.join(", ")}</p>
               </div>
               {r.locked ? (
                 <span className="text-[12px] text-admin-muted">ปิดไม่ได้ (กันล็อกตัวเอง)</span>

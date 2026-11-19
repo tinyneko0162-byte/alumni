@@ -1,5 +1,6 @@
-import { getAttendee, getEvent } from "@/lib/data";
+import { requireUser, getAttendee, getEvent } from "@/lib/data";
 import { BrandMark, MobileShell } from "@/components/user/MobileShell";
+import { UserBar } from "@/components/user/UserBar";
 import { AttendeeNav } from "@/components/user/AttendeeNav";
 import { BankAccount } from "@/components/user/BankAccount";
 import { Icon } from "@/components/ui/Icon";
@@ -12,19 +13,21 @@ import { WalletTopUp } from "./wallet-top-up";
 export const dynamic = "force-dynamic";
 
 export default async function WalletPage() {
-  const [{ wallet }, event] = await Promise.all([getAttendee(), getEvent()]);
+  const user = await requireUser("/me/wallet");
+  const [{ wallet }, event] = await Promise.all([getAttendee(user), getEvent()]);
   return (
     <MobileShell width={430}>
       <div className="px-6 pt-6 pb-4">
         <BrandMark />
       </div>
+      <UserBar name={user.name} />
 
       <div className="flex items-center justify-between px-6 pt-2.5 pb-[18px]">
         <div className="flex flex-col gap-px">
           <h1 className="text-[25px] font-bold leading-[1.4] text-ink-navy">กระเป๋าโทเคน</h1>
           <div className="flex items-center gap-1.5">
             <Icon name="event-status" size={6} />
-            <p className="text-[12px] text-black">{event.name}</p>
+            <p className="text-[12px] text-black">{event.name}{event.open ? "" : " (ปิดงานแล้ว)"}</p>
           </div>
         </div>
         <div className="flex size-11 items-center justify-center rounded-2xl bg-[#eeedf8]">
@@ -32,6 +35,11 @@ export default async function WalletPage() {
         </div>
       </div>
 
+      {!event.open && (
+        <p className="mx-5 mb-3 rounded-r-lg border-l-[3px] border-brand-deep bg-surface-muted px-3 py-2.5 text-[12px] leading-[1.6] text-ink">
+          {event.name} ปิดแล้ว Token ที่เหลือหมดอายุตามเงื่อนไขของงาน เติมและใช้ Token ได้อีกครั้งเมื่อเปิดงานถัดไป
+        </p>
+      )}
       <div className="px-5">
         <section className="relative flex flex-col gap-2 overflow-hidden rounded-3xl bg-brand-deep p-5">
           <Icon name="token-orbit-lg" size={150} className="pointer-events-none absolute -top-[30px] left-[280px]" />

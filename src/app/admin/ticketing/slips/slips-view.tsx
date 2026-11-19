@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { SlipDialog, SlipReceipt } from "@/components/admin/SlipReceipt";
+import { SlipImage } from "@/components/admin/SlipImage";
 import { BrandButton, Chip, OutlineButton, PageHeading, Panel, SearchBox } from "@/components/admin/ui";
 import { Icon } from "@/components/ui/Icon";
 import { resolveSlip } from "@/lib/actions";
@@ -110,7 +111,7 @@ export function SlipsView({ data }: { data: Data }) {
                     </span>
                     <span className="text-[13px] text-admin-ink">{r.name}</span>
                     <span className="text-[11px] text-admin-muted">
-                      บัตรเข้างาน {r.qty} ใบ · ฿{r.amount}
+                      {r.fromAttendee ? r.ticketType : `บัตรเข้างาน ${r.qty} ใบ`}, ฿{r.amount}
                     </span>
                     {tab === "pending" ? <Chip tone="warn">รอตรวจสอบ</Chip> : <Chip tone="ok">อนุมัติแล้ว</Chip>}
                   </button>
@@ -119,7 +120,7 @@ export function SlipsView({ data }: { data: Data }) {
             })}
             {list.length === 0 && <li className="py-6 text-center text-[12px] text-admin-muted">ไม่มีรายการ</li>}
           </ul>
-          <p className="text-[10px] leading-[1.55] text-admin-muted">เรียงตามเวลาส่ง • เก่าสุดก่อน</p>
+          <p className="text-[10px] leading-[1.55] text-admin-muted">เรียงตามเวลาส่ง, เก่าสุดก่อน</p>
         </Panel>
 
         {current && slip && (
@@ -133,7 +134,7 @@ export function SlipsView({ data }: { data: Data }) {
               }
               className="flex-1"
             >
-              <SlipReceipt {...slip} />
+              {current.slipUrl ? <SlipImage url={current.slipUrl} fileName={current.slipFile} /> : <SlipReceipt {...slip} />}
               <p className="text-[11px] leading-[1.55] text-admin-muted">แนบเมื่อ {current.submittedAt} น.</p>
               <SlipDialog open={expand} onClose={() => setExpand(false)} {...slip} />
             </Panel>
@@ -142,7 +143,20 @@ export function SlipsView({ data }: { data: Data }) {
               <div>{isPending ? <Chip tone="warn">รออนุมัติค่าบัตร</Chip> : <Chip tone="ok">อนุมัติแล้ว</Chip>}</div>
               <Detail label="ผู้ลงทะเบียน" value={current.name} />
               <Detail label="อีเมล" value={current.email} />
-              <Detail label="ประเภทบัตร" value={`${current.ticketType} · ${current.qty} ใบ`} />
+              <Detail label="รายการ" value={current.fromAttendee ? current.ticketType : `${current.ticketType}, ${current.qty} ใบ`} />
+              {!!current.friends?.length && <Detail label="บัตรเพื่อน" value={current.friends.map((f) => `${f.name} (${f.email})`).join(", ")} />}
+              {!!current.shirts?.length && (
+                <Detail
+                  label="เสื้อรุ่น"
+                  value={`${current.shirts.map((x) => x.size).join(", ")}, ${current.delivery === "delivery" ? "ส่งที่บ้าน" : "รับที่หน้างาน"}`}
+                />
+              )}
+              {current.delivery === "delivery" && current.address && (
+                <Detail
+                  label="ที่อยู่จัดส่ง"
+                  value={`${current.address.name} ${current.address.phone}, ${current.address.line} ต.${current.address.subdistrict} อ.${current.address.district} จ.${current.address.province} ${current.address.zip}`}
+                />
+              )}
               <Detail label="ยอดที่ต้องชำระ" value={`฿${money(current.amount)}`} valueClass="text-admin-indigo" />
               <div className="h-px bg-admin-line" />
               <p className="text-[13px] font-semibold leading-[1.55] text-admin-ink">ตรวจสอบก่อนอนุมัติ</p>
@@ -193,9 +207,9 @@ export function SlipsView({ data }: { data: Data }) {
 
 function Detail({ label, value, valueClass = "text-admin-ink" }: { label: string; value: string; valueClass?: string }) {
   return (
-    <div className="flex items-center justify-between gap-3 leading-[1.55]">
-      <p className="text-[12px] text-admin-muted">{label}</p>
-      <p className={cx("text-[13px] font-medium", valueClass)}>{value}</p>
+    <div className="flex items-start justify-between gap-3 leading-[1.55]">
+      <p className="shrink-0 text-[12px] text-admin-muted">{label}</p>
+      <p className={cx("min-w-0 text-right text-[13px] font-medium break-words", valueClass)}>{value}</p>
     </div>
   );
 }

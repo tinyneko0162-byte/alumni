@@ -1,21 +1,27 @@
-import { getAttendee } from "@/lib/data";
+import { requireUser, getAttendee } from "@/lib/data";
 import { BrandMark, MobileShell } from "@/components/user/MobileShell";
+import { UserBar } from "@/components/user/UserBar";
 import { AttendeeNav, Pill } from "@/components/user/AttendeeNav";
 import { Icon } from "@/components/ui/Icon";
 
+/** always read fresh data: staff top-ups and purchases change this page */
+export const dynamic = "force-dynamic";
+
 /** Figma: user / ผู้ร่วมงาน · ประวัติรายการ (4069:358) */
 export default async function HistoryPage() {
-  const { profile, wallet, history } = await getAttendee();
+  const user = await requireUser("/me/history");
+  const { profile, wallet, history } = await getAttendee(user);
   return (
     <MobileShell width={430}>
       <div className="px-6 pt-6 pb-4">
         <BrandMark />
       </div>
+      <UserBar name={user.name} />
       <main className="flex flex-col gap-5 px-6 pt-2 pb-6">
         <div className="flex flex-col gap-[5px] leading-[1.55]">
           <h1 className="text-[27px] font-semibold text-ink-slate">ประวัติรายการ</h1>
           <p className="text-[13px] text-black">
-            กระเป๋า {wallet.shortId} • {profile.fullName}
+            กระเป๋า {wallet.shortId}, {profile.fullName}
           </p>
         </div>
 
@@ -34,10 +40,11 @@ export default async function HistoryPage() {
 
         <Panel title="รายการเติม Token">
           <p className="text-[12px] leading-[1.55] text-black">
-            {history.dayLabel} • แสดง {history.topUps.length} รายการ
+            {history.dayLabel}, แสดง {history.topUps.length} รายการ
           </p>
+          {history.topUps.length === 0 && <p className="text-[12px] text-black">ยังไม่มีรายการ</p>}
           {history.topUps.map((t) => (
-            <Txn key={t.id} icon="arrow-down-left" label={t.label} meta={`${t.time} • ${t.id} • หลังรายการ ${t.balanceAfter}`} amount={`+${t.amount}`} tone="text-success" />
+            <Txn key={t.id} icon="arrow-down-left" label={t.label} meta={`${t.time}, ${t.id}, หลังรายการ ${t.balanceAfter}`} amount={`+${t.amount}`} tone="text-success" />
           ))}
         </Panel>
 
@@ -47,8 +54,9 @@ export default async function HistoryPage() {
               ดูรายการทั้งหมด
             </Pill>
           </div>
+          {history.purchases.length === 0 && <p className="text-[12px] text-black">ยังไม่มีรายการ</p>}
           {history.purchases.map((t) => (
-            <Txn key={t.id} icon="arrow-up-right" label={t.label} meta={`${t.time} • ${t.id} • หลังรายการ ${t.balanceAfter}`} amount={`−${t.amount}`} tone="text-danger" />
+            <Txn key={t.id} icon="arrow-up-right" label={t.label} meta={`${t.time}, ${t.id}, หลังรายการ ${t.balanceAfter}`} amount={`−${t.amount}`} tone="text-danger" />
           ))}
         </Panel>
 
@@ -58,12 +66,18 @@ export default async function HistoryPage() {
               ดูใบเสร็จทั้งหมด
             </Pill>
           </div>
-          <Detail label="ร้านค้า" value={history.receipt.shop} />
-          <Detail label="เวลา" value={history.receipt.time} />
-          <Detail label={history.receipt.line} value={`${history.receipt.amount} Token`} />
-          <Detail label="ยอดก่อน / หลัง" value={`${history.receipt.balanceBefore} / ${history.receipt.balanceAfter} Token`} />
-          <Detail label="สถานะ" value={history.receipt.status} valueClass="text-success" />
-          <p className="text-[11px] leading-[1.55] text-black">{history.receipt.footer}</p>
+          {history.receipt ? (
+            <>
+              <Detail label="ร้านค้า" value={history.receipt.shop} />
+              <Detail label="เวลา" value={history.receipt.time} />
+              <Detail label={history.receipt.line} value={`${history.receipt.amount} Token`} />
+              <Detail label="ยอดก่อน / หลัง" value={`${history.receipt.balanceBefore} / ${history.receipt.balanceAfter} Token`} />
+              <Detail label="สถานะ" value={history.receipt.status} valueClass="text-success" />
+              <p className="text-[11px] leading-[1.55] text-black">{history.receipt.footer}</p>
+            </>
+          ) : (
+            <p className="text-[12px] text-black">ยังไม่มีใบเสร็จ ใบเสร็จจะขึ้นเมื่อจ่ายด้วย Token ที่ร้านค้า</p>
+          )}
         </Panel>
 
         <div className="flex items-start gap-2.5 rounded-lg border border-[rgba(0,163,224,0.25)] bg-[rgba(0,163,224,0.07)] p-3.5">

@@ -62,7 +62,7 @@ export function SlipReceipt({
         <p className="font-latin text-[28px] font-semibold text-admin-ink">
           {amount.toLocaleString("en-US", { minimumFractionDigits: 2 })}
         </p>
-        <p className="text-[11px] text-admin-muted">บาท • {purpose}</p>
+        <p className="text-[11px] text-admin-muted">บาท, {purpose}</p>
         <div className="h-px w-full bg-admin-line" />
         <div className="flex w-full items-center justify-between gap-2">
           <p className="text-[12px] text-admin-muted">จาก</p>

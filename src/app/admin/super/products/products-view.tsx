@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { BrandButton, Chip, Field, OutlineButton, PageHeading, Panel, SearchBox } from "@/components/admin/ui";
+import { BrandButton, Chip, Field, Guidance, OutlineButton, PageHeading, Panel, SearchBox } from "@/components/admin/ui";
 import { Dialog } from "@/components/ui/Dialog";
 import { Icon } from "@/components/ui/Icon";
 import { createProduct, saveProduct } from "@/lib/actions";
@@ -64,6 +64,11 @@ export function ProductsView({ data }: { data: Data }) {
       ),
     [products, tab, query],
   );
+  const [page, setPage] = useState(1);
+  const per = data.pageSize;
+  const pages = Math.max(1, Math.ceil(shown.length / per));
+  const cur = Math.min(page, pages); // a filter can shrink the list below the current page
+  const paged = shown.slice((cur - 1) * per, cur * per);
 
   const save = async () => {
     const price = Number(form.price);
@@ -75,7 +80,7 @@ export function ProductsView({ data }: { data: Data }) {
     if (!res.ok) return setMessage({ ok: false, text: res.error });
     setProducts((all) => all.map((p) => (p.sku === current.sku ? res.product : p)));
     setEditOpen(false); // บันทึกสำเร็จแล้วปิด popup
-    setMessage({ ok: true, text: `บันทึกแล้ว · หน้าขายสินค้าจะใช้ราคา ${res.product.price} Token ทันที` });
+    setMessage({ ok: true, text: `บันทึกแล้ว, หน้าขายสินค้าจะใช้ราคา ${res.product.price} Token ทันที` });
   };
 
   return (
@@ -87,10 +92,7 @@ export function ProductsView({ data }: { data: Data }) {
           {message.text}
         </p>
       )}
-      <div className="flex items-start gap-2.5 rounded-lg bg-brand-soft p-3">
-        <Icon name="a-info-dark" size={18} />
-        <p className="flex-1 text-[12px] leading-[1.55] text-black">{data.guidance}</p>
-      </div>
+      <Guidance>{data.guidance}</Guidance>
 
       <Panel title="รายการสินค้า" className="min-h-[600px]">
         <div role="tablist" className="flex gap-2 overflow-x-auto border-b border-admin-line">
@@ -121,7 +123,7 @@ export function ProductsView({ data }: { data: Data }) {
               </tr>
             </thead>
             <tbody>
-              {shown.map((p) => (
+              {paged.map((p) => (
                 <tr key={p.sku}>
                   <td className="h-16 border-b border-admin-line px-3 text-admin-ink">
                     <p className="font-medium">{p.name}</p>
@@ -146,12 +148,12 @@ export function ProductsView({ data }: { data: Data }) {
         </div>
         <div className="mt-auto flex flex-wrap items-center justify-between gap-3">
           <p className="text-[11px] leading-[1.55] text-admin-muted">
-            แสดง 1–{Math.min(data.pageSize, shown.length)} จาก {data.totalProducts} สินค้า
+            {shown.length ? `แสดง ${(cur - 1) * per + 1}–${Math.min(cur * per, shown.length)} จาก ${shown.length} สินค้า` : "ไม่พบสินค้า"}
           </p>
           <div className="flex gap-2">
-            <OutlineButton icon="a-chevron-left" disabled>ก่อนหน้า</OutlineButton>
-            <span className="rounded-md bg-admin-indigo-tint p-2.5 text-[12px] leading-[1.55] text-admin-indigo">1</span>
-            <OutlineButton icon="a-chevron-right-dark" disabled>ถัดไป</OutlineButton>
+            <OutlineButton icon="a-chevron-left" disabled={cur <= 1} onClick={() => setPage(cur - 1)}>ก่อนหน้า</OutlineButton>
+            <span className="rounded-md bg-admin-indigo-tint p-2.5 text-[12px] leading-[1.55] text-admin-indigo">{cur}</span>
+            <OutlineButton icon="a-chevron-right-dark" disabled={cur >= pages} onClick={() => setPage(cur + 1)}>ถัดไป</OutlineButton>
           </div>
         </div>
       </Panel>
@@ -177,7 +179,7 @@ export function ProductsView({ data }: { data: Data }) {
             </p>
           )}
           <LockedField label="ชื่อสินค้า" value={current.name} />
-          <LockedField label="ร้านค้า" value={`${current.store} · ${current.storeCode}`} />
+          <LockedField label="ร้านค้า" value={`${current.store}, ${current.storeCode}`} />
           <LockedField label="หมวดหมู่" value={current.category} />
           <Field label="Stock" inputMode="numeric" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} hint={`หน่วย: ${current.unit}`} />
           <Field
@@ -185,7 +187,7 @@ export function ProductsView({ data }: { data: Data }) {
             inputMode="numeric"
             value={form.price}
             onChange={(e) => setForm({ ...form, price: e.target.value })}
-            hint="ใช้ราคาเดียวกันทุกอุปกรณ์ของร้าน • 1 Token = 1 บาท"
+            hint="ใช้ราคาเดียวกันทุกอุปกรณ์ของร้าน, 1 Token = 1 บาท"
           />
           <label className="flex flex-col gap-1.5">
             <span className="text-[12px] font-semibold leading-[1.55] text-admin-ink">สถานะการขาย</span>

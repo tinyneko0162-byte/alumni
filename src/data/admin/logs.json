@@ -9,12 +9,12 @@
   "total": 1248,
   "guidance": "บันทึกย้อนหลังไม่สามารถแก้ไขหรือลบผ่านหน้าจอนี้ เพื่อคงความถูกต้องของการตรวจสอบ",
   "events": [
-    { "time": "18:44:52", "event": "ขายสินค้า · 150 Token", "detail": "Wallet W-•••-1809", "role": "Store Operator", "actor": "นภ•• · ST-01", "ref": "SALE-0086", "result": "สำเร็จ" },
-    { "time": "18:43:16", "event": "เติมเงินสด ฿500 · +500 Token", "role": "Token Staff", "actor": "อร••", "ref": "TOP-0234", "result": "สำเร็จ" },
+    { "time": "18:44:52", "event": "ขายสินค้า, 150 Token", "detail": "Wallet W-•••-1809", "role": "Store Operator", "actor": "นภ••, ST-01", "ref": "SALE-0086", "result": "สำเร็จ" },
+    { "time": "18:43:16", "event": "เติมเงินสด ฿500, +500 Token", "role": "Token Staff", "actor": "อร••", "ref": "TOP-0234", "result": "สำเร็จ" },
     { "time": "18:41:08", "event": "ส่งลิงก์บัตรจากอีเมลบริษัท", "role": "Ticketing Officer", "actor": "พั••", "ref": "TKT-0399", "result": "สำเร็จ" },
     { "time": "18:40:32", "event": "อนุมัติสลิปค่าบัตร ฿790", "role": "Ticketing Officer", "actor": "พั••", "ref": "TKT-0399", "result": "สำเร็จ" },
-    { "time": "18:38:11", "event": "เติมเงินโอน ฿1,000 · +1,000 Token", "role": "Token Staff", "actor": "อร••", "ref": "TOP-0233", "result": "สำเร็จ" },
-    { "time": "18:36:20", "event": "บันทึกเข้างาน · ประตูหลัก", "role": "จุดเช็กอิน", "actor": "เจ้าหน้าที่ ก••", "ref": "ATT-0312", "result": "สำเร็จ" },
-    { "time": "16:30:00", "event": "กำหนดราคาป๊อปคอร์นคาราเมล", "detail": "60 Token / ชิ้น", "role": "Super Admin", "actor": "สุ••", "ref": "SN-001", "result": "สำเร็จ" }
+    { "time": "18:38:11", "event": "เติมเงินโอน ฿1,000, +1,000 Token", "role": "Token Staff", "actor": "อร••", "ref": "TOP-0233", "result": "สำเร็จ" },
+    { "time": "18:36:20", "event": "บันทึกเข้างาน, ประตูหลัก", "role": "จุดเช็กอิน", "actor": "เจ้าหน้าที่ ก••", "ref": "ATT-0312", "result": "สำเร็จ" },
+    { "time": "16:30:00", "event": "กำหนดราคาไก่ป๊อป", "detail": "60 Token / ชิ้น", "role": "Super Admin", "actor": "สุ••", "ref": "POP-01", "result": "สำเร็จ" }
   ]
 }

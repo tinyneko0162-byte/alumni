@@ -6,19 +6,24 @@
     "dateLong": "24 ตุลาคม 2569",
     "time": "17:00–23:00 น.",
     "venue": "หอประชุมโรงเรียนตัวอย่าง",
-    "now": "24 ต.ค. 2569 · 18:45 น.",
-    "environment": "24 ต.ค. 2569 · ข้อมูลสมมติ",
-    "footer": "งานเลี้ยงรุ่นศิษย์เก่า • ระบบเจ้าหน้าที่"
+    "now": "24 ต.ค. 2569, 18:45 น.",
+    "environment": "24 ต.ค. 2569, ข้อมูลสมมติ",
+    "footer": "งานเลี้ยงรุ่นศิษย์เก่า, ระบบเจ้าหน้าที่"
   },
   "account": {
     "initials": "อร",
-    "name": "อร•• • เจ้าหน้าที่"
+    "name": "อร••, เจ้าหน้าที่"
   },
   "roles": {
     "super": {
       "label": "Super Admin",
       "home": "/admin/super/overview",
       "menu": [
+        {
+          "href": "/admin/super/events",
+          "label": "จัดการงาน",
+          "icon": "calendar-menu"
+        },
         {
           "href": "/admin/super/overview",
           "label": "ภาพรวมระบบ",
@@ -36,8 +41,13 @@
         },
         {
           "href": "/admin/super/roles",
-          "label": "จัดการบทบาท",
+          "label": "จัดการบทบาทและบัญชี",
           "icon": "users"
+        },
+        {
+          "href": "/admin/super/shirts",
+          "label": "ออเดอร์เสื้อรุ่น",
+          "icon": "shirt"
         },
         {
           "href": "/admin/super/logs",
@@ -52,7 +62,7 @@
         {
           "href": "/admin/finance/attendance",
           "label": "ประวัติการเข้าร่วม",
-          "icon": "users"
+          "icon": "user-check-menu"
         }
       ]
     },
@@ -83,12 +93,12 @@
       "menu": [
         {
           "href": "/admin/token/cash",
-          "label": "เติม Token • เงินสด",
+          "label": "เติม Token ด้วยเงินสด",
           "icon": "scan-line"
         },
         {
           "href": "/admin/token/transfer",
-          "label": "เติม Token • โอนเงิน",
+          "label": "เติม Token จากเงินโอน",
           "icon": "landmark"
         },
         {
@@ -115,7 +125,7 @@
       ],
       "account": {
         "initials": "รจ",
-        "name": "รจ•• • เจ้าหน้าที่"
+        "name": "รจ••, เจ้าหน้าที่"
       }
     }
   }

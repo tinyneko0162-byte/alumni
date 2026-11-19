@@ -117,7 +117,7 @@ export function AttendanceView({ data }: { data: Data }) {
             </table>
           </div>
           <Pagination label={`แสดง 1–${shown.length} จาก ${total} คน`} />
-          <p className="text-[10px] leading-[1.55] text-admin-muted">วันที่ {data.date} · เวลาไทย (UTC+7) · เรียงมาถึงล่าสุดก่อน</p>
+          <p className="text-[10px] leading-[1.55] text-admin-muted">วันที่ {data.date}, เวลาไทย (UTC+7), เรียงมาถึงล่าสุดก่อน</p>
         </Panel>
 
         <Panel title="รายละเอียดการเข้าร่วม" aside={<Icon name="a-user-check" size={20} />} className="xl:w-[330px]">
@@ -126,7 +126,7 @@ export function AttendanceView({ data }: { data: Data }) {
             <div className="flex flex-col gap-[3px] leading-[1.55]">
               <p className="text-[15px] font-semibold text-admin-ink">{sel.name}</p>
               <p className="text-[11px] text-admin-muted">
-                {sel.ticket} · {sel.class}
+                {sel.ticket}, {sel.class}
               </p>
             </div>
           </div>
@@ -145,7 +145,7 @@ export function AttendanceView({ data }: { data: Data }) {
               <div className="flex flex-col gap-1 leading-[1.55]">
                 <p className="text-[12px] font-medium text-admin-ink">เช็กอินสำเร็จ</p>
                 <p className="text-[11px] text-admin-muted">
-                  {data.date} · {sel.time}
+                  {data.date}, {sel.time}
                 </p>
                 <p className="text-[11px] text-admin-muted">บันทึกเวลาเข้างานครั้งแรก</p>
               </div>

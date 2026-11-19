@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { logoutStaff } from "@/lib/actions";
-import { getStaffRole } from "@/lib/session";
+import { getStaff } from "@/lib/session";
 import { Icon } from "@/components/ui/Icon";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { getAdminConfig, type RoleKey } from "@/lib/admin-data";
@@ -27,25 +27,25 @@ export async function AdminShell({
   children: React.ReactNode;
 }) {
   const cfg = await getAdminConfig();
-  const signedIn = await getStaffRole();
-  if (!signedIn) redirect("/admin/login");
+  const staff = await getStaff();
+  const signedIn = staff?.role;
+  if (!staff || !signedIn) redirect("/admin/login");
   if (!cfg.enabled[signedIn]) redirect("/admin/login?disabled=1");
   // a role may only open its own pages (Super Admin can open all of them)
   if (signedIn !== role && signedIn !== "super") redirect(cfg.roles[signedIn].home);
   const r = cfg.roles[role];
-  const account = "account" in r ? (r.account as typeof cfg.account) : cfg.account;
+  // the signed-in person (Super Admin viewing another role's page still sees their own name)
+  const account = { initials: staff.name.slice(0, 2), name: staff.name };
+  const mine = cfg.roles[signedIn];
 
   return (
     <div className="flex min-h-dvh bg-admin-page">
       <aside className="sticky top-0 flex h-dvh w-[224px] shrink-0 flex-col justify-between overflow-y-auto bg-admin-side px-4 pt-7 pb-6 max-lg:hidden">
         <div className="flex flex-col gap-[30px]">
           <p className="px-2 text-[17px] font-bold leading-[1.55] text-brand">ศิษย์เก่า</p>
-          <div className="flex flex-col gap-[9px] rounded-lg bg-brand-deep p-3">
-            <p className="text-[10px] leading-[1.55] text-white">พื้นที่ทำงานของคุณ</p>
-            <div className="flex items-center gap-[7px]">
-              <Icon name="a-shield-check-white" size={16} />
-              <p className="text-[13px] font-medium leading-[1.55] text-white">{r.label}</p>
-            </div>
+          <div className="flex flex-col gap-0.5 border-l-[3px] border-brand pl-3">
+            <p className="text-[11px] leading-[1.55] text-admin-side-muted">ตำแหน่ง</p>
+            <p className="text-[14px] font-semibold leading-[1.55] text-admin-side-ink">{r.label}</p>
           </div>
           <nav className="flex flex-col gap-[7px]">
             <p className="text-[10px] leading-[1.55] text-admin-side-muted">เมนูปฏิบัติงาน</p>
@@ -76,15 +76,15 @@ export async function AdminShell({
             </span>
             <div className="flex flex-col leading-[1.55]">
               <p className="text-[12px] text-admin-side-ink">{account.name}</p>
-              <p className="text-[10px] text-admin-side-muted">สิทธิ์เฉพาะ {r.label}</p>
+              <p className="text-[10px] text-admin-side-muted">{mine.label}, {staff.username}</p>
             </div>
           </div>
           <form action={logoutStaff}>
             <button
               type="submit"
-              className="w-full rounded-lg border border-admin-side-line bg-brand p-3 text-left text-[12px] leading-[1.55] text-white transition hover:brightness-95"
+              className="w-full rounded-lg border border-admin-side-line p-2.5 text-center text-[12px] font-semibold leading-[1.55] text-admin-side-ink transition hover:bg-brand-tint"
             >
-              LOG OUT
+              ออกจากระบบ
             </button>
           </form>
           <div className="flex flex-col gap-1.5 rounded-lg border border-admin-side-line p-3 leading-[1.55]">

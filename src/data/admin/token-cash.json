@@ -2,7 +2,7 @@
   "description": "สแกน Wallet ลูกค้า → รับเงินสด → ตรวจสอบยอดก่อนยืนยันเติม Token",
   "rateNote": "1 Token = 1 บาท",
   "wallets": [
-    { "id": "WLT-xxxx-0842", "owner": "กิ•• ศิษย์เก่า", "balance": 120, "status": "ใช้งานได้" },
+    { "id": "WLT-xxxx-0517", "owner": "กิ•• ศิษย์เก่า", "balance": 120, "status": "ใช้งานได้" },
     { "id": "WLT-xxxx-1065", "owner": "ปิ•• ศิษย์เก่า", "balance": 40, "status": "ใช้งานได้" },
     { "id": "WLT-xxxx-7320", "owner": "ธน•• ศิษย์เก่า", "balance": 310, "status": "ใช้งานได้" }
   ],
