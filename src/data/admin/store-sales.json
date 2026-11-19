@@ -4,18 +4,78 @@
   "timeRange": "18:30–18:45",
   "boothName": "ซุ้มสวัสดิการงานเลี้ยงรุ่น",
   "note": "ยอดรวมแสดงมูลค่ารายการ, รอชำระและไม่สำเร็จไม่ถูกรวมในยอดขายยืนยัน และไม่เปลี่ยนยอด Wallet",
-  "priceNote": "ราคาสินค้าอ่านอย่างเดียวจาก Super Admin, FD-001 ยากิโซบะ 80, แก้ไขราคาไม่ได้จากหน้านี้",
+  "priceNote": "ราคาสินค้าอ่านอย่างเดียวจาก Super Admin, YAKI-01 ยากิโซบะ 80, แก้ไขราคาไม่ได้จากหน้านี้",
   "storeTotal": 9200,
-  "product": { "code": "FD-001", "name": "ยากิโซบะ", "price": 80 },
+  "product": {
+    "code": "YAKI-01",
+    "name": "ยากิโซบะ",
+    "price": 80
+  },
   "sales": [
     {
-      "id": "SALE-0086", "time": "18:44:52", "qty": 3, "wallet": "W-•••-1809", "customer": "นั•• ศิษย์เก่า", "seller": "อร••", "status": "ชำระแล้ว",
-      "balanceBefore": 320, "sellerCode": "SO-01", "pos": "POS-A01", "debitId": "DEBIT-0086",
+      "id": "SALE-0086",
+      "time": "18:44:52",
+      "qty": 3,
+      "wallet": "W-•••-1809",
+      "customer": "นั•• ศิษย์เก่า",
+      "seller": "รจ••",
+      "status": "ชำระแล้ว",
+      "balanceBefore": 320,
+      "sellerCode": "SO-01",
+      "pos": "POS-A01",
+      "debitId": "DEBIT-0086",
       "audit": "18:44:38 ตรวจพบ Wallet และยอดเพียงพอ → 18:44:52 อร•• ยืนยันยอด 240 Token → ตัดยอดสำเร็จและออกใบเสร็จ"
     },
-    { "id": "SALE-0084", "time": "18:40:00", "qty": 2, "wallet": "W-•••-2548", "customer": "มา•• ศิษย์เก่า", "seller": "อร••", "status": "ชำระแล้ว", "balanceBefore": 300, "sellerCode": "SO-01", "pos": "POS-A01", "debitId": "DEBIT-0084" },
-    { "id": "SALE-0083", "time": "18:38:24", "qty": 2, "wallet": "W-•••-3902", "customer": "สุ•• ศิษย์เก่า", "seller": "อร••", "status": "รอชำระ", "balanceBefore": 0, "sellerCode": "SO-01", "pos": "POS-A01" },
-    { "id": "SALE-0082", "time": "18:35:18", "qty": 2, "wallet": "W-•••-1065", "customer": "พร•• ศิษย์เก่า", "seller": "เม••", "status": "ชำระแล้ว", "balanceBefore": 540, "sellerCode": "SO-02", "pos": "POS-A02", "debitId": "DEBIT-0082" },
-    { "id": "SALE-0081", "time": "18:32:07", "qty": 1, "wallet": "W-•••-7320", "customer": "วิ•• ศิษย์เก่า", "seller": "เม••", "status": "ชำระแล้ว", "balanceBefore": 1310, "sellerCode": "SO-02", "pos": "POS-A02", "debitId": "DEBIT-0081" }
+    {
+      "id": "SALE-0084",
+      "time": "18:40:00",
+      "qty": 2,
+      "wallet": "W-•••-2548",
+      "customer": "มา•• ศิษย์เก่า",
+      "seller": "รจ••",
+      "status": "ชำระแล้ว",
+      "balanceBefore": 300,
+      "sellerCode": "SO-01",
+      "pos": "POS-A01",
+      "debitId": "DEBIT-0084"
+    },
+    {
+      "id": "SALE-0083",
+      "time": "18:38:24",
+      "qty": 2,
+      "wallet": "W-•••-3902",
+      "customer": "สุ•• ศิษย์เก่า",
+      "seller": "รจ••",
+      "status": "รอชำระ",
+      "balanceBefore": 0,
+      "sellerCode": "SO-01",
+      "pos": "POS-A01"
+    },
+    {
+      "id": "SALE-0082",
+      "time": "18:35:18",
+      "qty": 2,
+      "wallet": "W-•••-1065",
+      "customer": "พร•• ศิษย์เก่า",
+      "seller": "รจ••",
+      "status": "ชำระแล้ว",
+      "balanceBefore": 540,
+      "sellerCode": "SO-01",
+      "pos": "POS-A02",
+      "debitId": "DEBIT-0082"
+    },
+    {
+      "id": "SALE-0081",
+      "time": "18:32:07",
+      "qty": 1,
+      "wallet": "W-•••-7320",
+      "customer": "วิ•• ศิษย์เก่า",
+      "seller": "รจ••",
+      "status": "ชำระแล้ว",
+      "balanceBefore": 1310,
+      "sellerCode": "SO-01",
+      "pos": "POS-A02",
+      "debitId": "DEBIT-0081"
+    }
   ]
 }

@@ -17,7 +17,7 @@ export default async function RevenuePage() {
   const cash = d.revenue.filter((r) => r.channel === "เงินสด").reduce((s, r) => s + r.amount, 0);
   const bank = total - cash;
   const expired = d.tokens.expired ?? 0;
-  const remaining = d.tokens.toppedUp - d.tokens.spent - expired;
+  const remaining = d.tokens.left; // เติม − ใช้ − หมดอายุ (ตัวเลขเดียวกับหน้าจัดการงาน)
   const pct = (n: number, of: number) => `${((n / of) * 100).toFixed(1)}%`;
 
   return (

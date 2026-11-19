@@ -7,7 +7,7 @@ import overview from "@/data/admin/overview.json";
 import stores from "@/data/admin/stores.json";
 import products from "@/data/admin/products.json";
 import logs from "@/data/admin/logs.json";
-import { readDb, currentEvent, eventOf, FIRST_EVENT, type Db, type EventRow } from "@/lib/db";
+import { readDb, currentEvent, eventOf, FIRST_EVENT, tokenTotals, type Db, type EventRow } from "@/lib/db";
 import ticketSlips from "@/data/admin/ticket-slips.json";
 import ticketLinks from "@/data/admin/ticket-links.json";
 import tokenCash from "@/data/admin/token-cash.json";
@@ -125,7 +125,7 @@ export async function getTicketSlips() {
   const orders = db.orders.filter(mine);
   const pending = orders.filter((o) => o.status === "pending");
   const approved = orders.filter((o) => o.status === "approved");
-  return { ...ticketSlips, requests: pending, approved, pendingCount: pending.length, approvedCount: ticketSlips.approvedCount, approvedBase: ticketSlips.approvedCount };
+  return { ...ticketSlips, requests: pending, approved, pendingCount: pending.length, approvedCount: attendanceTotals(db).approved, approvedBase: attendanceTotals(db).approved - approved.length }; // ตัวเลขเดียวกับหน้าภาพรวมและประวัติการเข้าร่วม
 }
 
 export async function getTicketLinks() {
@@ -145,7 +145,7 @@ export async function getTicketLinks() {
 
 export async function getTokenCash() {
   const db = readDb();
-  return { ...tokenCash, wallets: db.wallets, recent: db.topups.filter((t) => t.id.startsWith("TOP")).slice(0, 6).map((t) => ({ id: t.id, wallet: t.wallet, cash: t.received ?? 0, tokens: t.tokens, time: t.time.slice(0, 5), status: t.status })) };
+  return { ...tokenCash, wallets: db.wallets, recent: db.topups.filter((t) => t.id.startsWith("TOP") && t.channel === "เงินสด").slice(0, 6).map((t) => ({ id: t.id, wallet: t.wallet, cash: t.received ?? 0, tokens: t.tokens, time: t.time.slice(0, 5), status: t.status })) };
 }
 
 export async function getTokenTransfers() {
@@ -154,7 +154,13 @@ export async function getTokenTransfers() {
 }
 
 export async function getTokenHistory() {
-  return { ...tokenHistory, records: readDb().topups };
+  const db = readDb();
+  // คำขอเติมจากเงินโอนที่ยังรอตรวจ แสดงในประวัติด้วย ให้ตรงกับคิวหน้า "เติม Token จากเงินโอน"
+  const pending = db.transfers
+    .filter((t) => t.state === "pending" && !db.topups.some((x) => x.id === t.id))
+    .map((t) => ({ id: t.id, time: t.time.length === 5 ? `${t.time}:00` : t.time, wallet: t.wallet, owner: t.owner, channel: "โอนธนาคาร", received: null, requested: t.amount, tokens: 0, staff: "รอตรวจสอบ", status: "รอตรวจสอบ", eventId: t.eventId }));
+  const records = [...pending, ...db.topups];
+  return { ...tokenHistory, records };
 }
 
 export async function getStorePos() {
@@ -199,8 +205,6 @@ export async function getStoreSales(storeId?: string) {
   };
 }
 
-const seededTopups = new Set(tokenHistory.records.map((r) => `${r.id}|${r.status}`));
-const seededSales = new Set(storeSales.sales.map((r) => r.id));
 
 /**
  * Money figures for Super Admin: the sample totals from finance-revenue.json
@@ -212,15 +216,10 @@ function financeFigures(db: Db, event?: EventRow) {
   const newTicketMoney = approvedOrders.reduce((n, o) => n + o.amount, 0);
   const newTickets = approvedOrders.reduce((n, o) => n + o.ticketIds.length, 0);
   const newShirts = approvedOrders.reduce((n, o) => n + (o.shirts?.length ?? 0), 0);
-  const fresh = db.topups.filter((t) => t.status === "สำเร็จ" && !seededTopups.has(`${t.id}|${t.status}`) && mine(t));
-  // Token left in wallets when the event closed (minus lines written by closeEvent)
-  const expired = -fresh.filter((t) => t.channel === "หมดอายุ").reduce((n, t) => n + t.tokens, 0);
-  const newCash = fresh.filter((t) => t.channel === "เงินสด").reduce((n, t) => n + (t.received ?? 0), 0);
-  const newBank = fresh.filter((t) => t.channel === "โอนธนาคาร").reduce((n, t) => n + (t.received ?? 0), 0);
-  // 200 Token that come with each ticket: Token in wallets, but the money is already in the ticket price
-  const newBonus = fresh.filter((t) => t.channel === "มากับบัตร").reduce((n, t) => n + t.tokens, 0);
-  const newSales = db.sales.filter((x) => !seededSales.has(x.id) && x.amount !== undefined && mine(x));
-  const newSpent = newSales.reduce((n, x) => n + (x.amount ?? 0), 0);
+  const t = tokenTotals(db, (event ?? currentEvent(db)).id);
+  const newCash = t.cash;
+  const newBank = t.bank;
+  const newSales = t.sales;
 
   const [ticketRow, cashRow, bankRow] = financeRevenue.revenue;
   const revenue = [
@@ -244,7 +243,7 @@ function financeFigures(db: Db, event?: EventRow) {
     revenue,
     total: revenue.reduce((n, r) => n + r.amount, 0),
     tickets: { ...financeRevenue.tickets, count: (first ? financeRevenue.tickets.count : 0) + newTickets, shirts: newShirts },
-    tokens: { toppedUp: (first ? financeRevenue.tokens.toppedUp : 0) + newCash + newBank + newBonus, spent: (first ? financeRevenue.tokens.spent : 0) + newSpent, expired },
+    tokens: { toppedUp: t.toppedUp, spent: t.spent, expired: t.expired, left: t.left },
     spendingByCategory: spending,
   };
 }
@@ -299,7 +298,7 @@ export async function getEvents() {
   // what closing the open event would do right now
   const open = db.events.find((e) => e.status === "open");
   const preview = open
-    ? { wallets: db.wallets.filter((w) => w.balance > 0).length, tokens: db.wallets.reduce((n, w) => n + Math.max(0, w.balance), 0), tickets: attendanceTotals(db, open).approved }
+    ? { wallets: db.wallets.filter((w) => w.balance > 0).length, tokens: tokenTotals(db, open.id).left, tickets: attendanceTotals(db, open).approved }
     : null;
   return { events, currentId: current.id, open: open ?? null, preview };
 }

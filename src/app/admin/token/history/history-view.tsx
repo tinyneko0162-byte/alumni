@@ -162,13 +162,13 @@ export function HistoryView({ data }: { data: Data }) {
                       {r.received == null ? (
                         <>
                           <p>—</p>
-                          <p className="text-[10px] text-admin-muted">ขอเติม ฿{fmt(r.requested ?? 0)}</p>
+                          {r.requested != null && <p className="text-[10px] text-admin-muted">ขอเติม ฿{fmt(r.requested)}</p>}
                         </>
                       ) : (
                         money(r.received)
                       )}
                     </td>
-                    <td className={cx("border-b border-admin-line px-3", r.tokens > 0 && "font-semibold text-black")}>{r.tokens > 0 ? `+${fmt(r.tokens)}` : "0"}</td>
+                    <td className={cx("border-b border-admin-line px-3", r.tokens > 0 && "font-semibold text-black")}>{r.tokens > 0 ? `+${fmt(r.tokens)}` : r.tokens < 0 ? `−${fmt(-r.tokens)}` : "0"}</td>
                     <td className="border-b border-admin-line px-3">{r.staff}</td>
                     <td className="border-b border-admin-line px-3">
                       <Chip tone={r.status === "สำเร็จ" ? "ok" : r.status === "รอตรวจสอบ" ? "warn" : "danger"}>{r.status}</Chip>
@@ -208,7 +208,7 @@ export function HistoryView({ data }: { data: Data }) {
             className="bg-brand-tint"
             items={[
               { label: "ยอดก่อนเติม", value: fmt(before) },
-              { label: "เครดิตเพิ่ม", value: `+${fmt(sel.tokens)}` },
+              { label: sel.tokens < 0 ? "หมดอายุ" : "เครดิตเพิ่ม", value: sel.tokens < 0 ? `−${fmt(-sel.tokens)}` : `+${fmt(sel.tokens)}` },
               { label: "ยอดหลังเติม", value: fmt(before + sel.tokens) },
             ]}
           />

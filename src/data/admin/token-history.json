@@ -11,19 +11,83 @@
     "ticketPrice": 790
   },
   "records": [
-    { "id": "TOP-0236", "time": "18:44:30", "wallet": "W-•••-3902", "owner": "สุ•• ศิษย์เก่า", "channel": "โอนธนาคาร", "received": null, "requested": 700, "tokens": 0, "staff": "รอตรวจสอบ", "status": "รอตรวจสอบ" },
-    { "id": "TOP-0234", "time": "18:43:16", "wallet": "W-•••-1065", "owner": "พร•• ศิษย์เก่า", "channel": "เงินสด", "received": 500, "tokens": 500, "staff": "อร••", "status": "สำเร็จ", "balanceBefore": 40, "staffCode": "TS-01", "station": "จุดเติมเงิน A" },
     {
-      "id": "TOP-0233", "time": "18:38:11", "wallet": "W-•••-4821", "owner": "กิ•• ศิษย์เก่า", "channel": "โอนธนาคาร", "received": 1000, "tokens": 1000, "staff": "อร••", "status": "สำเร็จ",
-      "balanceBefore": 120, "staffCode": "TS-01", "station": "จุดเติมเงิน A", "fromAccount": "กิ••, •••-•-4821",
-      "evidence": { "id": "SLIP-0233", "bankRef": "TRX-••••-3811" },
+      "id": "TOP-0234",
+      "time": "18:43:16",
+      "wallet": "W-•••-1065",
+      "owner": "พร•• ศิษย์เก่า",
+      "channel": "เงินสด",
+      "received": 500,
+      "tokens": 500,
+      "staff": "อร••",
+      "status": "สำเร็จ",
+      "balanceBefore": 40,
+      "staffCode": "TS-01",
+      "station": "จุดเติมเงิน A"
+    },
+    {
+      "id": "TOP-0233",
+      "time": "18:38:11",
+      "wallet": "W-•••-4821",
+      "owner": "กิ•• ศิษย์เก่า",
+      "channel": "โอนธนาคาร",
+      "received": 1000,
+      "tokens": 1000,
+      "staff": "อร••",
+      "status": "สำเร็จ",
+      "balanceBefore": 120,
+      "staffCode": "TS-01",
+      "station": "จุดเติมเงิน A",
+      "fromAccount": "กิ••, •••-•-4821",
+      "evidence": {
+        "id": "SLIP-0233",
+        "bankRef": "TRX-••••-3811"
+      },
       "audit": [
-        { "time": "18:37:42", "title": "รับคำขอและหลักฐานการโอน", "detail": "แนบ SLIP-0233, ขอเติม 1,000 Token, ยังไม่เครดิต" },
-        { "time": "18:38:05", "title": "ตรวจยอดโอนตรงกับหลักฐาน", "detail": "อร•• (TS-01) ตรวจรับเงิน ฿1,000.00 แล้ว" },
-        { "time": "18:38:11", "title": "ยืนยันและเพิ่มเข้า Wallet สำเร็จ", "detail": "เครดิต +1,000 Token ครั้งเดียว, 120 → 1,120 Token" }
+        {
+          "time": "18:37:42",
+          "title": "รับคำขอและหลักฐานการโอน",
+          "detail": "แนบ SLIP-0233, ขอเติม 1,000 Token, ยังไม่เครดิต"
+        },
+        {
+          "time": "18:38:05",
+          "title": "ตรวจยอดโอนตรงกับหลักฐาน",
+          "detail": "อร•• (TS-01) ตรวจรับเงิน ฿1,000.00 แล้ว"
+        },
+        {
+          "time": "18:38:11",
+          "title": "ยืนยันและเพิ่มเข้า Wallet สำเร็จ",
+          "detail": "เครดิต +1,000 Token ครั้งเดียว, 120 → 1,120 Token"
+        }
       ]
     },
-    { "id": "TOP-0232", "time": "18:35:00", "wallet": "W-•••-7320", "owner": "วิ•• ศิษย์เก่า", "channel": "เงินสด", "received": 1000, "tokens": 1000, "staff": "นา••", "status": "สำเร็จ", "balanceBefore": 310, "staffCode": "TS-02", "station": "จุดเติมเงิน B" },
-    { "id": "TOP-0231", "time": "18:31:05", "wallet": "W-•••-2548", "owner": "มา•• ศิษย์เก่า", "channel": "เงินสด", "received": 300, "tokens": 300, "staff": "นา••", "status": "สำเร็จ", "balanceBefore": 0, "staffCode": "TS-02", "station": "จุดเติมเงิน B" }
+    {
+      "id": "TOP-0232",
+      "time": "18:35:00",
+      "wallet": "W-•••-7320",
+      "owner": "วิ•• ศิษย์เก่า",
+      "channel": "เงินสด",
+      "received": 1000,
+      "tokens": 1000,
+      "staff": "นา••",
+      "status": "สำเร็จ",
+      "balanceBefore": 310,
+      "staffCode": "TS-02",
+      "station": "จุดเติมเงิน B"
+    },
+    {
+      "id": "TOP-0231",
+      "time": "18:31:05",
+      "wallet": "W-•••-2548",
+      "owner": "มา•• ศิษย์เก่า",
+      "channel": "เงินสด",
+      "received": 300,
+      "tokens": 300,
+      "staff": "นา••",
+      "status": "สำเร็จ",
+      "balanceBefore": 0,
+      "staffCode": "TS-02",
+      "station": "จุดเติมเงิน B"
+    }
   ]
 }
