@@ -102,11 +102,13 @@ export async function getAttendee(user: User): Promise<Attendee> {
   const topUps = mineTopups
     .filter((t) => t.channel !== "หมดอายุ")
     .map((t) => ({ id: t.id, label: channel(t.channel), time: t.time.slice(0, 5), balanceAfter: (t.balanceBefore ?? 0) + t.tokens, amount: t.tokens }));
-  const sales = db.sales.filter((x) => x.wallet === short && !seededSales.has(x.id) && x.amount !== undefined);
+  const sales = db.sales.filter((x) => x.wallet === short && !seededSales.has(x.id) && x.amount !== undefined && x.status === "ชำระแล้ว");
   const purchases = sales.map((x) => ({ id: x.id, label: `${x.productName} × ${x.qty}`, time: x.time.slice(0, 5), balanceAfter: x.balanceBefore - (x.amount ?? 0), amount: x.amount ?? 0 }));
 
   const topUpTotal = base.topUpTotal + topUps.reduce((n, t) => n + t.amount, 0);
   const spendTotal = base.spendTotal + purchases.reduce((n, t) => n + t.amount, 0) + expiries.reduce((n, t) => n + t.amount, 0);
+  // ยอดตั้งต้นของกระเป๋า (เช่น กระเป๋าทดลองที่เริ่มด้วย 2,500) = ยอดปัจจุบัน − (เติม − ใช้)
+  const initial = sample ? 0 : Math.max(0, w.balance - (topUpTotal - spendTotal));
   const last = sales[0];
   const store = last && db.stores.find((x) => x.id === last.storeId);
   const receipt = last
@@ -123,7 +125,7 @@ export async function getAttendee(user: User): Promise<Attendee> {
       currentBalance: w.balance,
       topUpTotal,
       spendTotal,
-      formula: `ยอดเริ่มต้น 0 + เติม ${fmt(topUpTotal)} − ใช้ ${fmt(spendTotal)} = ${fmt(topUpTotal - spendTotal)}`,
+      formula: `ยอดเริ่มต้น ${fmt(initial)} + เติม ${fmt(topUpTotal)} − ใช้ ${fmt(spendTotal)} = ${fmt(initial + topUpTotal - spendTotal)}`,
       topUps: [...topUps, ...base.topUps],
       purchases: [...expiries, ...purchases, ...base.purchases],
       receipt,
