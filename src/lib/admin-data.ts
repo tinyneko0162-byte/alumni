@@ -166,11 +166,14 @@ export async function getStorePos() {
     const closed = row?.status === "closed";
     return { ...s, name: row?.name ?? s.name, product: { ...s.product, name: c?.name ?? s.product.name, price: c?.price ?? s.product.price, unit: c?.unit ?? s.product.unit, stock: c?.stock ?? 0, status: closed ? "ร้านปิด" : c?.status ?? "ขายอยู่" } };
   });
-  const recent = db.sales
-    .filter((s) => s.amount !== undefined)
-    .slice(0, 6)
-    .map((s) => ({ id: s.id, wallet: s.wallet, amount: s.amount ?? 0, time: s.time.slice(0, 5), status: "สำเร็จ" }));
-  return { ...storePos, stores, recent: [...recent, ...storePos.recent].slice(0, 6) };
+  const withSales = stores.map((st) => {
+    const mine = db.sales.filter((x) => x.amount !== undefined && x.storeId === st.id);
+    const seed = st.id === "ST-01" ? storePos.recent : [];
+    const recent = [...mine.map((x) => ({ id: x.id, wallet: x.wallet, amount: x.amount ?? 0, time: x.time.slice(0, 5), status: x.status === "ยกเลิก" ? "ยกเลิก" : "สำเร็จ" })), ...seed].slice(0, 6);
+    const paid = mine.filter((x) => x.status === "ชำระแล้ว");
+    return { ...st, recent, today: { count: paid.length, revenue: paid.reduce((n, x) => n + (x.amount ?? 0), 0) } };
+  });
+  return { ...storePos, stores: withSales };
 }
 
 export async function getStoreSales(storeId?: string) {

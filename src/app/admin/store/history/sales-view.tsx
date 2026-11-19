@@ -5,6 +5,7 @@ import { Detail, FilterField, LedgerStrip, SelectField, Stat, downloadCsv } from
 import { BrandButton, Chip, Guidance, PageHeading, Panel } from "@/components/admin/ui";
 import { Icon } from "@/components/ui/Icon";
 import type { getStoreSales } from "@/lib/admin-data";
+import { cancelSale } from "@/lib/actions";
 import { cx } from "@/lib/format";
 
 type Data = Awaited<ReturnType<typeof getStoreSales>>;
@@ -19,6 +20,7 @@ export function SalesView({ data }: { data: Data }) {
   const [q, setQ] = useState("");
   const [status, setStatus] = useState("all");
   const [applied, setApplied] = useState({ q: "", status: "all" });
+  const [busy, setBusy] = useState(false);
   const [selectedId, setSelectedId] = useState(sales[0]?.id ?? "");
 
   const shown = useMemo(
@@ -72,21 +74,12 @@ export function SalesView({ data }: { data: Data }) {
             <Icon name="a-search" size={16} />
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="ค้นหา" className="min-w-0 flex-1 bg-transparent text-[12px] outline-none placeholder:text-admin-muted" />
           </FilterField>
-          <FilterField label="วันที่ขาย" className="w-[200px]">
-            <Icon name="a-calendar-days" size={16} />
-            <span className="flex-1 text-[12px]">{data.date}</span>
-            <Icon name="a-chevron-down" size={14} />
-          </FilterField>
-          <FilterField label="ช่วงเวลา" className="w-[175px]">
-            <span className="flex-1 text-[12px]">{data.timeRange}</span>
-            <Icon name="a-chevron-down" size={14} />
-          </FilterField>
           <SelectField
             label="สถานะการชำระ"
             className="w-[175px]"
             value={status}
             onChange={setStatus}
-            options={[["all", "ทุกสถานะ"], ["ชำระแล้ว", "ชำระแล้ว"], ["รอชำระ", "รอชำระ"], ["ไม่สำเร็จ", "ไม่สำเร็จ"]]}
+            options={[["all", "ทุกสถานะ"], ["ชำระแล้ว", "ชำระแล้ว"], ["รอชำระ", "รอชำระ"], ["ไม่สำเร็จ", "ไม่สำเร็จ"], ["ยกเลิก", "ยกเลิก"]]}
           />
           <BrandButton type="submit">ใช้ตัวกรอง</BrandButton>
         </form>
@@ -139,7 +132,7 @@ export function SalesView({ data }: { data: Data }) {
                     <td className="border-b border-admin-line px-3">{s.wallet}</td>
                     <td className="border-b border-admin-line px-3">{s.seller}</td>
                     <td className="border-b border-admin-line px-3">
-                      <Chip tone={ok ? "ok" : s.status === "รอชำระ" ? "warn" : "danger"}>{s.status}</Chip>
+                      <Chip tone={ok ? "ok" : s.status === "รอชำระ" || s.status === "ยกเลิก" ? "warn" : "danger"}>{s.status}</Chip>
                     </td>
                   </tr>
                 );
@@ -151,11 +144,6 @@ export function SalesView({ data }: { data: Data }) {
           <p>
             แสดง 1–{shown.length} จาก {shown.length} รายการ, ยอดขายยืนยันหน้านี้ {fmt(paidTokens)} Token / {paidQty} ชิ้น
           </p>
-          <div className="flex items-center gap-2">
-            <span>10 รายการ / หน้า</span>
-            <span className="flex size-[30px] items-center justify-center rounded-md bg-admin-indigo-tint text-[12px] font-semibold text-admin-indigo">1</span>
-            <span>หน้าเดียว</span>
-          </div>
         </div>
         <Guidance>{data.note}</Guidance>
       </Panel>
@@ -199,6 +187,23 @@ export function SalesView({ data }: { data: Data }) {
           </div>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-[11px] leading-[1.55] text-admin-muted">สำเนาใบเสร็จ, ปกปิดข้อมูลลูกค้า</p>
+            {isPaid && sel.amount !== undefined && (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={async () => {
+                  if (!confirm(`ยกเลิก ${sel.id} และคืน ${sel.amount} Token ให้ลูกค้า?`)) return;
+                  setBusy(true);
+                  const res = await cancelSale(sel.id);
+                  setBusy(false);
+                  if (!res.ok) return alert(res.error);
+                  location.reload();
+                }}
+                className="rounded-lg border border-[#c2414b] px-4 py-2 text-[12px] font-semibold text-[#c2414b] hover:bg-[#c2414b]/10 disabled:opacity-50"
+              >
+                {busy ? "กำลังยกเลิก…" : "ยกเลิกรายการ / คืน Token"}
+              </button>
+            )}
             <BrandButton icon="a-download-white" className="border border-admin-indigo" onClick={() => window.print()}>
               ส่งออกใบเสร็จ PDF
             </BrandButton>

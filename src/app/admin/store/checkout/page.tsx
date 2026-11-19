@@ -11,7 +11,7 @@ export default async function StoreCheckoutPage({ searchParams }: { searchParams
   const current = data.stores.find((s) => s.id === (own ?? store)) ?? data.stores.find((s) => s.id === data.defaultStore)!;
   return (
     <AdminShell role="store" active="/admin/store/pos" title="ชำระค่าสินค้า">
-      <CheckoutView store={current} recent={data.recent} />
+      <CheckoutView store={current} recent={current.recent} />
     </AdminShell>
   );
 }

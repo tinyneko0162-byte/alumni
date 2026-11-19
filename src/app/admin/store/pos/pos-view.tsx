@@ -27,6 +27,10 @@ export function PosView({ boothName, store, stores }: { boothName: string; store
         <StoreSwitcher current={store.id} stores={stores} />
       </div>
 
+      <p className="text-[12px] text-admin-muted">
+        ยอดขายวันนี้ของร้านนี้ <b className="text-admin-ink">{store.today.revenue.toLocaleString("en-US")} Token</b> · {store.today.count} รายการ
+      </p>
+
       <section className="flex flex-wrap items-center gap-[18px] rounded-xl border border-admin-line bg-white p-[18px]">
         <div className="relative h-[133px] w-[153px] shrink-0 overflow-hidden rounded-[3px]">
           <Image src={p.image} alt={p.name} fill sizes="153px" className="object-cover" />
@@ -34,7 +38,7 @@ export function PosView({ boothName, store, stores }: { boothName: string; store
         <div className="flex min-w-[160px] flex-1 flex-col gap-1.5 leading-[1.55]">
           <p className="text-[22px] font-bold text-admin-ink">{p.name}</p>
           <p className="text-[14px] text-admin-side-muted">{p.tagline}</p>
-          <p className={`text-[12px] ${onSale ? "text-admin-muted" : "text-[#c2414b]"}`}>{onSale ? `คงเหลือ ${p.stock} ${p.unit}` : p.status !== "ขายอยู่" ? "หยุดขายชั่วคราว" : "สินค้าหมด"}</p>
+          <p className={`text-[12px] ${onSale ? "text-admin-muted" : "text-[#c2414b]"}`}>{onSale ? `คงเหลือ ${p.stock} ${p.unit}${p.stock <= 5 ? " · ใกล้หมด!" : ""}` : p.status !== "ขายอยู่" ? "หยุดขายชั่วคราว" : "สินค้าหมด"}</p>
         </div>
         <div className="flex items-center gap-4">
           <div className="flex flex-col items-end gap-0.5 leading-[1.55]">
@@ -106,11 +110,11 @@ export function PosView({ boothName, store, stores }: { boothName: string; store
           <Link
             href={qty > 0 && onSale ? `/admin/store/checkout?store=${store.id}` : "#"}
             aria-disabled={qty === 0 || !onSale}
-            className={`flex h-[84px] items-center justify-center gap-2.5 rounded-[10px] bg-brand px-6 text-[24px] font-bold leading-[1.55] text-white transition hover:brightness-95 ${
+            className={`flex h-12 items-center justify-center gap-2 self-end rounded-lg bg-brand px-8 text-[15px] font-semibold text-white transition hover:brightness-95 ${
               qty === 0 || !onSale ? "pointer-events-none opacity-50" : ""
             }`}
           >
-            ไปหน้าชำระเงิน
+            ชำระเงิน
           </Link>
         </div>
       </section>
