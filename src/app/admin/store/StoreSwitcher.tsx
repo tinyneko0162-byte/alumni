@@ -11,7 +11,7 @@ export function StoreSwitcher({ current, stores }: { current: string; stores: { 
       ร้าน (ข้อมูลจำลอง)
       <select
         value={current}
-        onChange={(e) => router.push(`${path}?store=${e.target.value}`)}
+        onChange={(e) => router.replace(`${path}?store=${e.target.value}`)}
         className="rounded-lg border border-admin-line bg-white px-3 py-2 text-[12px] text-admin-ink outline-none focus:border-brand-soft"
       >
         {stores.map((s) => (
