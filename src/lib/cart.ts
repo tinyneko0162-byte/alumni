@@ -15,7 +15,9 @@ export type Address = {
   zip: string;
 };
 
-export type Friend = { name: string; email: string; phone: string };
+export type Friend = { name: string; email: string; phone: string; password: string };
+export const emptyFriend: Friend = { name: "", email: "", phone: "", password: "" };
+
 
 /**
  * Everything on the shop page. Nothing is picked for the buyer except their own ticket:
@@ -39,7 +41,7 @@ const KEY = "alumni-cart-v2";
 const initialCart: Cart = { orderId: "", self: true, shirts: [], delivery: "pickup", address: null, friends: [], slip: null };
 
 export const emptyAddress: Address = { name: "", phone: "", line: "", subdistrict: "", district: "", province: "", zip: "" };
-export const emptyFriend: Friend = { name: "", email: "", phone: "" };
+
 
 export const ticketCount = (c: Cart) => (c.self ? 1 : 0) + c.friends.length;
 /** Shirts can be picked up only by a buyer who comes to the event (has their own ticket). */
@@ -60,12 +62,15 @@ export const addressErrors = (a: Address | null) => {
     zip: /^\d{5}$/.test(x.zip) ? "" : "รหัสไปรษณีย์ 5 หลัก",
   };
 };
-export const friendErrors = (f: Friend) => ({ name: f.name.trim() ? "" : "กรอกชื่อเพื่อน", email: emailOk(f.email) ? "" : "อีเมลไม่ถูกต้อง" });
+export const friendErrors = (f: Friend) => ({
+  name: f.name.trim() ? "" : "กรอกชื่อเพื่อน",
+  email: emailOk(f.email) ? "" : "อีเมลไม่ถูกต้อง",
+password: (f.password ?? "").length >= 8 ? "" : "รหัสผ่านอย่างน้อย 8 ตัว",});
 
 /** First problem that stops the order, or null when it can go to payment. */
 export function cartProblem(c: Cart): string | null {
   if (ticketCount(c) === 0 && c.shirts.length === 0) return "เลือกบัตรหรือเสื้ออย่างน้อย 1 รายการ";
-  if (c.friends.some((f) => Object.values(friendErrors(f)).some(Boolean))) return "กรอกชื่อและอีเมลของเพื่อนให้ครบทุกคน";
+  if (c.friends.some((f) => Object.values(friendErrors(f)).some(Boolean))) return "กรอกชื่อ อีเมล และรหัสผ่านของเพื่อนให้ครบทุกคน";
   if (c.shirts.length && deliveryOf(c) === "delivery" && Object.values(addressErrors(c.address)).some(Boolean)) return "กรอกที่อยู่จัดส่งเสื้อให้ครบ";
   return null;
 }
