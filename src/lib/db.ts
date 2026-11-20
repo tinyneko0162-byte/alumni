@@ -240,6 +240,10 @@ export function readDb(): Db {
   if (!db.wallets.some((w) => w.id === "WLT-TEST-0001")) {
     db.wallets.push({ id: "WLT-TEST-0001", owner: "ไทนี่ (ทดลอง)", balance: 2500, status: "ใช้งานได้" });
   }
+  // กระเป๋าทดลองที่ไม่มี Token (QR: public/demo-qr/wallet-WLT-TEST-0000.png) — ไว้สาธิตกรณียอดไม่พอ
+  if (!db.wallets.some((w) => w.id === "WLT-TEST-0000")) {
+    db.wallets.push({ id: "WLT-TEST-0000", owner: "ไทนี่ (ทดลอง · ไม่มี Token)", balance: 0, status: "ใช้งานได้" });
+  }
   // บัญชีผู้ใช้ทดลอง ไทนี่ (ทดลอง): ล็อกอินฝั่งลูกค้าเพื่อดูกระเป๋า/ประวัติที่เชื่อมกับ QR ทดลอง (อีเมล tiny@example.com รหัส 12345678)
   if (!db.users.some((u) => u.walletId === "WLT-TEST-0001")) {
     db.users.push({ id: "U-TEST", name: "ไทนี่ (ทดลอง)", email: "tiny@example.com", phone: "0800000000", pass: (testPass ??= hashPassword("12345678", "demo-seed-salt")), walletId: "WLT-TEST-0001", createdAt: "24 ต.ค. 2569" });
