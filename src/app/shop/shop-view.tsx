@@ -189,17 +189,17 @@ export function ShopView({ eventName, products }: { eventName: string; products:
           <p className="text-[12px] text-black">กด + เพื่อซื้อบัตรให้เพื่อน เพื่อนได้บัตรและ 200 Token ของตัวเอง</p>
         ) : (
           <div className="flex flex-col gap-4">
-            <p className="text-[12px] leading-[1.6] text-black">ระบบจะส่งลิงก์บัตรไปที่อีเมลของเพื่อนแต่ละคน ไม่ต้องตั้งรหัสผ่านแทนเพื่อน</p>
-            {cart.friends.map((f, i) => {
+            <p className="text-[12px] leading-[1.6] text-black">ตั้งรหัสผ่านให้เพื่อน แล้วแจ้งอีเมลกับรหัสนี้ให้เพื่อนเข้าสู่ระบบ</p>
+            {cart.friends.map((f, i) => { 
               const err = friendErrors(f);
               return (
                 <fieldset key={i} className="flex flex-col gap-3 border-t border-line pt-3.5">
                   <legend className="sr-only">เพื่อนคนที่ {i + 1}</legend>
                   <p className="text-[13px] font-semibold text-brand-deep">เพื่อนคนที่ {i + 1}</p>
-                  <FormField label="ชื่อ–นามสกุล" icon="user-round" name={`friend${i}-name`} placeholder="ชื่อเพื่อน" value={f.name} onChange={(v) => setFriend(i, { name: v })} error={tried ? err.name || undefined : undefined} />
-                  <FormField label="อีเมล" icon="mail" name={`friend${i}-email`} type="email" placeholder="****@gmail.com" value={f.email} onChange={(v) => setFriend(i, { email: v })} error={tried ? err.email || undefined : undefined} />
-                  <FormField label="เบอร์โทรศัพท์" icon="phone" name={`friend${i}-phone`} type="tel" placeholder="ไม่บังคับ" required={false} value={f.phone} onChange={(v) => setFriend(i, { phone: v })} />
-                </fieldset>
+<FormField label="ชื่อ–นามสกุล" icon="user-round" name={`friend${i}-name`} placeholder="ชื่อเพื่อน" value={f.name} onChange={(v) => setFriend(i, { name: v })} error={tried ? err.name || undefined : undefined} />
+<FormField label="อีเมล" icon="mail" name={`friend${i}-email`} type="email" placeholder="****@gmail.com" value={f.email} onChange={(v) => setFriend(i, { email: v })} error={tried ? err.email || undefined : undefined} />
+<FormField label="รหัสผ่านให้เพื่อน" icon="lock-keyhole" name={`friend${i}-password`} type="text" placeholder="อย่างน้อย 8 ตัว" value={f.password} onChange={(v) => setFriend(i, { password: v })} error={tried ? err.password || undefined : undefined} />
+<FormField label="เบอร์โทรศัพท์" icon="phone" name={`friend${i}-phone`} type="tel" placeholder="ไม่บังคับ" required={false} value={f.phone} onChange={(v) => setFriend(i, { phone: v })} />                </fieldset>
               );
             })}
           </div>
