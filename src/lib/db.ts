@@ -240,10 +240,18 @@ export function readDb(): Db {
   if (!db.wallets.some((w) => w.id === "WLT-TEST-0001")) {
     db.wallets.push({ id: "WLT-TEST-0001", owner: "ไทนี่ (ทดลอง)", balance: 2500, status: "ใช้งานได้" });
   }
+  // กระเป๋าทดลองที่ไม่มี Token (QR: public/demo-qr/wallet-WLT-TEST-0000.png) — ไว้สาธิตกรณียอดไม่พอ
+  if (!db.wallets.some((w) => w.id === "WLT-TEST-0000")) {
+    db.wallets.push({ id: "WLT-TEST-0000", owner: "ไทนี่ (ทดลอง · ไม่มี Token)", balance: 0, status: "ใช้งานได้" });
+  }
   // บัญชีผู้ใช้ทดลอง ไทนี่ (ทดลอง): ล็อกอินฝั่งลูกค้าเพื่อดูกระเป๋า/ประวัติที่เชื่อมกับ QR ทดลอง (อีเมล tiny@example.com รหัส 12345678)
   if (!db.users.some((u) => u.walletId === "WLT-TEST-0001")) {
     db.users.push({ id: "U-TEST", name: "ไทนี่ (ทดลอง)", email: "tiny@example.com", phone: "0800000000", pass: (testPass ??= hashPassword("12345678", "demo-seed-salt")), walletId: "WLT-TEST-0001", createdAt: "24 ต.ค. 2569" });
   }
+  // ร้านไก่ป๊อปทอด (ST-04) ถูกยกเลิกแล้ว: ตัดออกจากข้อมูลเก่าที่เคยบันทึกไว้ในเครื่อง
+  db.stores = db.stores.filter((x) => x.id !== "ST-04");
+  db.catalog = db.catalog.filter((c) => c.sku !== "POP-01");
+  db.staff = db.staff.filter((x) => x.storeId !== "ST-04");
   // ข้อมูลเก่าที่เคยตั้งชื่อสินค้าว่า "เบียร์" → ใช้ชื่อ "เบียร์สด" ให้ตรงกับร้าน
   for (const c of db.catalog) if (c.sku === "BEER-01" && c.name === "เบียร์") c.name = "เบียร์สด";
   // an event past its end time closes itself the first time anyone opens a page afterwards

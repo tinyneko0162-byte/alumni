@@ -35,22 +35,6 @@
       }
     },
     {
-      "id": "ST-04",
-      "name": "ร้านไก่ป๊อปทอด",
-      "operator": {
-        "initials": "นง",
-        "name": "นง••, เจ้าหน้าที่"
-      },
-      "product": {
-        "sku": "POP-01",
-        "name": "ไก่ป๊อป",
-        "tagline": "ทอดใหม่, พร้อมเสิร์ฟ",
-        "price": 60,
-        "unit": "ถ้วย",
-        "image": "/images/products/chicken-pop.png"
-      }
-    },
-    {
       "id": "ST-03",
       "name": "ร้านของที่ระลึก",
       "operator": {
